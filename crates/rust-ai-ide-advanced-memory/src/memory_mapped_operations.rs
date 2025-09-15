@@ -17,20 +17,20 @@ use tokio::sync::{Mutex, RwLock};
 /// Configuration for memory mapped operations
 #[derive(Debug, Clone)]
 pub struct MemoryMappedConfig {
-    pub max_mapped_files:            usize,
-    pub max_file_size_gb:            usize,
-    pub streaming_chunk_size_mb:     usize,
-    pub enable_prefault:             bool,
+    pub max_mapped_files: usize,
+    pub max_file_size_gb: usize,
+    pub streaming_chunk_size_mb: usize,
+    pub enable_prefault: bool,
     pub concurrent_operations_limit: usize,
 }
 
 impl Default for MemoryMappedConfig {
     fn default() -> Self {
         Self {
-            max_mapped_files:            100,
-            max_file_size_gb:            32,
-            streaming_chunk_size_mb:     16,
-            enable_prefault:             false,
+            max_mapped_files: 100,
+            max_file_size_gb: 32,
+            streaming_chunk_size_mb: 16,
+            enable_prefault: false,
             concurrent_operations_limit: 10,
         }
     }
@@ -38,20 +38,20 @@ impl Default for MemoryMappedConfig {
 
 /// Memory mapped file manager
 pub struct MemoryMappedFileManager {
-    config:            MemoryMappedConfig,
-    mappings:          Arc<RwLock<HashMap<String, MappedFile>>>,
+    config: MemoryMappedConfig,
+    mappings: Arc<RwLock<HashMap<String, MappedFile>>>,
     active_operations: Arc<Mutex<HashMap<String, tokio::sync::Semaphore>>>,
 }
 
 #[derive(Debug)]
 struct MappedFile {
-    file_id:      String,
-    file_path:    PathBuf,
-    mmap:         Mmap,
-    size_bytes:   usize,
+    file_id: String,
+    file_path: PathBuf,
+    mmap: Mmap,
+    size_bytes: usize,
     chunk_offset: usize,
     access_count: u64,
-    last_access:  chrono::DateTime<chrono::Utc>,
+    last_access: chrono::DateTime<chrono::Utc>,
 }
 
 impl MemoryMappedFileManager {
@@ -118,7 +118,12 @@ impl MemoryMappedFileManager {
     }
 
     /// Read data from mapped file (zero-copy)
-    pub async fn read_from_mapped(&self, file_id: &str, offset: usize, size: usize) -> Result<&[u8], IDEError> {
+    pub async fn read_from_mapped(
+        &self,
+        file_id: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<&[u8], IDEError> {
         let mut mappings = self.mappings.write().await;
 
         if let Some(mapped_file) = mappings.get_mut(file_id) {
@@ -155,8 +160,8 @@ impl MemoryMappedFileManager {
 
 /// Stream processing engine for large datasets
 pub struct StreamProcessingEngine {
-    config:           MemoryMappedConfig,
-    chunk_size:       usize,
+    config: MemoryMappedConfig,
+    chunk_size: usize,
     processing_queue: Arc<Mutex<Vec<String>>>,
 }
 
@@ -170,7 +175,11 @@ impl StreamProcessingEngine {
     }
 
     /// Process large file in streaming chunks
-    pub async fn process_file_in_chunks<F>(&self, file_path: PathBuf, processor: F) -> Result<(), IDEError>
+    pub async fn process_file_in_chunks<F>(
+        &self,
+        file_path: PathBuf,
+        processor: F,
+    ) -> Result<(), IDEError>
     where
         F: Fn(&[u8], usize) -> Result<(), IDEError> + Send + 'static,
     {
@@ -295,7 +304,11 @@ impl StreamProcessingEngine {
     }
 
     /// Aggregate processing results with zero allocation overhead
-    pub async fn aggregate_results<R, F>(&self, data_sources: Vec<&[u8]>, aggregator: F) -> Result<R, IDEError>
+    pub async fn aggregate_results<R, F>(
+        &self,
+        data_sources: Vec<&[u8]>,
+        aggregator: F,
+    ) -> Result<R, IDEError>
     where
         F: Fn(Vec<&[u8]>) -> R,
     {
@@ -307,12 +320,12 @@ impl StreamProcessingEngine {
 /// Zero-copy operation engine
 pub struct ZeroCopyOperationEngine {
     compression_buffer: Arc<Mutex<Vec<u8>>>,
-    processing_queue:   Arc<RwLock<Vec<ProcessingTask>>>,
+    processing_queue: Arc<RwLock<Vec<ProcessingTask>>>,
 }
 
 struct ProcessingTask {
-    id:        String,
-    data:      Vec<u8>,
+    id: String,
+    data: Vec<u8>,
     operation: OperationType,
 }
 
@@ -325,16 +338,16 @@ enum OperationType {
 
 /// Model memory mapper for AI/ML operations
 pub struct ModelMemoryMapper {
-    config:         MemoryMappedConfig,
+    config: MemoryMappedConfig,
     model_mappings: Arc<RwLock<HashMap<String, ModelMapping>>>,
 }
 
 struct ModelMapping {
-    model_id:    String,
-    file_path:   PathBuf,
-    mmap:        Mmap,
+    model_id: String,
+    file_path: PathBuf,
+    mmap: Mmap,
     tensor_size: usize,
-    format:      ModelFormat,
+    format: ModelFormat,
 }
 
 #[derive(Clone)]
@@ -346,7 +359,7 @@ enum ModelFormat {
 
 /// Cross-platform memory adapter
 pub struct CrossPlatformMemoryAdapter {
-    platform:  PlatformType,
+    platform: PlatformType,
     page_size: usize,
     alignment: usize,
 }
@@ -361,11 +374,11 @@ enum PlatformType {
 
 /// Main Memory Mapped Operations Interface
 pub struct MemoryMappedOperations {
-    config:           MemoryMappedConfig,
-    file_manager:     Arc<MemoryMappedFileManager>,
-    stream_engine:    Arc<StreamProcessingEngine>,
+    config: MemoryMappedConfig,
+    file_manager: Arc<MemoryMappedFileManager>,
+    stream_engine: Arc<StreamProcessingEngine>,
     zero_copy_engine: Arc<ZeroCopyOperationEngine>,
-    model_mapper:     Arc<ModelMemoryMapper>,
+    model_mapper: Arc<ModelMemoryMapper>,
     platform_adapter: Arc<CrossPlatformMemoryAdapter>,
 }
 
@@ -413,14 +426,23 @@ impl MemoryMappedOperations {
     }
 
     /// Read from mapped file (zero copy)
-    pub async fn read_mapped(&self, file_id: &str, offset: usize, size: usize) -> Result<&[u8], IDEError> {
+    pub async fn read_mapped(
+        &self,
+        file_id: &str,
+        offset: usize,
+        size: usize,
+    ) -> Result<&[u8], IDEError> {
         self.file_manager
             .read_from_mapped(file_id, offset, size)
             .await
     }
 
     /// Stream process large file
-    pub async fn stream_process_file<F>(&self, file_path: PathBuf, processor: F) -> Result<(), IDEError>
+    pub async fn stream_process_file<F>(
+        &self,
+        file_path: PathBuf,
+        processor: F,
+    ) -> Result<(), IDEError>
     where
         F: Fn(&[u8], usize) -> Result<(), IDEError> + Send + 'static,
     {
@@ -430,7 +452,11 @@ impl MemoryMappedOperations {
     }
 
     /// Map AI model for efficient inference
-    pub async fn map_model(&self, model_path: PathBuf, format: ModelFormat) -> Result<String, IDEError> {
+    pub async fn map_model(
+        &self,
+        model_path: PathBuf,
+        format: ModelFormat,
+    ) -> Result<String, IDEError> {
         self.model_mapper.map_model(model_path, format).await
     }
 
@@ -461,7 +487,11 @@ impl ModelMemoryMapper {
         }
     }
 
-    pub async fn map_model(&self, model_path: PathBuf, format: ModelFormat) -> Result<String, IDEError> {
+    pub async fn map_model(
+        &self,
+        model_path: PathBuf,
+        format: ModelFormat,
+    ) -> Result<String, IDEError> {
         let model_id = format!("model_{}", model_path.display());
 
         let file = File::open(&model_path).map_err(|e| IDEError::IoError(e))?;
@@ -529,7 +559,7 @@ impl ZeroCopyOperationEngine {
     pub async fn new() -> Self {
         Self {
             compression_buffer: Arc::new(Mutex::new(Vec::with_capacity(64 * 1024 * 1024))), // 64MB buffer
-            processing_queue:   Arc::new(RwLock::new(Vec::new())),
+            processing_queue: Arc::new(RwLock::new(Vec::new())),
         }
     }
 }

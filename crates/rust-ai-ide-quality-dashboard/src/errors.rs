@@ -52,10 +52,7 @@ pub type DashboardResult<T> = Result<T, DashboardError>;
 #[derive(Debug)]
 pub enum ConfigurationError {
     /// Invalid configuration parameter
-    InvalidParameter {
-        parameter: String,
-        reason:    String,
-    },
+    InvalidParameter { parameter: String, reason: String },
 
     /// Missing required configuration
     MissingConfig(String),
@@ -168,7 +165,7 @@ pub enum UiIntegrationError {
 pub enum SecurityError {
     /// Path traversal attempt detected
     PathTraversal {
-        attempted_path:      String,
+        attempted_path: String,
         sanitization_result: String,
     },
 
@@ -193,9 +190,9 @@ pub enum ExternalServiceError {
 
     /// Service timeout
     Timeout {
-        service:    String,
+        service: String,
         timeout_ms: u64,
-        operation:  String,
+        operation: String,
     },
 
     /// Service returned invalid response
@@ -229,8 +226,8 @@ pub enum PerformanceError {
 
     /// Slow operation detected
     SlowOperation {
-        operation:    String,
-        duration_ms:  u64,
+        operation: String,
+        duration_ms: u64,
         threshold_ms: u64,
     },
 

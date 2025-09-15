@@ -17,19 +17,19 @@ use tokio::sync::Mutex;
 #[derive(Debug, Clone)]
 pub struct PlatformMemoryInfo {
     pub resident_set_size_kb: u64,
-    pub virtual_memory_kb:    u64,
-    pub shared_memory_kb:     u64,
-    pub private_memory_kb:    u64,
-    pub swap_total_kb:        u64,
-    pub swap_free_kb:         u64,
+    pub virtual_memory_kb: u64,
+    pub shared_memory_kb: u64,
+    pub private_memory_kb: u64,
+    pub swap_total_kb: u64,
+    pub swap_free_kb: u64,
 }
 
 /// Platform-specific CPU information
 #[derive(Debug, Clone)]
 pub struct PlatformCpuInfo {
-    pub cpu_count:        u32,
-    pub frequency_mhz:    f64,
-    pub load_average:     f64,
+    pub cpu_count: u32,
+    pub frequency_mhz: f64,
+    pub load_average: f64,
     pub context_switches: u64,
 }
 
@@ -42,7 +42,7 @@ pub struct PlatformPerformanceMonitor {
 #[derive(Debug, Clone)]
 struct SystemStats {
     memory_info: PlatformMemoryInfo,
-    cpu_info:    PlatformCpuInfo,
+    cpu_info: PlatformCpuInfo,
     last_update: std::time::Instant,
 }
 
@@ -87,12 +87,14 @@ impl PlatformPerformanceMonitor {
     /// Collect platform-specific memory information
     #[cfg(target_os = "linux")]
     fn collect_memory_info() -> Result<PlatformMemoryInfo, PlatformPerformanceError> {
-        let mut file = File::open("/proc/meminfo")
-            .map_err(|e| PlatformPerformanceError::SystemError(format!("Failed to open /proc/meminfo: {}", e)))?;
+        let mut file = File::open("/proc/meminfo").map_err(|e| {
+            PlatformPerformanceError::SystemError(format!("Failed to open /proc/meminfo: {}", e))
+        })?;
 
         let mut contents = String::new();
-        file.read_to_string(&mut contents)
-            .map_err(|e| PlatformPerformanceError::SystemError(format!("Failed to read /proc/meminfo: {}", e)))?;
+        file.read_to_string(&mut contents).map_err(|e| {
+            PlatformPerformanceError::SystemError(format!("Failed to read /proc/meminfo: {}", e))
+        })?;
 
         let mut mem_total = 0u64;
         let mut mem_free = 0u64;
@@ -146,12 +148,14 @@ impl PlatformPerformanceMonitor {
     #[cfg(target_os = "linux")]
     fn get_process_memory() -> Result<u64, PlatformPerformanceError> {
         let statm_path = format!("/proc/self/statm");
-        let mut file = File::open(statm_path)
-            .map_err(|e| PlatformPerformanceError::SystemError(format!("Failed to open /proc/self/statm: {}", e)))?;
+        let mut file = File::open(statm_path).map_err(|e| {
+            PlatformPerformanceError::SystemError(format!("Failed to open /proc/self/statm: {}", e))
+        })?;
 
         let mut contents = String::new();
-        file.read_to_string(&mut contents)
-            .map_err(|e| PlatformPerformanceError::SystemError(format!("Failed to read /proc/self/statm: {}", e)))?;
+        file.read_to_string(&mut contents).map_err(|e| {
+            PlatformPerformanceError::SystemError(format!("Failed to read /proc/self/statm: {}", e))
+        })?;
 
         let parts: Vec<&str> = contents.trim().split_whitespace().collect();
         if parts.len() >= 2 {
@@ -169,12 +173,14 @@ impl PlatformPerformanceMonitor {
     /// Get system load average
     #[cfg(target_os = "linux")]
     fn get_load_average() -> Result<f64, PlatformPerformanceError> {
-        let mut file = File::open("/proc/loadavg")
-            .map_err(|e| PlatformPerformanceError::SystemError(format!("Failed to open /proc/loadavg: {}", e)))?;
+        let mut file = File::open("/proc/loadavg").map_err(|e| {
+            PlatformPerformanceError::SystemError(format!("Failed to open /proc/loadavg: {}", e))
+        })?;
 
         let mut contents = String::new();
-        file.read_to_string(&mut contents)
-            .map_err(|e| PlatformPerformanceError::SystemError(format!("Failed to read /proc/loadavg: {}", e)))?;
+        file.read_to_string(&mut contents).map_err(|e| {
+            PlatformPerformanceError::SystemError(format!("Failed to read /proc/loadavg: {}", e))
+        })?;
 
         let parts: Vec<&str> = contents.trim().split_whitespace().collect();
         if let Some(load_str) = parts.first() {
@@ -260,11 +266,11 @@ impl PlatformPerformanceMonitor {
 
         Ok(PlatformMemoryInfo {
             resident_set_size_kb: mem_counters.WorkingSetSize / 1024,
-            virtual_memory_kb:    mem_counters.PagefileUsage / 1024,
-            shared_memory_kb:     0, // Not available on Windows
-            private_memory_kb:    (mem_counters.WorkingSetSize - mem_counters.PagefileUsage) / 1024,
-            swap_total_kb:        (mem_status.ullTotalPageFile - mem_status.ullTotalPhys) / 1024,
-            swap_free_kb:         (mem_status.ullAvailPageFile - mem_status.ullAvailPhys) / 1024,
+            virtual_memory_kb: mem_counters.PagefileUsage / 1024,
+            shared_memory_kb: 0, // Not available on Windows
+            private_memory_kb: (mem_counters.WorkingSetSize - mem_counters.PagefileUsage) / 1024,
+            swap_total_kb: (mem_status.ullTotalPageFile - mem_status.ullTotalPhys) / 1024,
+            swap_free_kb: (mem_status.ullAvailPageFile - mem_status.ullAvailPhys) / 1024,
         })
     }
 
@@ -355,7 +361,9 @@ impl PlatformPerformanceMonitor {
                 swap_free_kb: 0,
             })
         })
-        .map_err(|_| PlatformPerformanceError::SystemError("Failed to get macOS memory info".to_string()))
+        .map_err(|_| {
+            PlatformPerformanceError::SystemError("Failed to get macOS memory info".to_string())
+        })
     }
 
     #[cfg(target_os = "macos")]
@@ -367,14 +375,16 @@ impl PlatformPerformanceMonitor {
         unsafe {
             let process_info = NSProcessInfo::processInfo(nil);
             let active_processor_count =
-                cocoa::foundation::NSProcessInfoCocoaExt_ns64::activeProcessorCount(process_info).unwrap_or(0);
+                cocoa::foundation::NSProcessInfoCocoaExt_ns64::activeProcessorCount(process_info)
+                    .unwrap_or(0);
             let processor_count =
-                cocoa::foundation::NSProcessInfoCocoaExt_ns64::processorCount(process_info).unwrap_or(0) as u32;
+                cocoa::foundation::NSProcessInfoCocoaExt_ns64::processorCount(process_info)
+                    .unwrap_or(0) as u32;
 
             Ok(PlatformCpuInfo {
-                cpu_count:        processor_count,
-                frequency_mhz:    0.0, // Need specific APIs
-                load_average:     0.0, // Need specific APIs
+                cpu_count: processor_count,
+                frequency_mhz: 0.0, // Need specific APIs
+                load_average: 0.0,  // Need specific APIs
                 context_switches: 0,
             })
         }
@@ -415,20 +425,20 @@ impl PlatformPerformanceMonitor {
         let resident_set_size = Self::get_process_memory()?;
         Ok(PlatformMemoryInfo {
             resident_set_size_kb: resident_set_size,
-            virtual_memory_kb:    0,
-            shared_memory_kb:     0,
-            private_memory_kb:    resident_set_size,
-            swap_total_kb:        0,
-            swap_free_kb:         0,
+            virtual_memory_kb: 0,
+            shared_memory_kb: 0,
+            private_memory_kb: resident_set_size,
+            swap_total_kb: 0,
+            swap_free_kb: 0,
         })
     }
 
     #[cfg(not(any(target_os = "linux", target_os = "windows", target_os = "macos")))]
     fn collect_cpu_info() -> Result<PlatformCpuInfo, PlatformPerformanceError> {
         Ok(PlatformCpuInfo {
-            cpu_count:        num_cpus::get() as u32,
-            frequency_mhz:    0.0,
-            load_average:     0.0,
+            cpu_count: num_cpus::get() as u32,
+            frequency_mhz: 0.0,
+            load_average: 0.0,
             context_switches: 0,
         })
     }

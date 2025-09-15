@@ -410,8 +410,9 @@ impl HotReloadManager {
             )))
         })?;
 
-        use sha256::digest;
-        Ok(digest(&content))
+        use sha2::{Digest, Sha256};
+        let hash = Sha256::digest(&content);
+        Ok(format!("{:x}", hash))
     }
 }
 

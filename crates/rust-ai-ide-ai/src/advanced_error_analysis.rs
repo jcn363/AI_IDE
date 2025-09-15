@@ -35,17 +35,17 @@ pub struct AdvancedErrorAnalyzer {
     /// Predictive error prevention system
     pub prediction_system: PredictionSystem,
     /// Automated solution generator
-    solution_generator:    SolutionGenerator,
+    solution_generator: SolutionGenerator,
     /// Error clustering and impact analyzer
-    pub impact_analyzer:   ImpactAnalyzer,
+    pub impact_analyzer: ImpactAnalyzer,
     /// Error evolution and quality tracker
-    evolution_tracker:     EvolutionTracker,
+    evolution_tracker: EvolutionTracker,
     /// AI provider for enhanced analysis (EXTENSIBILITY: Reserved for future AI/ML integration
     /// points where this provider will be used for advanced pattern recognition, confidence
     /// scoring enhancement, and adaptive algorithm selection based on analysis context and
     /// historical performance data. This enables evolutionary design where AI provider
     /// capabilities can be dynamically utilized without breaking existing interfaces.)
-    _ai_provider:          AIProvider,
+    _ai_provider: AIProvider,
 }
 
 /// Multi-level error classification hierarchy
@@ -82,36 +82,36 @@ impl ErrorLevel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RootCauseAnalysis {
     /// Unique analysis ID
-    pub analysis_id:       String,
+    pub analysis_id: String,
     /// Primary error classification
-    pub primary_level:     ErrorLevel,
+    pub primary_level: ErrorLevel,
     /// Hierarchical root cause chain
-    pub cause_chain:       Vec<CauseLink>,
+    pub cause_chain: Vec<CauseLink>,
     /// Root cause confidence (0.0 to 1.0)
-    pub confidence:        f32,
+    pub confidence: f32,
     /// Error dependencies and prerequisites
-    pub dependencies:      Vec<ErrorDependency>,
+    pub dependencies: Vec<ErrorDependency>,
     /// Impact assessment across different scopes
     pub impact_assessment: ImpactAssessment,
     /// Timestamp of analysis
-    pub analyzed_at:       DateTime<Utc>,
+    pub analyzed_at: DateTime<Utc>,
 }
 
 /// Link in the root cause chain
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CauseLink {
     /// Error level for this link
-    pub level:      ErrorLevel,
+    pub level: ErrorLevel,
     /// Error category/type
-    pub category:   String,
+    pub category: String,
     /// Specific error message
-    pub message:    String,
+    pub message: String,
     /// Confidence in this causal link (0.0 to 1.0)
     pub confidence: f32,
     /// Supporting evidence
-    pub evidence:   Vec<String>,
+    pub evidence: Vec<String>,
     /// Location information
-    pub location:   Option<ErrorLocation>,
+    pub location: Option<ErrorLocation>,
 }
 
 /// Error dependency tracking
@@ -120,11 +120,11 @@ pub struct ErrorDependency {
     /// Type of dependency
     pub dependency_type: DependencyType,
     /// Dependency identifier (module name, function name, etc.)
-    pub identifier:      String,
+    pub identifier: String,
     /// Impact of this dependency on the error
-    pub impact:          DependencyImpact,
+    pub impact: DependencyImpact,
     /// Confidence in this dependency relationship
-    pub confidence:      f32,
+    pub confidence: f32,
 }
 
 /// Types of error dependencies
@@ -161,30 +161,30 @@ pub enum DependencyImpact {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorLocation {
     /// File path (relative to workspace root)
-    pub file_path:     String,
+    pub file_path: String,
     /// Line number (1-based)
-    pub line:          u32,
+    pub line: u32,
     /// Column number (1-based)
-    pub column:        u32,
+    pub column: u32,
     /// Function name (if applicable)
     pub function_name: Option<String>,
     /// Module path (if applicable)
-    pub module_path:   Option<String>,
+    pub module_path: Option<String>,
 }
 
 /// Comprehensive impact assessment with proper collection lifetime bounds
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpactAssessment {
     /// Scope of impact (local, module-wide, project-wide)
-    pub scope:           ImpactScope,
+    pub scope: ImpactScope,
     /// Estimated files affected
-    pub affected_files:  Vec<String>,
+    pub affected_files: Vec<String>,
     /// Risk level of the error
-    pub risk_level:      RiskLevel,
+    pub risk_level: RiskLevel,
     /// Breakdown by error level with explicit bounds
     pub level_breakdown: HashMap<ErrorLevel, u32>,
     /// Urgency score (0.0 to 1.0, higher = more urgent)
-    pub urgency_score:   f32,
+    pub urgency_score: f32,
     /// Business impact description
     pub business_impact: String,
 }
@@ -224,7 +224,7 @@ pub struct RootCauseEngine {
     /// codebases, identify systemic root causes, and provide statistical confidence in causal
     /// relationships. Enables evolutionary design where pattern recognition capabilities can be
     /// enhanced without API changes.)
-    _pattern_manager:      PatternManager,
+    _pattern_manager: PatternManager,
     /// ML model for hierarchical classification (EXTENSIBILITY: Advanced neural network or ensemble
     /// model for hierarchical error classification from system level down to line level. Enables
     /// future deep learning approaches for error analysis including transformer-based models,
@@ -235,7 +235,7 @@ pub struct RootCauseEngine {
     /// understanding error propagation chains and interdependencies. Supports future
     /// integration with advanced graph algorithms, temporal dependency tracking, and predictive
     /// impact modeling across module boundaries.)
-    _dependency_analyzer:  DependencyAnalyzer,
+    _dependency_analyzer: DependencyAnalyzer,
 }
 
 /// ML Classification Model for error level prediction
@@ -245,7 +245,7 @@ pub struct ClassificationModel {
     /// error classification. Supports future migration to advanced ML frameworks with distributed
     /// training, model quantization, and continuous learning capabilities. Enables hot-swapping
     /// between different model architectures without API disruptions.)
-    _weights:        HashMap<String, f32>,
+    _weights: HashMap<String, f32>,
     /// Training data statistics (EXTENSIBILITY: Comprehensive model performance tracking and
     /// continuous learning statistics. Supports future implementation of adaptive learning rates,
     /// model confidence calibration, and automated model retraining based on performance
@@ -257,13 +257,13 @@ pub struct ClassificationModel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelStats {
     /// Total training samples
-    pub total_samples:     u32,
+    pub total_samples: u32,
     /// Accuracy by error level with pre-allocated capacity
     pub accuracy_by_level: HashMap<ErrorLevel, f32>,
     /// Last training timestamp
-    pub last_trained:      DateTime<Utc>,
+    pub last_trained: DateTime<Utc>,
     /// Model version
-    pub version:           String,
+    pub version: String,
 }
 
 impl ModelStats {
@@ -312,7 +312,7 @@ pub struct DependencyAnalyzer {
     /// results with adaptive eviction strategies. Supports future implementation of machine
     /// learning powered cache prefetching, semantic caching, and query optimization for complex
     /// dependency queries.)
-    _analysis_cache:   HashMap<String, ImpactAssessment>,
+    _analysis_cache: HashMap<String, ImpactAssessment>,
 }
 
 /// Predictive Error Prevention System
@@ -321,29 +321,29 @@ pub struct PredictionSystem {
     /// ML pattern recognition engine
     _pattern_recognizer: PatternRecognizer,
     /// Risk prediction model
-    _risk_predictor:     RiskPredictor,
+    _risk_predictor: RiskPredictor,
     /// Early warning system
-    _early_warning:      EarlyWarningSystem,
+    _early_warning: EarlyWarningSystem,
 }
 
 /// ML-based pattern recognition for error prediction
 #[derive(Debug)]
 pub struct PatternRecognizer {
     /// Learned error patterns
-    _learned_patterns:     Vec<ErrorPattern>,
+    _learned_patterns: Vec<ErrorPattern>,
     /// Prediction confidence threshold
     _confidence_threshold: f32,
     /// Pattern matching cache
-    _pattern_cache:        HashMap<String, Vec<PredictionResult>>,
+    _pattern_cache: HashMap<String, Vec<PredictionResult>>,
 }
 
 /// Risk prediction model
 #[derive(Debug)]
 pub struct RiskPredictor {
     /// Historical error data
-    historical_data:  Vec<HistoricalError>,
+    historical_data: Vec<HistoricalError>,
     /// Risk factors
-    risk_factors:     HashMap<String, f32>,
+    risk_factors: HashMap<String, f32>,
     /// Prediction model
     prediction_model: Option<Arc<RwLock<PredictionModel>>>,
 }
@@ -352,7 +352,7 @@ pub struct RiskPredictor {
 #[derive(Debug)]
 pub struct PredictionModel {
     /// Model coefficients
-    coefficients:   HashMap<String, f32>,
+    coefficients: HashMap<String, f32>,
     /// Baseline error rates
     baseline_rates: HashMap<String, f32>,
 }
@@ -361,9 +361,9 @@ pub struct PredictionModel {
 #[derive(Debug)]
 pub struct EarlyWarningSystem {
     /// Warning thresholds
-    thresholds:    HashMap<String, f32>,
+    thresholds: HashMap<String, f32>,
     /// Active monitors
-    monitors:      Vec<ErrorMonitor>,
+    monitors: Vec<ErrorMonitor>,
     /// Alert history
     alert_history: Vec<EarlyWarning>,
 }
@@ -372,9 +372,9 @@ pub struct EarlyWarningSystem {
 #[derive(Debug)]
 pub struct ErrorMonitor {
     /// Monitor type (code quality, performance, security)
-    monitor_type:    MonitorType,
+    monitor_type: MonitorType,
     /// Monitoring rules
-    rules:           Vec<MonitoringRule>,
+    rules: Vec<MonitoringRule>,
     /// Alert threshold
     alert_threshold: f32,
 }
@@ -396,11 +396,11 @@ pub enum MonitorType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MonitoringRule {
     /// Rule name
-    pub name:        String,
+    pub name: String,
     /// Rule condition (regex or pattern)
-    pub condition:   String,
+    pub condition: String,
     /// Severity level
-    pub severity:    String,
+    pub severity: String,
     /// Rule description
     pub description: String,
 }
@@ -409,32 +409,32 @@ pub struct MonitoringRule {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EarlyWarning {
     /// Alert ID
-    pub alert_id:          String,
+    pub alert_id: String,
     /// Warning type
-    pub warning_type:      String,
+    pub warning_type: String,
     /// Predicted error description
-    pub description:       String,
+    pub description: String,
     /// Confidence in prediction
-    pub confidence:        f32,
+    pub confidence: f32,
     /// Recommended preventive action
     pub preventive_action: String,
     /// Timestamp
-    pub detected_at:       DateTime<Utc>,
+    pub detected_at: DateTime<Utc>,
 }
 
 /// Prediction result from pattern recognition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PredictionResult {
     /// Prediction ID
-    pub prediction_id:          String,
+    pub prediction_id: String,
     /// Predicted error type
-    pub error_type:             String,
+    pub error_type: String,
     /// Likelihood score (0.0 to 1.0)
-    pub likelihood:             f32,
+    pub likelihood: f32,
     /// Time window for prediction (hours)
-    pub time_window_hours:      u32,
+    pub time_window_hours: u32,
     /// Contributing factors
-    pub contributing_factors:   Vec<String>,
+    pub contributing_factors: Vec<String>,
     /// Preventive suggestions
     pub preventive_suggestions: Vec<String>,
 }
@@ -443,26 +443,26 @@ pub struct PredictionResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoricalError {
     /// Error ID
-    pub error_id:    String,
+    pub error_id: String,
     /// Error type classification
-    pub error_type:  String,
+    pub error_type: String,
     /// Occurrence timestamp
     pub occurred_at: DateTime<Utc>,
     /// Resolution time (if resolved)
     pub resolved_at: Option<DateTime<Utc>>,
     /// Location of error
-    pub location:    ErrorLocation,
+    pub location: ErrorLocation,
     /// Contributing context
-    pub context:     HashMap<String, String>,
+    pub context: HashMap<String, String>,
 }
 
 /// Automated Solution Generator
 #[derive(Debug)]
 pub struct SolutionGenerator {
     /// Fix templates registry
-    templates:            HashMap<String, FixTemplate>,
+    templates: HashMap<String, FixTemplate>,
     /// Template learning system
-    template_learner:     TemplateLearner,
+    template_learner: TemplateLearner,
     /// Contextual generator
     contextual_generator: ContextualGenerator,
 }
@@ -471,21 +471,21 @@ pub struct SolutionGenerator {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FixTemplate {
     /// Template ID
-    pub template_id:         String,
+    pub template_id: String,
     /// Template name
-    pub name:                String,
+    pub name: String,
     /// Applicable error patterns
-    pub error_patterns:      Vec<String>,
+    pub error_patterns: Vec<String>,
     /// Fix strategy
-    pub strategy:            FixStrategy,
+    pub strategy: FixStrategy,
     /// Template content
-    pub template_content:    String,
+    pub template_content: String,
     /// Required parameters
     pub required_parameters: Vec<TemplateParameter>,
     /// Success rate from historical application
-    pub success_rate:        f32,
+    pub success_rate: f32,
     /// Usage count
-    pub usage_count:         u32,
+    pub usage_count: u32,
 }
 
 /// Strategy for generating fixes
@@ -507,15 +507,15 @@ pub enum FixStrategy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TemplateParameter {
     /// Parameter name
-    pub name:            String,
+    pub name: String,
     /// Parameter type
-    pub parameter_type:  ParameterType,
+    pub parameter_type: ParameterType,
     /// Default value
-    pub default_value:   Option<String>,
+    pub default_value: Option<String>,
     /// Validation rule
     pub validation_rule: Option<String>,
     /// Description
-    pub description:     String,
+    pub description: String,
 }
 
 /// Types of template parameters
@@ -543,9 +543,9 @@ pub struct TemplateLearner {
     /// Learned fix patterns
     learned_templates: Vec<FixTemplate>,
     /// Learning statistics
-    learning_stats:    LearningStats,
+    learning_stats: LearningStats,
     /// Template creation rules
-    creation_rules:    Vec<CreationRule>,
+    creation_rules: Vec<CreationRule>,
 }
 
 /// Contextual solution generator
@@ -561,39 +561,39 @@ pub struct ContextualGenerator {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContextPattern {
     /// Pattern ID
-    pub pattern_id:           String,
+    pub pattern_id: String,
     /// Context conditions
-    pub context_conditions:   Vec<String>,
+    pub context_conditions: Vec<String>,
     /// Applicable templates
     pub applicable_templates: Vec<String>,
     /// Context priority
-    pub priority:             u8,
+    pub priority: u8,
 }
 
 /// Learning statistics for template system
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LearningStats {
     /// Total templates learned
-    pub templates_learned:       u32,
+    pub templates_learned: u32,
     /// Total successful applications
     pub successful_applications: u32,
     /// Average success rate
-    pub average_success_rate:    f32,
+    pub average_success_rate: f32,
     /// Most used templates
-    pub most_used_templates:     Vec<String>,
+    pub most_used_templates: Vec<String>,
 }
 
 /// Rule for creating new templates
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreationRule {
     /// Rule ID
-    pub rule_id:          String,
+    pub rule_id: String,
     /// Rule condition
-    pub condition:        String,
+    pub condition: String,
     /// Template creation pattern
     pub creation_pattern: String,
     /// Rule priority
-    pub priority:         u8,
+    pub priority: u8,
 }
 
 /// Error Clustering and Impact Analyzer
@@ -611,7 +611,7 @@ pub struct ImpactAnalyzer {
 #[derive(Debug)]
 pub struct ClusteringEngine {
     /// Error clusters
-    error_clusters:       Vec<ErrorCluster>,
+    error_clusters: Vec<ErrorCluster>,
     /// Clustering algorithm
     clustering_algorithm: ClusteringAlgorithm,
     /// Similarity threshold
@@ -622,15 +622,15 @@ pub struct ClusteringEngine {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorCluster {
     /// Cluster ID
-    pub cluster_id:      String,
+    pub cluster_id: String,
     /// Cluster center/pattern
-    pub centroid:        ErrorPattern,
+    pub centroid: ErrorPattern,
     /// Cluster members
-    pub members:         Vec<String>,
+    pub members: Vec<String>,
     /// Cluster quality metrics
     pub quality_metrics: ClusterQuality,
     /// Cluster metadata
-    pub metadata:        HashMap<String, String>,
+    pub metadata: HashMap<String, String>,
 }
 
 /// Clustering algorithm
@@ -648,22 +648,22 @@ pub enum ClusteringAlgorithm {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ClusterQuality {
     /// Cluster cohesion
-    pub cohesion:         f32,
+    pub cohesion: f32,
     /// Cluster separation
-    pub separation:       f32,
+    pub separation: f32,
     /// Silhouette score
     pub silhouette_score: f32,
     /// Member count
-    pub member_count:     u32,
+    pub member_count: u32,
 }
 
 /// Impact assessment system
 #[derive(Debug)]
 pub struct ImpactAssessmentSystem {
     /// Impact models
-    impact_models:     HashMap<String, ImpactModel>,
+    impact_models: HashMap<String, ImpactModel>,
     /// Assessment rules
-    assessment_rules:  Vec<AssessmentRule>,
+    assessment_rules: Vec<AssessmentRule>,
     /// Historical impact data
     historical_impact: Vec<HistoricalImpact>,
 }
@@ -672,39 +672,39 @@ pub struct ImpactAssessmentSystem {
 #[derive(Debug)]
 pub struct ImpactModel {
     /// Error type
-    error_type:   String,
+    error_type: String,
     /// Impact coefficients
     coefficients: HashMap<String, f32>,
     /// Impact equations
-    equations:    Vec<String>,
+    equations: Vec<String>,
 }
 
 /// Assessment rule for impact calculation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssessmentRule {
     /// Rule ID
-    pub rule_id:            String,
+    pub rule_id: String,
     /// Condition for rule application
-    pub condition:          String,
+    pub condition: String,
     /// Impact calculation
     pub impact_calculation: String,
     /// Rule priority
-    pub priority:           u8,
+    pub priority: u8,
 }
 
 /// Historical impact data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoricalImpact {
     /// Error ID
-    pub error_id:         String,
+    pub error_id: String,
     /// Actual impact experienced
-    pub actual_impact:    ImpactAssessment,
+    pub actual_impact: ImpactAssessment,
     /// Predicted impact
     pub predicted_impact: ImpactAssessment,
     /// Impact accuracy
-    pub accuracy:         f32,
+    pub accuracy: f32,
     /// Timestamp
-    pub assessed_at:      DateTime<Utc>,
+    pub assessed_at: DateTime<Utc>,
 }
 
 /// Systemic error analyzer
@@ -715,22 +715,22 @@ pub struct SystemicAnalyzer {
     /// Root cause finder
     root_cause_finder: RootCauseFinder,
     /// Cascade analysis
-    cascade_analyzer:  CascadeAnalyzer,
+    cascade_analyzer: CascadeAnalyzer,
 }
 
 /// Systemic error pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemicPattern {
     /// Pattern ID
-    pub pattern_id:          String,
+    pub pattern_id: String,
     /// Pattern description
-    pub description:         String,
+    pub description: String,
     /// Involved error types
-    pub error_types:         Vec<String>,
+    pub error_types: Vec<String>,
     /// Pattern severity
-    pub severity:            String,
+    pub severity: String,
     /// Systemic impact
-    pub systemic_impact:     ImpactAssessment,
+    pub systemic_impact: ImpactAssessment,
     /// Resolution strategy
     pub resolution_strategy: String,
 }
@@ -739,7 +739,7 @@ pub struct SystemicPattern {
 #[derive(Debug)]
 pub struct RootCauseFinder {
     /// Root cause patterns
-    root_patterns:        Vec<RootCausePattern>,
+    root_patterns: Vec<RootCausePattern>,
     /// Correlation analysis
     correlation_analyzer: CorrelationAnalyzer,
 }
@@ -748,20 +748,20 @@ pub struct RootCauseFinder {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RootCausePattern {
     /// Pattern ID
-    pub pattern_id:       String,
+    pub pattern_id: String,
     /// Root cause description
-    pub description:      String,
+    pub description: String,
     /// Symptom patterns
     pub symptom_patterns: Vec<String>,
     /// Confidence score
-    pub confidence:       f32,
+    pub confidence: f32,
 }
 
 /// Correlation analysis for error relationships
 #[derive(Debug)]
 pub struct CorrelationAnalyzer {
     /// Correlation matrix
-    correlation_matrix:    HashMap<(String, String), f32>,
+    correlation_matrix: HashMap<(String, String), f32>,
     /// Correlation threshold
     correlation_threshold: f32,
 }
@@ -770,7 +770,7 @@ pub struct CorrelationAnalyzer {
 #[derive(Debug)]
 pub struct CascadeAnalyzer {
     /// Cascade patterns
-    cascade_patterns:   Vec<CascadePattern>,
+    cascade_patterns: Vec<CascadePattern>,
     /// Propagation models
     propagation_models: Vec<PropagationModel>,
 }
@@ -779,11 +779,11 @@ pub struct CascadeAnalyzer {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CascadePattern {
     /// Pattern ID
-    pub pattern_id:              String,
+    pub pattern_id: String,
     /// Trigger error
-    pub trigger_error:           String,
+    pub trigger_error: String,
     /// Cascading effects
-    pub cascading_effects:       Vec<String>,
+    pub cascading_effects: Vec<String>,
     /// Propagation probability
     pub propagation_probability: f32,
 }
@@ -792,11 +792,11 @@ pub struct CascadePattern {
 #[derive(Debug)]
 pub struct PropagationModel {
     /// Model ID
-    pub model_id:          String,
+    pub model_id: String,
     /// Source error type
-    pub source_error:      String,
+    pub source_error: String,
     /// Target error types
-    pub target_errors:     Vec<String>,
+    pub target_errors: Vec<String>,
     /// Propagation rules
     pub propagation_rules: Vec<String>,
 }
@@ -805,35 +805,35 @@ pub struct PropagationModel {
 #[derive(Debug)]
 pub struct EvolutionTracker {
     /// Quality trend analyzer
-    quality_analyzer:   QualityTrendAnalyzer,
+    quality_analyzer: QualityTrendAnalyzer,
     /// Evolution patterns
     evolution_patterns: Vec<EvolutionPattern>,
     /// Trend prediction
-    trend_predictor:    TrendPredictor,
+    trend_predictor: TrendPredictor,
 }
 
 /// Quality trend analysis
 #[derive(Debug)]
 pub struct QualityTrendAnalyzer {
     /// Quality metrics over time
-    quality_metrics:  BTreeMap<DateTime<Utc>, QualityMetrics>,
+    quality_metrics: BTreeMap<DateTime<Utc>, QualityMetrics>,
     /// Trend indicators
     trend_indicators: Vec<TrendIndicator>,
     /// Benchmark comparisons
-    benchmarks:       BenchmarkData,
+    benchmarks: BenchmarkData,
 }
 
 /// Quality metrics snapshot with optimized collection operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityMetrics {
     /// Timestamp
-    pub timestamp:            DateTime<Utc>,
+    pub timestamp: DateTime<Utc>,
     /// Error rates by category with explicit bounds
-    pub error_rates:          HashMap<String, f32>,
+    pub error_rates: HashMap<String, f32>,
     /// Resolution times with capacity pre-allocation for performance
-    pub resolution_times:     Vec<f32>,
+    pub resolution_times: Vec<f32>,
     /// Code quality scores with consistent key type
-    pub quality_scores:       HashMap<String, f32>,
+    pub quality_scores: HashMap<String, f32>,
     /// Team productivity metrics
     pub productivity_metrics: ProductivityMetrics,
 }
@@ -842,10 +842,10 @@ impl QualityMetrics {
     /// Create new quality metrics with pre-allocated collections for efficiency
     pub fn new() -> Self {
         Self {
-            timestamp:            Utc::now(),
-            error_rates:          HashMap::with_capacity(16), // Pre-allocate for typical error categories
-            resolution_times:     Vec::with_capacity(100),    // Pre-allocate for performance
-            quality_scores:       HashMap::with_capacity(16), // Pre-allocate for quality metrics
+            timestamp: Utc::now(),
+            error_rates: HashMap::with_capacity(16), // Pre-allocate for typical error categories
+            resolution_times: Vec::with_capacity(100), // Pre-allocate for performance
+            quality_scores: HashMap::with_capacity(16), // Pre-allocate for quality metrics
             productivity_metrics: ProductivityMetrics::default(),
         }
     }
@@ -882,15 +882,15 @@ impl Default for QualityMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrendIndicator {
     /// Indicator name
-    pub name:            String,
+    pub name: String,
     /// Current value
-    pub current_value:   f32,
+    pub current_value: f32,
     /// Trend direction
     pub trend_direction: TrendDirection,
     /// Trend strength
-    pub trend_strength:  f32,
+    pub trend_strength: f32,
     /// Confidence in trend
-    pub confidence:      f32,
+    pub confidence: f32,
 }
 
 /// Trend direction
@@ -910,9 +910,9 @@ pub enum TrendDirection {
 #[derive(Debug)]
 pub struct BenchmarkData {
     /// Industry benchmarks
-    industry_benchmarks:  HashMap<String, f32>,
+    industry_benchmarks: HashMap<String, f32>,
     /// Internal benchmarks
-    internal_benchmarks:  HashMap<String, f32>,
+    internal_benchmarks: HashMap<String, f32>,
     /// Historical baselines
     historical_baselines: BTreeMap<DateTime<Utc>, f32>,
 }
@@ -921,9 +921,9 @@ pub struct BenchmarkData {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProductivityMetrics {
     /// Lines of code per hour
-    pub lines_per_hour:    f32,
+    pub lines_per_hour: f32,
     /// Error resolution rate
-    pub resolution_rate:   f32,
+    pub resolution_rate: f32,
     /// Time to first fix
     pub time_to_first_fix: f32,
     /// Code review turnaround
@@ -933,8 +933,8 @@ pub struct ProductivityMetrics {
 impl Default for ProductivityMetrics {
     fn default() -> Self {
         Self {
-            lines_per_hour:    0.0,
-            resolution_rate:   0.0,
+            lines_per_hour: 0.0,
+            resolution_rate: 0.0,
             time_to_first_fix: 0.0,
             review_turnaround: 0.0,
         }
@@ -945,26 +945,26 @@ impl Default for ProductivityMetrics {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvolutionPattern {
     /// Pattern ID
-    pub pattern_id:       String,
+    pub pattern_id: String,
     /// Pattern description
-    pub description:      String,
+    pub description: String,
     /// Evolution stages
     pub evolution_stages: Vec<EvolutionStage>,
     /// Pattern frequency
-    pub frequency:        u32,
+    pub frequency: u32,
     /// Impact severity
-    pub impact_severity:  String,
+    pub impact_severity: String,
 }
 
 /// Evolution stage of an error pattern
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvolutionStage {
     /// Stage name
-    pub stage_name:             String,
+    pub stage_name: String,
     /// Stage characteristics
-    pub characteristics:        Vec<String>,
+    pub characteristics: Vec<String>,
     /// Duration in stage
-    pub average_duration_days:  f32,
+    pub average_duration_days: f32,
     /// Transition probability
     pub transition_probability: f32,
 }
@@ -977,20 +977,20 @@ pub struct TrendPredictor {
     /// Forecast horizons
     forecast_horizons: Vec<u32>,
     /// Prediction accuracy
-    accuracy_metrics:  HashMap<String, f32>,
+    accuracy_metrics: HashMap<String, f32>,
 }
 
 /// Trend prediction model
 #[derive(Debug)]
 pub struct TrendModel {
     /// Model type
-    model_type:    String,
+    model_type: String,
     /// Model parameters
-    parameters:    HashMap<String, f32>,
+    parameters: HashMap<String, f32>,
     /// Training data
     training_data: Vec<(DateTime<Utc>, f32)>,
     /// Model accuracy
-    accuracy:      f32,
+    accuracy: f32,
 }
 
 impl Default for AdvancedErrorAnalyzer {
@@ -1003,12 +1003,12 @@ impl AdvancedErrorAnalyzer {
     /// Create new advanced error analyzer
     pub fn new(ai_provider: AIProvider) -> Self {
         Self {
-            root_cause_engine:  RootCauseEngine::new(),
-            prediction_system:  PredictionSystem::new(),
+            root_cause_engine: RootCauseEngine::new(),
+            prediction_system: PredictionSystem::new(),
             solution_generator: SolutionGenerator::new(),
-            impact_analyzer:    ImpactAnalyzer::new(),
-            evolution_tracker:  EvolutionTracker::new(),
-            _ai_provider:       ai_provider,
+            impact_analyzer: ImpactAnalyzer::new(),
+            evolution_tracker: EvolutionTracker::new(),
+            _ai_provider: ai_provider,
         }
     }
 
@@ -1082,40 +1082,40 @@ impl AdvancedErrorAnalyzer {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AdvancedAnalysisResult {
     /// Analysis identifier
-    pub analysis_id:         String,
+    pub analysis_id: String,
     /// Root cause analysis
     pub root_cause_analysis: RootCauseAnalysis,
     /// Predictive warnings
-    pub predictions:         Vec<PredictionResult>,
+    pub predictions: Vec<PredictionResult>,
     /// Generated solutions
-    pub solutions:           Vec<FixSuggestion>,
+    pub solutions: Vec<FixSuggestion>,
     /// Impact assessments
-    pub impacts:             ImpactAssessment,
+    pub impacts: ImpactAssessment,
     /// Evolution patterns
-    pub evolution_patterns:  Vec<EvolutionPattern>,
+    pub evolution_patterns: Vec<EvolutionPattern>,
     /// Analysis timestamp
-    pub analyzed_at:         DateTime<Utc>,
+    pub analyzed_at: DateTime<Utc>,
     /// Overall confidence score
-    pub confidence_score:    f32,
+    pub confidence_score: f32,
 }
 
 /// Comprehensive analysis report for detailed insights
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComprehensiveAnalysisReport {
     /// Report ID
-    pub report_id:           String,
+    pub report_id: String,
     /// Executive summary
-    pub executive_summary:   String,
+    pub executive_summary: String,
     /// Detailed findings
-    pub findings:            Vec<AnalysisFinding>,
+    pub findings: Vec<AnalysisFinding>,
     /// Recommendations
-    pub recommendations:     Vec<Recommendation>,
+    pub recommendations: Vec<Recommendation>,
     /// Risk assessment
-    pub risk_assessment:     RiskAssessment,
+    pub risk_assessment: RiskAssessment,
     /// Performance metrics
     pub performance_metrics: AnalysisPerformanceMetrics,
     /// Generated at timestamp
-    pub generated_at:        DateTime<Utc>,
+    pub generated_at: DateTime<Utc>,
 }
 
 /// Individual analysis finding
@@ -1124,26 +1124,26 @@ pub struct AnalysisFinding {
     /// Finding type
     pub finding_type: String,
     /// Severity level
-    pub severity:     String,
+    pub severity: String,
     /// Description
-    pub description:  String,
+    pub description: String,
     /// Evidence supporting finding
-    pub evidence:     Vec<String>,
+    pub evidence: Vec<String>,
     /// Confidence in finding
-    pub confidence:   f32,
+    pub confidence: f32,
 }
 
 /// Recommendation for improvement
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Recommendation {
     /// Recommendation title
-    pub title:             String,
+    pub title: String,
     /// Detailed description
-    pub description:       String,
+    pub description: String,
     /// Implementation priority
-    pub priority:          RecommendationPriority,
+    pub priority: RecommendationPriority,
     /// Estimated effort (person-days)
-    pub effort_days:       f32,
+    pub effort_days: f32,
     /// Expected benefits
     pub expected_benefits: Vec<String>,
 }
@@ -1165,11 +1165,11 @@ pub enum RecommendationPriority {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskAssessment {
     /// Overall risk score (0.0 to 1.0)
-    pub risk_score:                 f32,
+    pub risk_score: f32,
     /// Risk breakdown by category
-    pub risk_breakdown:             HashMap<String, f32>,
+    pub risk_breakdown: HashMap<String, f32>,
     /// Risk mitigation strategies
-    pub mitigation_strategies:      Vec<String>,
+    pub mitigation_strategies: Vec<String>,
     /// Risk monitoring recommendations
     pub monitoring_recommendations: Vec<String>,
 }
@@ -1178,15 +1178,15 @@ pub struct RiskAssessment {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisPerformanceMetrics {
     /// Analysis duration (milliseconds)
-    pub analysis_duration_ms:        u64,
+    pub analysis_duration_ms: u64,
     /// CPU usage during analysis
-    pub cpu_usage_percent:           f32,
+    pub cpu_usage_percent: f32,
     /// Memory usage during analysis
-    pub memory_usage_mb:             f32,
+    pub memory_usage_mb: f32,
     /// Model prediction accuracy
-    pub prediction_accuracy:         f32,
+    pub prediction_accuracy: f32,
     /// False positive rate
-    pub false_positive_rate:         f32,
+    pub false_positive_rate: f32,
     /// Analysis throughput (items per second)
     pub throughput_items_per_second: f32,
 }
@@ -1196,9 +1196,9 @@ pub struct AnalysisPerformanceMetrics {
 impl RootCauseEngine {
     pub fn new() -> Self {
         Self {
-            _pattern_manager:      PatternManager::new(),
+            _pattern_manager: PatternManager::new(),
             _classification_model: None,
-            _dependency_analyzer:  DependencyAnalyzer::new(),
+            _dependency_analyzer: DependencyAnalyzer::new(),
         }
     }
 
@@ -1223,33 +1223,33 @@ impl RootCauseEngine {
         // 5. Assess impacts
 
         let cause_chain = vec![CauseLink {
-            level:      ErrorLevel::Line,
-            category:   "syntax_error".to_string(),
-            message:    error_context.message.clone(),
+            level: ErrorLevel::Line,
+            category: "syntax_error".to_string(),
+            message: error_context.message.clone(),
             confidence: 0.95,
-            evidence:   vec!["Direct syntax error in code".to_string()],
-            location:   error_context.file_path.as_ref().map(|path| ErrorLocation {
-                file_path:     path.clone(),
-                line:          error_context.line.unwrap_or(1),
-                column:        error_context.column.unwrap_or(1),
+            evidence: vec!["Direct syntax error in code".to_string()],
+            location: error_context.file_path.as_ref().map(|path| ErrorLocation {
+                file_path: path.clone(),
+                line: error_context.line.unwrap_or(1),
+                column: error_context.column.unwrap_or(1),
                 function_name: None,
-                module_path:   None,
+                module_path: None,
             }),
         }];
 
         let dependencies = vec![ErrorDependency {
             dependency_type: DependencyType::Module,
-            identifier:      "syntax".to_string(),
-            impact:          DependencyImpact::Critical,
-            confidence:      0.9,
+            identifier: "syntax".to_string(),
+            impact: DependencyImpact::Critical,
+            confidence: 0.9,
         }];
 
         let impact_assessment = ImpactAssessment {
-            scope:           ImpactScope::Local,
-            affected_files:  vec![error_context.file_path.clone().unwrap_or_default()],
-            risk_level:      RiskLevel::Low,
+            scope: ImpactScope::Local,
+            affected_files: vec![error_context.file_path.clone().unwrap_or_default()],
+            risk_level: RiskLevel::Low,
             level_breakdown: std::iter::once((ErrorLevel::Line, 1)).collect(),
-            urgency_score:   0.7,
+            urgency_score: 0.7,
             business_impact: "Minimal impact - compilation failure".to_string(),
         };
 
@@ -1269,7 +1269,7 @@ impl DependencyAnalyzer {
     pub fn new() -> Self {
         Self {
             _dependency_graph: HashMap::new(),
-            _analysis_cache:   HashMap::new(),
+            _analysis_cache: HashMap::new(),
         }
     }
 }
@@ -1278,8 +1278,8 @@ impl PredictionSystem {
     pub fn new() -> Self {
         Self {
             _pattern_recognizer: PatternRecognizer::new(),
-            _risk_predictor:     RiskPredictor::new(),
-            _early_warning:      EarlyWarningSystem::new(),
+            _risk_predictor: RiskPredictor::new(),
+            _early_warning: EarlyWarningSystem::new(),
         }
     }
 
@@ -1299,9 +1299,9 @@ impl PredictionSystem {
 impl PatternRecognizer {
     pub fn new() -> Self {
         Self {
-            _learned_patterns:     vec![],
+            _learned_patterns: vec![],
             _confidence_threshold: 0.7,
-            _pattern_cache:        HashMap::new(),
+            _pattern_cache: HashMap::new(),
         }
     }
 }
@@ -1309,8 +1309,8 @@ impl PatternRecognizer {
 impl RiskPredictor {
     pub fn new() -> Self {
         Self {
-            historical_data:  vec![],
-            risk_factors:     HashMap::new(),
+            historical_data: vec![],
+            risk_factors: HashMap::new(),
             prediction_model: None,
         }
     }
@@ -1319,8 +1319,8 @@ impl RiskPredictor {
 impl EarlyWarningSystem {
     pub fn new() -> Self {
         Self {
-            thresholds:    HashMap::new(),
-            monitors:      vec![],
+            thresholds: HashMap::new(),
+            monitors: vec![],
             alert_history: vec![],
         }
     }
@@ -1329,8 +1329,8 @@ impl EarlyWarningSystem {
 impl SolutionGenerator {
     pub fn new() -> Self {
         Self {
-            templates:            HashMap::new(),
-            template_learner:     TemplateLearner::new(),
+            templates: HashMap::new(),
+            template_learner: TemplateLearner::new(),
             contextual_generator: ContextualGenerator::new(),
         }
     }
@@ -1355,13 +1355,13 @@ impl TemplateLearner {
     pub fn new() -> Self {
         Self {
             learned_templates: vec![],
-            learning_stats:    LearningStats {
-                templates_learned:       0,
+            learning_stats: LearningStats {
+                templates_learned: 0,
                 successful_applications: 0,
-                average_success_rate:    0.0,
-                most_used_templates:     vec![],
+                average_success_rate: 0.0,
+                most_used_templates: vec![],
             },
-            creation_rules:    vec![],
+            creation_rules: vec![],
         }
     }
 }
@@ -1400,7 +1400,7 @@ impl ImpactAnalyzer {
 impl ClusteringEngine {
     pub fn new() -> Self {
         Self {
-            error_clusters:       vec![],
+            error_clusters: vec![],
             clustering_algorithm: ClusteringAlgorithm::KMeans,
             similarity_threshold: 0.8,
         }
@@ -1410,8 +1410,8 @@ impl ClusteringEngine {
 impl ImpactAssessmentSystem {
     pub fn new() -> Self {
         Self {
-            impact_models:     HashMap::new(),
-            assessment_rules:  vec![],
+            impact_models: HashMap::new(),
+            assessment_rules: vec![],
             historical_impact: vec![],
         }
     }
@@ -1422,7 +1422,7 @@ impl SystemicAnalyzer {
         Self {
             systemic_patterns: vec![],
             root_cause_finder: RootCauseFinder::new(),
-            cascade_analyzer:  CascadeAnalyzer::new(),
+            cascade_analyzer: CascadeAnalyzer::new(),
         }
     }
 }
@@ -1430,7 +1430,7 @@ impl SystemicAnalyzer {
 impl RootCauseFinder {
     pub fn new() -> Self {
         Self {
-            root_patterns:        vec![],
+            root_patterns: vec![],
             correlation_analyzer: CorrelationAnalyzer::new(),
         }
     }
@@ -1439,7 +1439,7 @@ impl RootCauseFinder {
 impl CorrelationAnalyzer {
     pub fn new() -> Self {
         Self {
-            correlation_matrix:    HashMap::new(),
+            correlation_matrix: HashMap::new(),
             correlation_threshold: 0.7,
         }
     }
@@ -1448,7 +1448,7 @@ impl CorrelationAnalyzer {
 impl CascadeAnalyzer {
     pub fn new() -> Self {
         Self {
-            cascade_patterns:   vec![],
+            cascade_patterns: vec![],
             propagation_models: vec![],
         }
     }
@@ -1457,9 +1457,9 @@ impl CascadeAnalyzer {
 impl EvolutionTracker {
     pub fn new() -> Self {
         Self {
-            quality_analyzer:   QualityTrendAnalyzer::new(),
+            quality_analyzer: QualityTrendAnalyzer::new(),
             evolution_patterns: vec![],
-            trend_predictor:    TrendPredictor::new(),
+            trend_predictor: TrendPredictor::new(),
         }
     }
 
@@ -1483,9 +1483,9 @@ impl EvolutionTracker {
 impl QualityTrendAnalyzer {
     pub fn new() -> Self {
         Self {
-            quality_metrics:  BTreeMap::new(),
+            quality_metrics: BTreeMap::new(),
             trend_indicators: vec![],
-            benchmarks:       BenchmarkData::new(),
+            benchmarks: BenchmarkData::new(),
         }
     }
 }
@@ -1493,8 +1493,8 @@ impl QualityTrendAnalyzer {
 impl BenchmarkData {
     pub fn new() -> Self {
         Self {
-            industry_benchmarks:  HashMap::new(),
-            internal_benchmarks:  HashMap::new(),
+            industry_benchmarks: HashMap::new(),
+            internal_benchmarks: HashMap::new(),
             historical_baselines: BTreeMap::new(),
         }
     }
@@ -1505,7 +1505,7 @@ impl TrendPredictor {
         Self {
             prediction_models: HashMap::new(),
             forecast_horizons: vec![7, 30, 90], // Days
-            accuracy_metrics:  HashMap::new(),
+            accuracy_metrics: HashMap::new(),
         }
     }
 }
@@ -1544,12 +1544,12 @@ mod tests {
     #[tokio::test]
     async fn test_root_cause_analysis_basic() {
         let context = ErrorContext {
-            message:       "Syntax error".to_string(),
-            error_code:    None,
+            message: "Syntax error".to_string(),
+            error_code: None,
             context_lines: vec![],
-            file_path:     Some("test.rs".to_string()),
-            line:          Some(1),
-            column:        Some(1),
+            file_path: Some("test.rs".to_string()),
+            line: Some(1),
+            column: Some(1),
         };
 
         let engine = RootCauseEngine::new();

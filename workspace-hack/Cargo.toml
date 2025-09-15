@@ -116,7 +116,7 @@ tauri-utils = { version = "2", default-features = false, features = ["build", "c
 time = { version = "0.3", features = ["local-offset", "macros", "serde-well-known"] }
 tokio = { version = "1", features = ["full", "test-util"] }
 #tokio-stream = { version = "0.1", features = ["full"] }
-tokio-tungstenite = { version = "0.27", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.27", default-features = false, features = ["rustls-tls-webpki-roots"] }
 tokio-util = { version = "0.7", features = ["codec", "io"] }
 toml_datetime = { version = "0.6", default-features = false, features = ["serde"] }
 toml_edit = { version = "0.22", default-features = false, features = ["display", "parse", "serde"] }
@@ -125,7 +125,7 @@ tower-d8f496e17d97b5cb = { package = "tower", version = "0.5", default-features 
 #tracing = { version = "0.1", features = ["log"] }
 #tracing-core = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["chrono", "env-filter"] }
-tungstenite = { version = "0.27", features = ["native-tls"] }
+tungstenite = { version = "0.27", default-features = false, features = ["rustls-tls-webpki-roots"] }
 typenum = { version = "1", default-features = false, features = ["const-generics"] }
 unicode-xid = { version = "0.2" }
 uuid = { version = "1", features = ["serde", "v1", "v4"] }
@@ -236,7 +236,7 @@ time = { version = "0.3", features = ["local-offset", "macros", "serde-well-know
 time-macros = { version = "0.2", default-features = false, features = ["formatting", "parsing", "serde"] }
 tokio = { version = "1", features = ["full", "test-util"] }
 #tokio-stream = { version = "0.1", features = ["full"] }
-tokio-tungstenite = { version = "0.27", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.27", default-features = false, features = ["rustls-tls-webpki-roots"] }
 tokio-util = { version = "0.7", features = ["codec", "io"] }
 toml_datetime = { version = "0.6", default-features = false, features = ["serde"] }
 toml_edit = { version = "0.22", default-features = false, features = ["display", "parse", "serde"] }
@@ -245,7 +245,7 @@ tower-d8f496e17d97b5cb = { package = "tower", version = "0.5", default-features 
 #tracing = { version = "0.1", features = ["log"] }
 #tracing-core = { version = "0.1" }
 tracing-subscriber = { version = "0.3", features = ["chrono", "env-filter"] }
-tungstenite = { version = "0.27", features = ["native-tls"] }
+tungstenite = { version = "0.27", default-features = false, features = ["rustls-tls-webpki-roots"] }
 typenum = { version = "1", default-features = false, features = ["const-generics"] }
 unicode-xid = { version = "0.2" }
 uuid = { version = "1", features = ["serde", "v1", "v4"] }

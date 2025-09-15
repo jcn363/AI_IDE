@@ -379,6 +379,51 @@ stages:
               pathToPublish: 'trivy-results.json'
               artifactName: 'container-scan-results'
 
+  # ============ SECURITY SCAN STAGE ============
+  - stage: Security
+    displayName: 'Security Scan'
+    dependsOn: Test
+    condition: and(succeeded(), eq('${{ parameters.securityScan }}', true))
+    jobs:
+      - job: OwaspScan
+        displayName: 'OWASP Security Scan'
+        pool:
+          vmImage: 'ubuntu-22.04'
+        container: 'rust:$(RUST_VERSION)'
+        steps:
+          - checkout: self
+            clean: true
+
+          - script: |
+              # Install required tools
+              cargo install cargo-audit cargo-deny
+              
+              # Create output directory
+              mkdir -p security-reports
+              
+              # Run the security scan script
+              chmod +x scripts/security/run_owasp_scan.sh
+              ./scripts/security/run_owasp_scan.sh
+              
+              # Publish security reports
+            displayName: 'Run OWASP Security Scan'
+            env:
+              CARGO_AUDIT_DENY: 'y'  # Treat vulnerabilities as errors
+              
+          - task: PublishBuildArtifacts@1
+            condition: always()
+            inputs:
+              pathToPublish: 'security-reports'
+              artifactName: 'security-reports'
+              
+          - task: PublishTestResults@2
+            condition: always()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/security-reports/*.xml'
+              mergeTestResults: true
+              testRunTitle: 'Security Tests'
+              
   # ============ DEPLOY STAGE ============
   - stage: Deploy
     displayName: 'Deploy'

@@ -10,14 +10,14 @@ use super::unified_generator::*;
 #[derive(Debug, Clone)]
 pub struct TestTargetConfig {
     pub target_name: String,
-    pub test_type:   TestType,
+    pub test_type: TestType,
 }
 
 impl Default for TestTargetConfig {
     fn default() -> Self {
         Self {
             target_name: "default_target".to_string(),
-            test_type:   TestType::Unit,
+            test_type: TestType::Unit,
         }
     }
 }
@@ -26,25 +26,28 @@ impl Default for TestTargetConfig {
 #[derive(Debug, Clone)]
 pub struct IntegrationTestTarget {
     pub target_name: String,
-    pub components:  Vec<String>,
+    pub components: Vec<String>,
 }
 
 /// Placeholder data structure for property test configuration
 #[derive(Debug, Clone)]
 pub struct PropertyTestConfig {
     pub property_name: String,
-    pub parameters:    Vec<String>,
+    pub parameters: Vec<String>,
 }
 
 /// Placeholder data structure for benchmark test target
 #[derive(Debug, Clone)]
 pub struct BenchmarkTestTarget {
-    pub target_name:          String,
+    pub target_name: String,
     pub performance_critical: bool,
 }
 
 /// Placeholder implementations for unit test identification
-pub async fn identify_unit_test_targets(_code: &str, _language: &ProgrammingLanguage) -> Option<Vec<TestTargetConfig>> {
+pub async fn identify_unit_test_targets(
+    _code: &str,
+    _language: &ProgrammingLanguage,
+) -> Option<Vec<TestTargetConfig>> {
     // Placeholder: In a real implementation, this would analyze code
     // to identify functions, methods, classes that need unit tests
     Some(vec![TestTargetConfig::default()])
@@ -79,7 +82,10 @@ pub async fn generate_integration_test(
 }
 
 /// Placeholder implementations for property test targets
-pub async fn identify_properties(_code: &str, _language: &ProgrammingLanguage) -> Option<Vec<PropertyTestConfig>> {
+pub async fn identify_properties(
+    _code: &str,
+    _language: &ProgrammingLanguage,
+) -> Option<Vec<PropertyTestConfig>> {
     // Placeholder: In a real implementation, this would identify
     // mathematical properties that can be tested
     None
@@ -126,7 +132,9 @@ pub async fn estimate_coverage(
 pub fn supports_property_tests(language: &ProgrammingLanguage) -> bool {
     matches!(
         language,
-        ProgrammingLanguage::Rust | ProgrammingLanguage::TypeScript | ProgrammingLanguage::JavaScript
+        ProgrammingLanguage::Rust
+            | ProgrammingLanguage::TypeScript
+            | ProgrammingLanguage::JavaScript
     )
 }
 
@@ -355,15 +363,15 @@ test_rename_{}_to_{}() {{
     );
 
     Ok(GeneratedTest {
-        name:              format!("test_rename_{}_to_{}", _old_name, _new_name),
-        code:              test_code,
-        test_type:         TestType::Unit,
-        description:       format!("Generic test for renaming {} to {}", _old_name, _new_name),
-        language:          _language.clone(),
-        framework:         _framework.to_string(),
+        name: format!("test_rename_{}_to_{}", _old_name, _new_name),
+        code: test_code,
+        test_type: TestType::Unit,
+        description: format!("Generic test for renaming {} to {}", _old_name, _new_name),
+        language: _language.clone(),
+        framework: _framework.to_string(),
         expected_coverage: vec![_old_name.to_string(), _new_name.to_string()],
-        dependencies:      vec![],
-        tags:              vec!["rename".to_string(), "generic".to_string()],
-        confidence_score:  0.80,
+        dependencies: vec![],
+        tags: vec!["rename".to_string(), "generic".to_string()],
+        confidence_score: 0.80,
     })
 }

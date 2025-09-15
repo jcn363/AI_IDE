@@ -4,7 +4,9 @@
 //! type information from Rust source files using the syn crate.
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
+use proc_macro2;
 use syn::{Attribute, Fields, File, Item, Type, Variant as SynVariant, Visibility};
 
 use crate::errors::TypeGenerationError;
@@ -59,7 +61,9 @@ impl TypeParser {
 
     /// Parse a Rust source file and extract type information
     pub fn parse_file(&self, source: &str, file_path: &str) -> Result<Vec<ParsedType>, TypeGenerationError> {
-        let ast: File = syn::parse_str(source)
+        let token_stream = proc_macro2::TokenStream::from_str(source)
+            .map_err(|e| TypeGenerationError::AnalysisError(format!("Failed to tokenize source: {}", e)))?;
+        let ast: File = syn::parse2(token_stream)
             .map_err(|e| TypeGenerationError::AnalysisError(format!("Failed to parse Rust file: {}", e)))?;
 
         let mut types = Vec::new();

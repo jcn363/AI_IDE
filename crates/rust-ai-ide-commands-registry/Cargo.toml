@@ -29,6 +29,7 @@ tauri = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+log = { workspace = true }
 
 # Core IDE components
 rust-ai-ide-types = { workspace = true }

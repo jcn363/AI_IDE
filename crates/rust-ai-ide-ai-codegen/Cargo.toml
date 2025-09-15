@@ -43,8 +43,12 @@ uuid = { workspace = true }
 chrono = { workspace = true }
 once_cell = { workspace = true }
 
+# Async traits
+async-trait = { workspace = true }
+
 # AI dependencies from other crates (may need adjustment)
 rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-analysis = { path = "../rust-ai-ide-ai-analysis" }
 
 # Common types shared across crates
 rust-ai-ide-common = { path = "../rust-ai-ide-common" }
@@ -52,8 +56,14 @@ rust-ai-ide-common = { path = "../rust-ai-ide-common" }
 # Shared code generation interfaces
 rust-ai-ide-shared-codegen = { path = "../rust-ai-ide-shared-codegen" }
 
+# Security crate for audit logging
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+
 # Shared testing utilities
 shared-test-utils = { path = "../shared-test-utils" }
+
+# Caching dependencies
+moka = { workspace = true }
 
 # Development and testing
 futures = { workspace = true }

@@ -372,8 +372,7 @@ impl Default for AnalysisConfig {
 impl AnalysisConfig {
     /// Generate a hash of the configuration for cache invalidation
     pub fn get_hash(&self) -> u64 {
-        use std::hash::{Hash, Hasher};
-        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher, DefaultHasher};
 
         let mut hasher = DefaultHasher::new();
         self.version.hash(&mut hasher);

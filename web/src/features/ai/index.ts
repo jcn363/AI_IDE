@@ -1,6 +1,7 @@
 // =============================================================================
 // AI Feature Module Exports
 // =============================================================================
+import React from 'react';
 
 // Core Provider and Context
 export { AIProvider, useAIService } from './AIProvider';
@@ -9,10 +10,14 @@ export { AIProvider, useAIService } from './AIProvider';
 // COMPONENTS - NEWLY IMPLEMENTED AI FEATURES
 // =============================================================================
 
-// Core AI Feature Panels
+// Core AI Feature Panels (Lazy-loaded for performance)
 export { FineTuningPanel } from './components/FineTuningPanel';
-export { ArchitecturalAdvisorPanel } from './components/ArchitecturalAdvisorPanel';
-export { SpecificationGeneratorPanel } from './components/SpecificationGeneratorPanel';
+export const ArchitecturalAdvisorPanel = React.lazy(
+  () => import('./components/ArchitecturalAdvisorPanel')
+);
+export const SpecificationGeneratorPanel = React.lazy(
+  () => import('./components/SpecificationGeneratorPanel')
+);
 
 // Existing Configuration Panels
 export { ModelConfigurationPanel } from './components/ModelConfigurationPanel';

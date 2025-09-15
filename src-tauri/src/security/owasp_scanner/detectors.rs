@@ -14,7 +14,7 @@ use walkdir::WalkDir;
 pub use super::{OWASPCategory, ExploitabilityScore, ImpactScore, OWASPVulnerability, AttackVector, AttackComplexity, PrivilegesRequired, UserInteraction, Scope, ConfidentialityImpact, IntegrityImpact, AvailabilityImpact};
 
 // Re-export trait
-pub use trait::{OWASPDetector, DetectionResult};
+pub use self::r#trait::{OWASPDetector, DetectionResult};
 
 // Detection result from individual detectors
 #[derive(Debug, Clone)]

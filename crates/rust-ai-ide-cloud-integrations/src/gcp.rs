@@ -12,15 +12,15 @@ use crate::CloudProvider;
 /// GCP-specific configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GcpConfig {
-    pub project_id:    String,
+    pub project_id: String,
     pub key_file_path: Option<String>,
-    pub token:         Option<String>,
+    pub token: Option<String>,
 }
 
 /// GCP client wrapper
 pub struct GcpClient {
     storage_client: StorageClient,
-    config:         GcpConfig,
+    config: GcpConfig,
 }
 
 impl GcpClient {
@@ -100,7 +100,10 @@ impl GcpClient {
         for bucket in buckets {
             let created_at = bucket.time_created.and_then(|dt| {
                 let millis = dt.seconds * 1000 + (dt.nanos / 1_000_000) as i64;
-                chrono::DateTime::from_timestamp(millis / 1000, ((millis % 1000) * 1_000_000) as u32)
+                chrono::DateTime::from_timestamp(
+                    millis / 1000,
+                    ((millis % 1000) * 1_000_000) as u32,
+                )
             });
 
             let resource = CloudResource {

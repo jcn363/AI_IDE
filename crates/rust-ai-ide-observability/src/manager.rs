@@ -16,11 +16,11 @@ use crate::tracing::Tracer;
 
 /// Main observability manager
 pub struct ObservabilityManager {
-    config:           ObservabilityConfig,
-    tracer:           Option<Tracer>,
+    config: ObservabilityConfig,
+    tracer: Option<Tracer>,
     metrics_recorder: Option<MetricsRecorder>,
-    health_checker:   Option<HealthChecker>,
-    is_running:       Arc<RwLock<bool>>,
+    health_checker: Option<HealthChecker>,
+    is_running: Arc<RwLock<bool>>,
 }
 
 impl ObservabilityManager {
@@ -101,9 +101,9 @@ impl ObservabilityManager {
         } else {
             Ok(crate::health::HealthStatus {
                 overall_status: crate::health::HealthCheckStatus::Healthy,
-                timestamp:      chrono::Utc::now(),
-                checks:         std::collections::HashMap::new(),
-                message:        "Health checks disabled".to_string(),
+                timestamp: chrono::Utc::now(),
+                checks: std::collections::HashMap::new(),
+                message: "Health checks disabled".to_string(),
             })
         }
     }
@@ -120,7 +120,11 @@ impl ObservabilityManager {
     }
 
     /// Record a custom metric
-    pub async fn record_metric(&self, name: String, value: crate::metrics::MetricValue) -> Result<()> {
+    pub async fn record_metric(
+        &self,
+        name: String,
+        value: crate::metrics::MetricValue,
+    ) -> Result<()> {
         if let Some(metrics) = &self.metrics_recorder {
             metrics.record_custom_metric(name, value).await
         } else {
@@ -159,7 +163,7 @@ impl ObservabilityManager {
                 interval.tick().await;
 
                 match checker.perform_all_checks().await {
-                    Ok(status) =>
+                    Ok(status) => {
                         if !status.overall_status.is_healthy() {
                             tracing::warn!(
                                 status = ?status.overall_status,
@@ -168,7 +172,8 @@ impl ObservabilityManager {
                             );
                         } else {
                             tracing::debug!("Health check passed");
-                        },
+                        }
+                    }
                     Err(e) => {
                         tracing::error!("Health check failed: {}", e);
                     }

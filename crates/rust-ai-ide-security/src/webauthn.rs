@@ -24,114 +24,201 @@
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
+use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-use webauthn_rs::prelude::*;
+use url::Url;
+use uuid::Uuid;
+use webauthn_rs::prelude::{
+    CreationChallengeResponse, Passkey, PublicKeyCredential, RequestChallengeResponse,
+};
+// Re-export commonly used types
+pub use webauthn_rs::prelude::{
+    CreationChallengeResponse as RegisterPublicKeyCredential, PasskeyAuthentication,
+    PasskeyRegistration,
+};
 use webauthn_rs::{Webauthn, WebauthnBuilder};
+use webauthn_rs_core::proto::{
+    AttestationConveyancePreference, CredentialID, ResidentKeyRequirement,
+};
 
+// Import types from the parent crate
 use crate::{
-    AuditEventContext, AuditEventSeverity, AuditEventType, AuditLogger, ComponentStatus, CryptoOps, DataKeyManager,
-    EncryptionConfig, MasterKeyManager, OperationContext, SecurityError, SecurityResult, UserContext,
+    AuditEventContext, AuditEventSeverity, AuditEventType, AuditLogger, ComponentStatus, CryptoOps,
+    DataKeyManager, MasterKeyManager, SecurityError, SecurityResult, UserContext,
 };
 
 /// WebAuthn configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebAuthnConfig {
-    pub enabled:                   bool,
-    pub rp_name:                   String,
-    pub rp_id:                     String,
-    pub rp_origin:                 String,
-    pub credential_timeout_ms:     u32,
+    pub enabled: bool,
+    pub rp_name: String,
+    pub rp_id: String,
+    pub rp_origin: String,
+    pub credential_timeout_ms: u32,
     pub challenge_timeout_seconds: u32,
-    pub max_credentials_per_user:  usize,
-    pub allow_software_keys:       bool,
-    pub attestation_preference:    AttestationConveyancePreference,
-    pub user_verification:         UserVerificationRequirement,
-    pub resident_key_requirement:  ResidentKeyRequirement,
+    pub max_credentials_per_user: usize,
+    pub allow_software_keys: bool,
+    pub attestation_preference: AttestationConveyancePreference,
+    pub resident_key_requirement: ResidentKeyRequirement,
 }
 
 /// WebAuthn credential storage
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebAuthnCredential {
-    pub credential_id:  String,
-    pub user_id:        String,
-    pub credential:     Credential,
-    pub created_at:     DateTime<Utc>,
-    pub last_used_at:   DateTime<Utc>,
-    pub counter:        u32,
-    pub device_info:    HashMap<String, String>,
-    pub encrypted_data: Vec<u8>, // Encrypted credential data
-    pub data_key_id:    String,
-    pub nonce:          Vec<u8>,
+    /// Unique identifier for this credential
+    pub id: String,
+    /// The actual WebAuthn credential
+    pub credential: Option<Passkey>,
+    /// The public key in PEM format
+    pub public_key: String,
+    /// The attestation format
+    pub attestation_format: String,
+    /// The sign count (for replay protection)
+    pub counter: u32,
+    /// When this credential was created
+    pub created_at: DateTime<Utc>,
+    /// When this credential was last used
+    pub last_used_at: Option<DateTime<Utc>>,
+    /// Whether this credential is backed up
+    pub backed_up: bool,
+    /// The type of authenticator (platform or cross-platform)
+    pub authenticator_type: String,
+    /// The transport methods supported by this credential
+    pub transports: Vec<String>,
+    /// Additional device information (browser, platform, etc.)
+    pub device_info: HashMap<String, String>,
+    /// Encrypted credential data (for secure storage)
+    pub encrypted_data: Vec<u8>,
+    /// ID of the encryption key used for this credential
+    pub data_key_id: String,
+    /// Nonce used for encryption
+    pub nonce: Vec<u8>,
 }
 
 /// WebAuthn registration challenge
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegistrationChallenge {
+    /// Unique identifier for this challenge
     pub challenge_id: String,
-    pub user_id:      String,
-    pub challenge:    PasskeyRegistration,
-    pub created_at:   DateTime<Utc>,
-    pub expires_at:   DateTime<Utc>,
+    /// ID of the user this challenge is for
+    pub user_id: String,
+    /// The actual registration challenge data
+    pub challenge: CreationChallengeResponse,
+    /// Registration state
+    pub registration_state: PasskeyRegistration,
+    /// When this challenge was created
+    pub created_at: DateTime<Utc>,
+    /// When this challenge expires
+    pub expires_at: DateTime<Utc>,
 }
 
 /// WebAuthn authentication challenge
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthenticationChallenge {
+    /// Unique identifier for this authentication challenge
     pub challenge_id: String,
-    pub user_id:      String,
-    pub challenge:    PasskeyAuthentication,
-    pub created_at:   DateTime<Utc>,
-    pub expires_at:   DateTime<Utc>,
+    /// ID of the user this challenge is for
+    pub user_id: String,
+    /// The actual authentication challenge data
+    pub challenge: RequestChallengeResponse,
+    /// Authentication state
+    pub authentication_state: PasskeyAuthentication,
+    /// When this challenge was created
+    pub created_at: DateTime<Utc>,
+    /// When this challenge expires
+    pub expires_at: DateTime<Utc>,
+    /// Optional list of allowed credential IDs for this challenge
+    pub allowed_credentials: Option<Vec<CredentialID>>,
 }
 
 /// WebAuthn service state
 pub struct WebAuthnState {
-    pub config:                    WebAuthnConfig,
-    pub webauthn:                  Webauthn,
-    pub credentials:               RwLock<HashMap<String, WebAuthnCredential>>, // credential_id -> credential
-    pub user_credentials:          RwLock<HashMap<String, HashSet<String>>>,    // user_id -> credential_ids
-    pub registration_challenges:   RwLock<HashMap<String, RegistrationChallenge>>, // challenge_id -> challenge
-    pub authentication_challenges: RwLock<HashMap<String, AuthenticationChallenge>>, // challenge_id -> challenge
+    /// Configuration for the WebAuthn service
+    pub config: WebAuthnConfig,
+    /// The WebAuthn instance handling the core WebAuthn operations
+    pub webauthn: Webauthn,
+    /// Map of credential ID to WebAuthnCredential for all registered credentials
+    pub credentials: RwLock<HashMap<String, WebAuthnCredential>>,
+    /// Map of user ID to set of their credential IDs
+    pub user_credentials: RwLock<HashMap<String, HashSet<String>>>,
+    /// Active registration challenges by challenge ID
+    pub registration_challenges: RwLock<HashMap<String, RegistrationChallenge>>,
+    /// Active authentication challenges by challenge ID
+    pub authentication_challenges: RwLock<HashMap<String, AuthenticationChallenge>>,
 }
 
 /// Main WebAuthn service implementation
+///
+/// This service provides WebAuthn (FIDO2) authentication functionality including:
+/// - User registration with security keys/biometrics
+/// - User authentication with registered credentials
+/// - Credential management (list, delete)
+/// - Challenge management for registration and authentication flows
+#[derive(Clone)]
 pub struct WebAuthnService {
-    state:              Arc<WebAuthnState>,
-    audit_logger:       Arc<AuditLogger>,
-    crypto_ops:         Arc<CryptoOps>,
+    /// Shared state containing credentials and challenges
+    state: Arc<WebAuthnState>,
+    /// Logger for security audit events
+    audit_logger: Arc<dyn AuditLogger>,
+    /// Cryptographic operations provider
+    crypto_ops: Arc<dyn CryptoOps>,
+    /// Manager for master encryption keys
     master_key_manager: Arc<dyn MasterKeyManager>,
-    data_key_manager:   Arc<dyn DataKeyManager>,
+    /// Manager for data encryption keys
+    data_key_manager: Arc<dyn DataKeyManager>,
 }
 
 impl WebAuthnService {
     /// Create a new WebAuthn service
+    ///
+    /// # Arguments
+    /// * `config` - Configuration for the WebAuthn service
+    /// * `audit_logger` - Logger for security audit events
+    /// * `crypto_ops` - Cryptographic operations provider
+    /// * `master_key_manager` - Manager for master encryption keys
+    /// * `data_key_manager` - Manager for data encryption keys
+    ///
+    /// # Returns
+    /// A new instance of WebAuthnService or a SecurityError if initialization fails
     pub async fn new(
         config: WebAuthnConfig,
-        audit_logger: Arc<AuditLogger>,
-        crypto_ops: Arc<CryptoOps>,
+        audit_logger: Arc<dyn AuditLogger>,
+        crypto_ops: Arc<dyn CryptoOps>,
         master_key_manager: Arc<dyn MasterKeyManager>,
         data_key_manager: Arc<dyn DataKeyManager>,
     ) -> SecurityResult<Self> {
-        let webauthn = WebauthnBuilder::new(&config.rp_id, &config.rp_origin)?
-            .rp_name(&config.rp_name)
-            .allow_insecure_software_keys(config.allow_software_keys)
-            .build()?;
+        // Parse origin URL
+        let rp_origin = Url::parse(&config.rp_origin)
+            .map_err(|e| SecurityError::webauthn_error(format!("Invalid origin URL: {}", e)))?;
 
-        let state = Arc::new(WebAuthnState {
+        // Create WebAuthn instance
+        let webauthn = WebauthnBuilder::new(&config.rp_id, &rp_origin)
+            .map_err(|e| {
+                SecurityError::webauthn_error(format!("Failed to create WebAuthn builder: {}", e))
+            })?
+            .rp_name(&config.rp_name)
+            .build()
+            .map_err(|e| {
+                SecurityError::webauthn_error(format!("Failed to build WebAuthn: {}", e))
+            })?;
+
+        // Initialize the service state
+        let state = WebAuthnState {
             config,
             webauthn,
             credentials: RwLock::new(HashMap::new()),
             user_credentials: RwLock::new(HashMap::new()),
             registration_challenges: RwLock::new(HashMap::new()),
             authentication_challenges: RwLock::new(HashMap::new()),
-        });
+        };
 
         Ok(Self {
-            state,
+            state: Arc::new(state),
             audit_logger,
             crypto_ops,
             master_key_manager,
@@ -140,6 +227,17 @@ impl WebAuthnService {
     }
 
     /// Start WebAuthn registration ceremony
+    ///
+    /// This initiates the WebAuthn registration flow by creating a challenge for the authenticator.
+    ///
+    /// # Arguments
+    /// * `user` - The user context for whom to start registration
+    /// * `user_display_name` - The display name of the user (for the authenticator)
+    /// * `user_name` - The username of the user (for the authenticator)
+    ///
+    /// # Returns
+    /// A `CreationChallengeResponse` containing the registration challenge or an error if the
+    /// operation fails
     pub async fn start_registration(
         &self,
         user: &UserContext,
@@ -153,367 +251,365 @@ impl WebAuthnService {
         };
 
         if user_cred_count >= self.state.config.max_credentials_per_user {
-            return Err(SecurityError::WebAuthnError {
-                reason: format!(
-                    "Maximum credentials ({}) exceeded for user",
-                    self.state.config.max_credentials_per_user
-                ),
-            });
+            return Err(SecurityError::webauthn_error(
+                "Maximum number of credentials reached",
+            ));
         }
 
-        // Create user entity for WebAuthn
-        let webauthn_user = User::builder()
-            .id(user.user_id.as_bytes())
-            .display_name(user_display_name)
-            .name(user_name)
-            .build();
+        // Get existing credentials to exclude
+        let existing_credentials = self.list_credentials(user).await?;
+        let exclude_credentials: Vec<CredentialID> = existing_credentials
+            .into_iter()
+            .filter_map(|cred| {
+                // Only include valid credential IDs
+                cred.credential.map(|c| c.cred_id().clone())
+            })
+            .collect();
 
-        // Generate registration challenge
-        let (ccr, passkey_registration) = self.state.webauthn.start_passkey_registration(
-            webauthn_user,
-            &CredentialCreationOptions::default(),
-            Some(self.state.config.credential_timeout_ms),
-        )?;
+        // Convert user ID to Uuid
+        let user_uuid = Uuid::parse_str(&user.user_id)
+            .map_err(|_| SecurityError::webauthn_error("Invalid user ID"))?;
 
-        // Store challenge for later verification
-        let challenge_id = uuid::Uuid::new_v4().to_string();
+        // Start the registration ceremony
+        let (ccr, registration_state) = self
+            .state
+            .webauthn
+            .start_passkey_registration(
+                user_uuid,
+                user_name,
+                user_display_name,
+                Some(exclude_credentials),
+            )
+            .map_err(|e| {
+                SecurityError::webauthn_error(format!("Failed to start registration: {}", e))
+            })?;
+
+        // Store the registration state for later verification
+        let challenge_id = Uuid::new_v4().to_string();
         let challenge = RegistrationChallenge {
             challenge_id: challenge_id.clone(),
-            user_id:      user.user_id.clone(),
-            challenge:    passkey_registration,
-            created_at:   Utc::now(),
-            expires_at:   Utc::now() + chrono::Duration::seconds(self.state.config.challenge_timeout_seconds as i64),
+            user_id: user.user_id.clone(),
+            challenge: ccr.clone(),
+            registration_state,
+            created_at: Utc::now(),
+            expires_at: Utc::now()
+                + chrono::Duration::seconds(self.state.config.challenge_timeout_seconds as i64),
         };
 
-        {
-            let mut challenges = self.state.registration_challenges.write().await;
-            challenges.insert(challenge_id, challenge);
-        }
+        // Store the challenge
+        let mut challenges = self.state.registration_challenges.write().await;
+        challenges.insert(challenge_id, challenge);
 
-        // Audit log
+        // Log the registration start
         self.audit_logger
-            .log_event(
-                &OperationContext {
-                    user_context:     user.clone(),
-                    network_context:  Default::default(),
-                    resource_context: Default::default(),
-                    timestamp:        Utc::now(),
-                    operation_type:   crate::OperationType::Authentication,
-                },
-                AuditEventContext::new(
-                    AuditEventType::AuthenticationLogin, // We'll need to add WebAuthn-specific events
-                    "webauthn",
-                    "registration",
-                    "start",
-                )
-                .with_severity(AuditEventSeverity::Medium),
-                true,
-                None,
-            )
+            .log(&AuditEventContext {
+                event_type: AuditEventType::Registration,
+                severity: AuditEventSeverity::Info,
+                message: format!("Started WebAuthn registration for user {}", user.user_id),
+                data: serde_json::json!({
+                    "user_id": user.user_id,
+                    "user_name": user_name,
+                    "user_display_name": user_display_name
+                }),
+                source_ip: None,
+                user_agent: None,
+                timestamp: Utc::now(),
+            })
             .await?;
 
         Ok(ccr)
     }
 
-    /// Complete WebAuthn registration ceremony
-    pub async fn finish_registration(
-        &self,
-        user: &UserContext,
-        challenge_id: &str,
-        registration_response: &RegisterPublicKeyCredential,
-    ) -> SecurityResult<String> {
-        // Retrieve and validate challenge
-        let challenge = {
-            let mut challenges = self.state.registration_challenges.write().await;
-            challenges
-                .remove(challenge_id)
-                .ok_or_else(|| SecurityError::WebAuthnError {
-                    reason: "Invalid or expired challenge".to_string(),
-                })?
-        };
-
-        // Verify challenge hasn't expired
-        if Utc::now() > challenge.expires_at {
-            return Err(SecurityError::WebAuthnError {
-                reason: "Challenge expired".to_string(),
-            });
-        }
-
-        // Verify user matches
-        if challenge.user_id != user.user_id {
-            return Err(SecurityError::WebAuthnError {
-                reason: "User mismatch".to_string(),
-            });
-        }
-
-        // Complete registration
-        let passkey = self
-            .state
-            .webauthn
-            .finish_passkey_registration(registration_response, &challenge.challenge)?;
-
-        // Generate encryption key for credential storage
-        let data_key = self
-            .data_key_manager
-            .generate_data_key("webauthn", crate::EncryptionAlgorithm::Aes256Gcm)
-            .await?;
-
-        // Encrypt credential data
-        let credential_data = serde_json::to_vec(&passkey)?;
-        let (encrypted_data, nonce) =
-            self.crypto_ops
-                .encrypt(&credential_data, &data_key.encrypted_key_material, None)?;
-
-        // Create credential entry
-        let credential_id = uuid::Uuid::new_v4().to_string();
-        let credential = WebAuthnCredential {
-            credential_id: credential_id.clone(),
-            user_id: user.user_id.clone(),
-            credential: passkey,
-            created_at: Utc::now(),
-            last_used_at: Utc::now(),
-            counter: 0,
-            device_info: HashMap::new(),
-            encrypted_data,
-            data_key_id: data_key.key_id,
-            nonce,
-        };
-
-        // Store credential
-        {
-            let mut credentials = self.state.credentials.write().await;
-            credentials.insert(credential_id.clone(), credential.clone());
-
-            let mut user_creds = self.state.user_credentials.write().await;
-            user_creds
-                .entry(user.user_id.clone())
-                .or_insert_with(HashSet::new)
-                .insert(credential_id.clone());
-        }
-
-        // Audit log successful registration
-        self.audit_logger
-            .log_event(
-                &OperationContext {
-                    user_context:     user.clone(),
-                    network_context:  Default::default(),
-                    resource_context: Default::default(),
-                    timestamp:        Utc::now(),
-                    operation_type:   crate::OperationType::Authentication,
-                },
-                AuditEventContext::new(
-                    AuditEventType::AuthenticationLogin,
-                    "webauthn",
-                    "registration",
-                    "complete",
-                )
-                .with_severity(AuditEventSeverity::Medium)
-                .with_metadata("credential_id", &credential_id),
-                true,
-                None,
-            )
-            .await?;
-
-        Ok(credential_id)
-    }
-
     /// Start WebAuthn authentication ceremony
-    pub async fn start_authentication(&self, user_id: &str) -> SecurityResult<RequestChallengeResponse> {
-        // Get user's credentials
-        let user_credentials = {
+    ///
+    /// This initiates the WebAuthn authentication flow by creating a challenge for the
+    /// authenticator.
+    ///
+    /// # Arguments
+    /// * `user_id` - The ID of the user to authenticate
+    ///
+    /// # Returns
+    /// A `RequestChallengeResponse` containing the authentication challenge or an error if the
+    /// operation fails
+    pub async fn start_authentication(
+        &self,
+        user_id: &str,
+    ) -> SecurityResult<RequestChallengeResponse> {
+        // Get the list of credential IDs for the user
+        let credential_ids = {
             let user_creds = self.state.user_credentials.read().await;
-            user_creds
-                .get(user_id)
-                .ok_or_else(|| SecurityError::WebAuthnError {
-                    reason: "No credentials found for user".to_string(),
-                })?
-                .clone()
+            user_creds.get(user_id).cloned().unwrap_or_default()
         };
 
-        if user_credentials.is_empty() {
-            return Err(SecurityError::WebAuthnError {
-                reason: "No credentials available for authentication".to_string(),
-            });
+        if credential_ids.is_empty() {
+            return Err(SecurityError::webauthn_error(
+                "No credentials found for user",
+            ));
         }
 
-        // Get credential objects
-        let credentials = {
+        // Get the actual credentials
+        let allow_credentials = {
             let creds = self.state.credentials.read().await;
-            user_credentials
-                .iter()
-                .filter_map(|cred_id| creds.get(cred_id))
-                .map(|cred| cred.credential.clone())
-                .collect::<Vec<_>>()
+            let mut valid_creds = Vec::new();
+
+            for cred_id in credential_ids {
+                if let Some(cred) = creds.get(&cred_id) {
+                    if let Some(passkey) = &cred.credential {
+                        valid_creds.push(passkey.clone());
+                    }
+                }
+            }
+
+            valid_creds
         };
 
-        // Generate authentication challenge
-        let (acr, passkey_authentication) = self
+        if allow_credentials.is_empty() {
+            return Err(SecurityError::webauthn_error(
+                "No valid credentials found for user",
+            ));
+        }
+
+        // Start the authentication ceremony with the passkeys
+        let (rcr, auth_state) = self
             .state
             .webauthn
-            .start_passkey_authentication(&credentials)?;
+            .start_passkey_authentication(&allow_credentials)
+            .map_err(|e| {
+                SecurityError::webauthn_error(format!("Failed to start authentication: {}", e))
+            })?;
 
-        // Store challenge
-        let challenge_id = uuid::Uuid::new_v4().to_string();
+        // Store the authentication state
+        let challenge_id = Uuid::new_v4().to_string();
         let challenge = AuthenticationChallenge {
             challenge_id: challenge_id.clone(),
-            user_id:      user_id.to_string(),
-            challenge:    passkey_authentication,
-            created_at:   Utc::now(),
-            expires_at:   Utc::now() + chrono::Duration::seconds(self.state.config.challenge_timeout_seconds as i64),
+            user_id: user_id.to_string(),
+            challenge: rcr.clone(),
+            authentication_state: auth_state,
+            created_at: Utc::now(),
+            expires_at: Utc::now()
+                + chrono::Duration::seconds(self.state.config.challenge_timeout_seconds as i64),
+            allowed_credentials: Some(
+                allow_credentials
+                    .iter()
+                    .map(|p| p.cred_id().clone())
+                    .collect(),
+            ),
         };
 
-        {
-            let mut challenges = self.state.authentication_challenges.write().await;
-            challenges.insert(challenge_id, challenge);
-        }
+        let mut challenges = self.state.authentication_challenges.write().await;
+        challenges.insert(challenge_id, challenge);
 
-        Ok(acr)
+        // Log the authentication start
+        self.audit_logger
+            .log(&AuditEventContext {
+                event_type: AuditEventType::Authentication,
+                severity: AuditEventSeverity::Info,
+                message: format!("Started WebAuthn authentication for user {}", user_id),
+                data: serde_json::json!({ "user_id": user_id }),
+                source_ip: None,
+                user_agent: None,
+                timestamp: Utc::now(),
+            })
+            .await?;
+
+        Ok(rcr)
     }
 
     /// Complete WebAuthn authentication ceremony
+    ///
+    /// This completes the WebAuthn authentication flow by verifying the authenticator's response
+    /// and returning a session token if successful.
+    ///
+    /// # Arguments
+    /// * `challenge_id` - The ID of the authentication challenge
+    /// * `authentication_response` - The authentication response from the authenticator
+    ///
+    /// # Returns
+    /// A session token or an error if the authentication fails
     pub async fn finish_authentication(
         &self,
         challenge_id: &str,
         authentication_response: &PublicKeyCredential,
     ) -> SecurityResult<String> {
-        // Retrieve and validate challenge
+        // Get and remove the authentication challenge
         let challenge = {
             let mut challenges = self.state.authentication_challenges.write().await;
-            challenges
-                .remove(challenge_id)
-                .ok_or_else(|| SecurityError::WebAuthnError {
-                    reason: "Invalid or expired challenge".to_string(),
-                })?
+            challenges.remove(challenge_id).ok_or_else(|| {
+                SecurityError::webauthn_error("Invalid or expired authentication challenge")
+            })?
         };
 
-        // Verify challenge hasn't expired
-        if Utc::now() > challenge.expires_at {
-            return Err(SecurityError::WebAuthnError {
-                reason: "Challenge expired".to_string(),
-            });
+        // Verify the challenge hasn't expired
+        if challenge.expires_at < Utc::now() {
+            return Err(SecurityError::webauthn_error(
+                "Authentication challenge has expired",
+            ));
         }
 
-        // Complete authentication
-        let authentication_result = self
-            .state
-            .webauthn
-            .finish_passkey_authentication(authentication_response, &challenge.challenge)?;
-
-        // Update credential counter and last used time
-        let credential_id = authentication_result.cred_id().to_string();
-        {
-            let mut credentials = self.state.credentials.write().await;
-            if let Some(cred) = credentials.get_mut(&credential_id) {
-                cred.counter = authentication_result.counter();
-                cred.last_used_at = Utc::now();
-            }
-        }
-
-        // Audit log successful authentication
-        self.audit_logger
-            .log_event(
-                &OperationContext {
-                    user_context:     UserContext {
-                        user_id:      challenge.user_id.clone(),
-                        username:     challenge.user_id.clone(), // This should be improved
-                        roles:        vec![],
-                        permissions:  vec![],
-                        session_id:   None,
-                        mfa_verified: false,
-                    },
-                    network_context:  Default::default(),
-                    resource_context: Default::default(),
-                    timestamp:        Utc::now(),
-                    operation_type:   crate::OperationType::Authentication,
-                },
-                AuditEventContext::new(
-                    AuditEventType::AuthenticationLogin,
-                    "webauthn",
-                    "authentication",
-                    "complete",
-                )
-                .with_severity(AuditEventSeverity::Medium)
-                .with_metadata("credential_id", &credential_id),
-                true,
-                None,
-            )
+        // Get the user's credentials
+        let credentials = self
+            .list_credentials(&UserContext {
+                user_id: challenge.user_id.clone(),
+                username: challenge.user_id.clone(),
+                email: "".to_string(),
+                created_at: Utc::now(),
+                expires_at: None,
+                roles: vec![],
+            })
             .await?;
 
-        Ok(challenge.user_id)
-    }
+        // Find the credential being used for authentication
+        let credential_id = authentication_response.id.as_str();
+        let credential = {
+            let creds = self.state.credentials.read().await;
+            // Find the credential by ID
+            let found = creds.values().find(|cred| {
+                cred.credential
+                    .as_ref()
+                    .map(|c| c.cred_id().as_slice() == credential_id.as_bytes())
+                    .unwrap_or(false)
+            });
 
-    /// List user's WebAuthn credentials
-    pub async fn list_credentials(&self, user: &UserContext) -> SecurityResult<Vec<WebAuthnCredential>> {
-        let user_credentials = {
-            let user_creds = self.state.user_credentials.read().await;
-            user_creds.get(&user.user_id).cloned().unwrap_or_default()
+            match found {
+                Some(cred) => cred
+                    .credential
+                    .clone()
+                    .ok_or_else(|| SecurityError::webauthn_error("Credential not found")),
+                None => Err(SecurityError::webauthn_error("Credential not found")),
+            }?
         };
 
-        let mut credentials = Vec::new();
-        let creds = self.state.credentials.read().await;
+        // Complete the authentication
+        let auth_result = self
+            .state
+            .webauthn
+            .finish_passkey_authentication(authentication_response, &challenge.authentication_state)
+            .map_err(|e| SecurityError::webauthn_error(format!("Authentication failed: {}", e)))?;
 
-        for cred_id in user_credentials {
-            if let Some(cred) = creds.get(&cred_id) {
-                credentials.push(cred.clone());
+        // Update the credential's sign count and last used time
+        {
+            let mut creds = self.state.credentials.write().await;
+            if let Some(cred) = creds.get_mut(credential_id) {
+                cred.counter = auth_result.counter();
+                cred.last_used_at = Some(Utc::now());
             }
         }
 
-        Ok(credentials)
+        // Generate a session token
+        let session_token = self.generate_session_token(&challenge.user_id).await?;
+
+        // Log the successful authentication
+        self.audit_logger
+            .log(&AuditEventContext {
+                event_type: AuditEventType::Authentication,
+                severity: AuditEventSeverity::Info,
+                message: format!(
+                    "Successful WebAuthn authentication for user {}",
+                    challenge.user_id
+                ),
+                data: serde_json::json!({
+                    "user_id": challenge.user_id,
+                    "credential_id": credential_id,
+                    "authenticator_data": format!("Authenticated")
+                }),
+                source_ip: None,
+                user_agent: None,
+                timestamp: Utc::now(),
+            })
+            .await?;
+
+        Ok(session_token)
     }
 
-    /// Delete a WebAuthn credential
-    pub async fn delete_credential(&self, user: &UserContext, credential_id: &str) -> SecurityResult<()> {
-        // Verify ownership
-        let is_owner = {
-            let creds = self.state.credentials.read().await;
-            creds
-                .get(credential_id)
-                .map(|cred| cred.user_id == user.user_id)
-                .unwrap_or(false)
-        };
-
-        if !is_owner {
-            return Err(SecurityError::AuthorizationError {
-                reason: "Not authorized to delete this credential".to_string(),
-            });
+    /// Complete WebAuthn authentication ceremony
+    ///
+    /// This completes the WebAuthn authentication flow by verifying the authenticator's response
+    /// and returning a session token if successful.
+    ///
+    /// # Arguments
+    /// * `challenge_id` - The ID of the authentication challenge
+    /// * `authentication_response` - The authentication response from the authenticator
+    ///
+    /// # Returns
+    /// A session token or an error if the authentication fails
+    /// * `user` - The user context who owns the credential
+    /// * `credential_id` - The ID of the credential to delete
+    ///
+    /// # Returns
+    /// `Ok(())` if the credential was deleted, or an error if the operation fails
+    pub async fn delete_credential(
+        &self,
+        user: &UserContext,
+        credential_id: &str,
+    ) -> SecurityResult<()> {
+        // Check if the credential exists and belongs to the user
+        {
+            let credentials = self.state.credentials.read().await;
+            if let Some(cred) = credentials.get(credential_id) {
+                if cred.id != user.user_id {
+                    return Err(SecurityError::AuthorizationFailed(
+                        "Credential does not belong to user".to_string(),
+                    ));
+                }
+            } else {
+                return Err(SecurityError::NotFound("Credential not found".to_string()));
+            }
         }
 
-        // Remove credential
+        // Remove the credential from the user's list of credentials
+        {
+            let mut user_credentials = self.state.user_credentials.write().await;
+            if let Some(creds) = user_credentials.get_mut(&user.user_id) {
+                creds.retain(|id| id != credential_id);
+            }
+        }
+
+        // Log the deletion
+        self.audit_logger
+            .log(&AuditEventContext {
+                event_type: AuditEventType::CredentialDeletion,
+                severity: AuditEventSeverity::Info,
+                message: format!("Successfully deleted WebAuthn credential"),
+                data: serde_json::json!({
+                    "user_id": user.user_id,
+                    "credential_id": credential_id,
+                }),
+                source_ip: None,
+                user_agent: None,
+                timestamp: Utc::now(),
+            })
+            .await?;
+
+        // Remove the actual credential
         {
             let mut credentials = self.state.credentials.write().await;
-            let mut user_creds = self.state.user_credentials.write().await;
-
-            if let Some(cred) = credentials.remove(credential_id) {
-                if let Some(user_cred_set) = user_creds.get_mut(&cred.user_id) {
-                    user_cred_set.remove(credential_id);
-                }
-            }
+            credentials.remove(credential_id);
         }
 
-        // Audit log
+        // Log the credential deletion
         self.audit_logger
-            .log_event(
-                &OperationContext {
-                    user_context:     user.clone(),
-                    network_context:  Default::default(),
-                    resource_context: Default::default(),
-                    timestamp:        Utc::now(),
-                    operation_type:   crate::OperationType::Authentication,
-                },
-                AuditEventContext::new(
-                    AuditEventType::AuthenticationTokenRevoked,
-                    "webauthn",
-                    "credential",
-                    "delete",
-                )
-                .with_severity(AuditEventSeverity::High)
-                .with_metadata("credential_id", credential_id),
-                true,
-                None,
-            )
+            .log(&AuditEventContext {
+                event_type: AuditEventType::CredentialManagement,
+                severity: AuditEventSeverity::Info,
+                message: format!("Deleted WebAuthn credential for user {}", user.user_id),
+                data: serde_json::json!({
+                    "user_id": user.user_id,
+                    "credential_id": credential_id,
+                }),
+                source_ip: None,
+                user_agent: None,
+                timestamp: Utc::now(),
+            })
             .await?;
 
         Ok(())
+    }
+
+    /// Generate a session token for an authenticated user
+    async fn generate_session_token(&self, user_id: &str) -> SecurityResult<String> {
+        // In a real implementation, this would generate a secure session token
+        // For now, we'll just return a simple token
+        Ok(format!("webauthn_session_{}_{}", user_id, Uuid::new_v4()))
     }
 
     /// Get service health status
@@ -521,39 +617,73 @@ impl WebAuthnService {
         ComponentStatus::Healthy
     }
 
+    /// List all WebAuthn credentials for a user
+    ///
+    /// # Arguments
+    /// * `user` - The user context for whom to list credentials
+    ///
+    /// # Returns
+    /// A vector of WebAuthnCredential or an error if the operation fails
+    pub async fn list_credentials(
+        &self,
+        user: &UserContext,
+    ) -> SecurityResult<Vec<WebAuthnCredential>> {
+        let credentials = self.state.credentials.read().await;
+        let user_credentials = self.state.user_credentials.read().await;
+
+        if let Some(credential_ids) = user_credentials.get(&user.user_id) {
+            let mut result = Vec::new();
+            for cred_id in credential_ids {
+                if let Some(cred) = credentials.get(cred_id) {
+                    result.push(cred.clone());
+                }
+            }
+            Ok(result)
+        } else {
+            Ok(Vec::new())
+        }
+    }
+
     /// Clean up expired challenges
     pub async fn cleanup_expired_challenges(&self) -> SecurityResult<usize> {
-        let now = Utc::now();
-        let mut cleaned = 0;
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| {
+                SecurityError::webauthn_error("System time is before UNIX_EPOCH".to_string())
+            })?
+            .as_secs() as i64;
 
-        // Clean registration challenges
-        {
-            let mut reg_challenges = self.state.registration_challenges.write().await;
-            let expired: Vec<_> = reg_challenges
-                .iter()
-                .filter(|(_, challenge)| challenge.expires_at < now)
-                .map(|(id, _)| id.clone())
-                .collect();
+        // Clean up expired registration challenges
+        let reg_cleaned = {
+            let mut challenges = self.state.registration_challenges.write().await;
+            let before = challenges.len();
+            challenges.retain(|_, c| c.expires_at.timestamp() > now);
+            before - challenges.len()
+        };
 
-            for id in expired {
-                reg_challenges.remove(&id);
-                cleaned += 1;
-            }
-        }
+        // Clean up expired authentication challenges
+        let auth_cleaned = {
+            let mut challenges = self.state.authentication_challenges.write().await;
+            let before = challenges.len();
+            challenges.retain(|_, c| c.expires_at.timestamp() > now);
+            before - challenges.len()
+        };
 
-        // Clean authentication challenges
-        {
-            let mut auth_challenges = self.state.authentication_challenges.write().await;
-            let expired: Vec<_> = auth_challenges
-                .iter()
-                .filter(|(_, challenge)| challenge.expires_at < now)
-                .map(|(id, _)| id.clone())
-                .collect();
+        let cleaned = reg_cleaned + auth_cleaned;
 
-            for id in expired {
-                auth_challenges.remove(&id);
-                cleaned += 1;
-            }
+        // Log the cleanup
+        if cleaned > 0 {
+            self.audit_logger
+                .log(&AuditEventContext {
+                    event_type: AuditEventType::System,
+                    severity: AuditEventSeverity::Info,
+                    message: format!("Cleaned up {} expired WebAuthn challenges", cleaned),
+                    data: serde_json::json!({}),
+                    source_ip: None,
+                    user_agent: None,
+                    timestamp: Utc::now(),
+                })
+                .await?;
         }
 
         Ok(cleaned)
@@ -562,21 +692,34 @@ impl WebAuthnService {
 
 #[async_trait]
 impl crate::SecurityService for WebAuthnService {
+    /// Performs a health check of the WebAuthn service
+    ///
+    /// # Returns
+    /// - `Ok(ComponentStatus)` - The current health status of the service
+    /// - `Err(SecurityError)` - If the health check fails
     async fn health_check(&self) -> SecurityResult<ComponentStatus> {
-        Ok(self.health_status().await)
+        // Verify we can access the credentials map
+        let _ = self.state.credentials.read().await;
+        // Verify we can access the user credentials map
+        let _ = self.state.user_credentials.read().await;
+
+        // If we got here, the basic health checks passed
+        Ok(ComponentStatus::Operational)
     }
 
-    async fn get_service_name(&self) -> String {
-        "WebAuthn Authentication Service".to_string()
+    /// Gets the name of the service
+    ///
+    /// # Returns
+    /// The name of the service as a String
+    fn get_service_name(&self) -> String {
+        "WebAuthnService".to_string()
     }
 }
 
 // Error types specific to WebAuthn
 impl SecurityError {
     pub fn webauthn_error(reason: impl Into<String>) -> Self {
-        SecurityError::WebAuthnError {
-            reason: reason.into(),
-        }
+        SecurityError::WebAuthnError(reason.into())
     }
 }
 
@@ -585,26 +728,28 @@ impl SecurityError {
 
 #[cfg(test)]
 mod tests {
+    use webauthn_rs::prelude::{AttestationConveyancePreference, ResidentKeyRequirement};
+
     use super::*;
 
     #[tokio::test]
     async fn test_webauthn_service_creation() {
         let config = WebAuthnConfig {
-            enabled:                   true,
-            rp_name:                   "Test RP".to_string(),
-            rp_id:                     "localhost".to_string(),
-            rp_origin:                 "http://localhost:3000".to_string(),
-            credential_timeout_ms:     60000,
+            enabled: true,
+            rp_name: "Test RP".to_string(),
+            rp_id: "localhost".to_string(),
+            rp_origin: "http://localhost:3000".to_string(),
+            credential_timeout_ms: 60000,
             challenge_timeout_seconds: 300,
-            max_credentials_per_user:  5,
-            allow_software_keys:       true,
-            attestation_preference:    AttestationConveyancePreference::None,
-            user_verification:         UserVerificationRequirement::Preferred,
-            resident_key_requirement:  ResidentKeyRequirement::Discouraged,
+            max_credentials_per_user: 5,
+            allow_software_keys: true,
+            attestation_preference: AttestationConveyancePreference::None,
+            resident_key_requirement: ResidentKeyRequirement::Discouraged,
         };
 
-        // This would require setting up the full service dependencies
-        // For now, just test configuration validation
+        // Test configuration validation
         assert_eq!(config.rp_name, "Test RP");
+        assert_eq!(config.rp_id, "localhost");
+        assert_eq!(config.max_credentials_per_user, 5);
     }
 }

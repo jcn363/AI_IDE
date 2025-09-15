@@ -1,3 +1,4 @@
+use quote::ToTokens;
 use serde::{Deserialize, Serialize};
 
 /// Refactoring types that define the kind of refactoring operation
@@ -146,7 +147,7 @@ pub enum SymbolKind {
 }
 
 /// Options that control how a refactoring is performed
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RefactoringOptions {
     pub create_backup:            bool,
     pub generate_tests:           bool,
@@ -313,4 +314,53 @@ pub struct RefactoringSuggestion {
     pub description:      String,
     pub context:          RefactoringContext,
     pub expected_changes: Vec<CodeChange>,
+}
+
+// ToTokens implementations for syn quote! macro support
+use quote::{quote, ToTokens};
+
+/// Helper struct for extracted method information
+pub struct ExtractedMethod {
+    pub signature: syn::Signature,
+    pub attrs:     Vec<syn::Attribute>,
+}
+
+impl ToTokens for ExtractedMethod {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        for attr in &self.attrs {
+            attr.to_tokens(tokens);
+        }
+        self.signature.to_tokens(tokens);
+    }
+}
+
+/// Analyzed field information for splitting
+#[derive(Clone)]
+pub struct FieldInfo {
+    pub name:          String,
+    pub ty:            syn::Type,
+    pub visibility:    syn::Visibility,
+    pub methods_using: Vec<String>,
+}
+
+impl ToTokens for FieldInfo {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        // For FieldInfo, we'll just quote the type since it's primarily used for code generation
+        self.ty.to_tokens(tokens);
+    }
+}
+
+/// Method information for splitting
+#[derive(Clone)]
+pub struct MethodInfo {
+    pub name:        String,
+    pub signature:   syn::Signature,
+    pub fields_used: Vec<String>,
+    pub visibility:  syn::Visibility,
+}
+
+impl ToTokens for MethodInfo {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.signature.to_tokens(tokens);
+    }
 }

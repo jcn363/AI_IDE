@@ -4,17 +4,17 @@ use std::time::Instant;
 
 use lazy_static::lazy_static;
 use prometheus::{
-    register_counter_vec, register_histogram_vec, Encoder, HistogramOpts, HistogramVec, IntCounterVec, Opts, Registry,
-    TextEncoder,
+    register_counter_vec, register_histogram_vec, Encoder, HistogramOpts, HistogramVec,
+    IntCounterVec, Opts, Registry, TextEncoder,
 };
 
 /// Metrics for vulnerability prediction operations
 pub struct VulnerabilityMetrics {
-    predictions_total:   prometheus::IntCounterVec,
+    predictions_total: prometheus::IntCounterVec,
     prediction_duration: prometheus::HistogramVec,
-    cache_hits:          prometheus::IntCounterVec,
-    cache_misses:        prometheus::IntCounterVec,
-    accuracy_rate:       prometheus::HistogramVec,
+    cache_hits: prometheus::IntCounterVec,
+    cache_misses: prometheus::IntCounterVec,
+    accuracy_rate: prometheus::HistogramVec,
 }
 
 impl VulnerabilityMetrics {
@@ -99,9 +99,9 @@ impl VulnerabilityMetrics {
 
 /// Metrics for maintenance forecasting
 pub struct MaintenanceMetrics {
-    forecasts_total:            prometheus::IntCounterVec,
-    forecast_duration:          prometheus::HistogramVec,
-    cost_estimation_accuracy:   prometheus::HistogramVec,
+    forecasts_total: prometheus::IntCounterVec,
+    forecast_duration: prometheus::HistogramVec,
+    cost_estimation_accuracy: prometheus::HistogramVec,
     task_priority_distribution: prometheus::HistogramVec,
 }
 
@@ -168,9 +168,9 @@ impl MaintenanceMetrics {
 
 /// Metrics for health scoring
 pub struct HealthMetrics {
-    scores_total:                 prometheus::IntCounterVec,
-    scoring_duration:             prometheus::HistogramVec,
-    health_trend:                 prometheus::HistogramVec,
+    scores_total: prometheus::IntCounterVec,
+    scoring_duration: prometheus::HistogramVec,
+    health_trend: prometheus::HistogramVec,
     performance_requirements_met: prometheus::IntCounterVec,
 }
 
@@ -236,16 +236,16 @@ impl HealthMetrics {
 /// Overall predictive quality metrics aggregator
 pub struct PredictiveQualityMetrics {
     vulnerability_metrics: VulnerabilityMetrics,
-    maintenance_metrics:   MaintenanceMetrics,
-    health_metrics:        HealthMetrics,
+    maintenance_metrics: MaintenanceMetrics,
+    health_metrics: HealthMetrics,
 }
 
 impl PredictiveQualityMetrics {
     pub fn new() -> Self {
         Self {
             vulnerability_metrics: VulnerabilityMetrics::new(),
-            maintenance_metrics:   MaintenanceMetrics::new(),
-            health_metrics:        HealthMetrics::new(),
+            maintenance_metrics: MaintenanceMetrics::new(),
+            health_metrics: HealthMetrics::new(),
         }
     }
 
@@ -269,7 +269,12 @@ lazy_static::lazy_static! {
 
 /// Helper trait for reporting operation metrics
 pub trait MetricReporter {
-    async fn report_operation(&self, operation_name: &str, success: bool, duration: std::time::Duration) {
+    async fn report_operation(
+        &self,
+        operation_name: &str,
+        success: bool,
+        duration: std::time::Duration,
+    ) {
         GLOBAL_PREDICTIVE_METRICS
             .vulnerability_metrics
             .report_operation(operation_name, success, duration)
@@ -279,14 +284,14 @@ pub trait MetricReporter {
 
 /// Prometheus exporter for current metrics
 pub struct MetricExporter {
-    encoder:  TextEncoder,
+    encoder: TextEncoder,
     registry: Registry,
 }
 
 impl MetricExporter {
     pub fn new() -> Self {
         Self {
-            encoder:  TextEncoder::new(),
+            encoder: TextEncoder::new(),
             registry: prometheus::default_registry().clone(),
         }
     }

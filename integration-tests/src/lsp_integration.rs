@@ -27,24 +27,27 @@ use crate::IntegrationTestResult;
 /// LSP Integration Test Suite Runner
 #[derive(Clone)]
 pub struct LSPIntegrationTestRunner {
-    context:     Option<ExtendedIntegrationContext>,
+    context: Option<ExtendedIntegrationContext>,
     mock_server: Option<Arc<Mutex<MockLSPServer>>>,
-    client:      Option<LSPClient>,
-    results:     Vec<IntegrationTestResult>,
+    client: Option<LSPClient>,
+    results: Vec<IntegrationTestResult>,
 }
 
 impl LSPIntegrationTestRunner {
     pub fn new() -> Self {
         Self {
-            context:     None,
+            context: None,
             mock_server: None,
-            client:      None,
-            results:     Vec::new(),
+            client: None,
+            results: Vec::new(),
         }
     }
 
     /// Setup LSP test environment with mock server
-    pub async fn setup_test_environment(&mut self, context: ExtendedIntegrationContext) -> Result<(), RustAIError> {
+    pub async fn setup_test_environment(
+        &mut self,
+        context: ExtendedIntegrationContext,
+    ) -> Result<(), RustAIError> {
         self.context = Some(context);
 
         // Initialize mock LSP server
@@ -218,10 +221,10 @@ impl LSPIntegrationTestRunner {
 
                 // Create AI context for enhanced completion
                 let ai_context = AIContext {
-                    current_code:    "let vec = Vec::new();".to_string(),
-                    file_name:       Some("test.rs".to_string()),
+                    current_code: "let vec = Vec::new();".to_string(),
+                    file_name: Some("test.rs".to_string()),
                     cursor_position: Some((0, 15)),
-                    selection:       None,
+                    selection: None,
                     project_context: std::collections::HashMap::from([
                         ("file_type".to_string(), "rust".to_string()),
                         ("imports".to_string(), "std::collections::*".to_string()),
@@ -507,10 +510,10 @@ impl LSPIntegrationTestRunner {
 
                     // Request completions
                     let ai_context = AIContext {
-                        current_code:    test_code.clone(),
-                        file_name:       Some(format!("test_{}.rs", i)),
+                        current_code: test_code.clone(),
+                        file_name: Some(format!("test_{}.rs", i)),
                         cursor_position: Some((0, test_code.len())),
-                        selection:       None,
+                        selection: None,
                         project_context: std::collections::HashMap::new(),
                     };
 
@@ -621,8 +624,8 @@ mod tests {
 
         let context = ExtendedIntegrationContext::new(shared_test_utils::IntegrationContext {
             test_dir: workspace_path,
-            config:   shared_test_utils::IntegrationConfig::default(),
-            state:    std::collections::HashMap::new(),
+            config: shared_test_utils::IntegrationConfig::default(),
+            state: std::collections::HashMap::new(),
         });
 
         let scenario = LSPScenarioBuilder::new()

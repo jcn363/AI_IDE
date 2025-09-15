@@ -7,8 +7,8 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
-    ConsensusConfig, FallbackConfig, LoadBalancingConfig, ModelSwitchingConfig, OrchestrationConfig,
-    PerformanceThresholds, VotingMechanism,
+    ConsensusConfig, FallbackConfig, LoadBalancingConfig, ModelSwitchingConfig,
+    OrchestrationConfig, PerformanceThresholds, VotingMechanism,
 };
 
 /// Default orchestration configuration
@@ -16,9 +16,9 @@ impl Default for OrchestrationConfig {
     fn default() -> Self {
         Self {
             performance_thresholds: PerformanceThresholds::default(),
-            load_balancing_config:  LoadBalancingConfig::default(),
-            consensus_config:       ConsensusConfig::default(),
-            fallback_config:        FallbackConfig::default(),
+            load_balancing_config: LoadBalancingConfig::default(),
+            consensus_config: ConsensusConfig::default(),
+            fallback_config: FallbackConfig::default(),
             model_switching_config: ModelSwitchingConfig::default(),
         }
     }
@@ -27,10 +27,10 @@ impl Default for OrchestrationConfig {
 impl Default for PerformanceThresholds {
     fn default() -> Self {
         Self {
-            max_latency_ms:             5000.0, // 5 seconds
-            min_accuracy:               0.7,    // 70% accuracy threshold
-            max_memory_mb:              8192.0, // 8GB memory limit
-            max_cpu_percent:            80.0,   // 80% CPU usage limit
+            max_latency_ms: 5000.0, // 5 seconds
+            min_accuracy: 0.7,      // 70% accuracy threshold
+            max_memory_mb: 8192.0,  // 8GB memory limit
+            max_cpu_percent: 80.0,  // 80% CPU usage limit
             health_check_interval_secs: 30,
         }
     }
@@ -39,10 +39,10 @@ impl Default for PerformanceThresholds {
 impl Default for LoadBalancingConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_requests:    num_cpus::get() * 4,
-            queue_capacity:             1000,
+            max_concurrent_requests: num_cpus::get() * 4,
+            queue_capacity: 1000,
             load_balance_interval_secs: 10,
-            overload_threshold:         0.9, // 90% capacity threshold
+            overload_threshold: 0.9, // 90% capacity threshold
         }
     }
 }
@@ -51,9 +51,9 @@ impl Default for ConsensusConfig {
     fn default() -> Self {
         Self {
             min_models_for_consensus: 2,
-            confidence_threshold:     0.8, // 80% confidence required
-            disagreement_tolerance:   0.3, // Allow 30% disagreement
-            voting_mechanism:         VotingMechanism::ConfidenceBased,
+            confidence_threshold: 0.8,   // 80% confidence required
+            disagreement_tolerance: 0.3, // Allow 30% disagreement
+            voting_mechanism: VotingMechanism::ConfidenceBased,
         }
     }
 }
@@ -61,9 +61,9 @@ impl Default for ConsensusConfig {
 impl Default for FallbackConfig {
     fn default() -> Self {
         Self {
-            offline_cache_duration_days: 7,          // 7 days cache validity
-            grace_period_secs:           30,         // 30 second graceful degradation
-            fallback_sequence:           Vec::new(), // Will be populated at runtime
+            offline_cache_duration_days: 7, // 7 days cache validity
+            grace_period_secs: 30,          // 30 second graceful degradation
+            fallback_sequence: Vec::new(),  // Will be populated at runtime
         }
     }
 }
@@ -72,8 +72,8 @@ impl Default for ModelSwitchingConfig {
     fn default() -> Self {
         Self {
             switching_latency_target_ms: 100.0, // <100ms switch time target
-            cooldown_duration_secs:      60,    // 1 minute cooldown between switches
-            hysteresis_factor:           1.05,  // 5% hysteresis to prevent thrashing
+            cooldown_duration_secs: 60,         // 1 minute cooldown between switches
+            hysteresis_factor: 1.05,            // 5% hysteresis to prevent thrashing
         }
     }
 }
@@ -207,23 +207,32 @@ pub fn validate_config(config: &OrchestrationConfig) -> crate::Result<()> {
 }
 
 /// Save configuration to a TOML file
-pub fn save_config_to_file<P: AsRef<std::path::Path>>(config: &OrchestrationConfig, path: P) -> crate::Result<()> {
-    let toml_string = toml::to_string_pretty(config)
-        .map_err(|e| crate::OrchestrationError::ConfigError(format!("Failed to serialize config: {}", e)))?;
+pub fn save_config_to_file<P: AsRef<std::path::Path>>(
+    config: &OrchestrationConfig,
+    path: P,
+) -> crate::Result<()> {
+    let toml_string = toml::to_string_pretty(config).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to serialize config: {}", e))
+    })?;
 
-    std::fs::write(path, toml_string)
-        .map_err(|e| crate::OrchestrationError::ConfigError(format!("Failed to write config file: {}", e)))?;
+    std::fs::write(path, toml_string).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to write config file: {}", e))
+    })?;
 
     Ok(())
 }
 
 /// Load configuration from a TOML file
-pub fn load_config_from_file<P: AsRef<std::path::Path>>(path: P) -> crate::Result<OrchestrationConfig> {
-    let config_content = std::fs::read_to_string(path)
-        .map_err(|e| crate::OrchestrationError::ConfigError(format!("Failed to read config file: {}", e)))?;
+pub fn load_config_from_file<P: AsRef<std::path::Path>>(
+    path: P,
+) -> crate::Result<OrchestrationConfig> {
+    let config_content = std::fs::read_to_string(path).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to read config file: {}", e))
+    })?;
 
-    let mut config: OrchestrationConfig = toml::from_str(&config_content)
-        .map_err(|e| crate::OrchestrationError::ConfigError(format!("Failed to parse config: {}", e)))?;
+    let mut config: OrchestrationConfig = toml::from_str(&config_content).map_err(|e| {
+        crate::OrchestrationError::ConfigError(format!("Failed to parse config: {}", e))
+    })?;
 
     // Validate the loaded configuration
     validate_config(&config)?;

@@ -1,4 +1,4 @@
-use syn::spanned::Spanned;
+use syn::Spanned;
 
 use super::code_analyzer::CodeAnalyzer;
 use crate::{

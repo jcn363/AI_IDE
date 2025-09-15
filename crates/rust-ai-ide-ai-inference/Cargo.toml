@@ -50,6 +50,7 @@ rust-ai-ide-lazy-loading = { path = "../rust-ai-ide-lazy-loading" }
 [features]
 default = []
 simd = ["rust-ai-ide-simd"]
+inference = []
 
 [dev-dependencies]
 criterion = { workspace = true }

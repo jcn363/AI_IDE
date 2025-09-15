@@ -52,6 +52,9 @@ syn = { workspace = true }
 quote = { workspace = true }
 proc-macro2 = { workspace = true }
 
+# Code formatting for generated transformations
+prettyplease = "0.2.25"
+
 # Statistical analysis for risk assessment
 statrs = { workspace = true }
 

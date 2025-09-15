@@ -20,9 +20,8 @@ pub use integration::*;
 use regex::Regex;
 pub use security_rules::*;
 use serde::{Deserialize, Serialize};
-use syn::spanned::Spanned;
 use syn::visit::Visit;
-use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, ExprPath, File, Lit, LitStr, Span};
+use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, ExprPath, File, Lit, LitStr, Span, Spanned};
 pub use types::*;
 use walkdir;
 
@@ -201,8 +200,8 @@ impl<'ast> Visit<'ast> for UnsafeCodeVisitor {
                 title:        "Unsafe block usage".to_string(),
                 description:  "Unsafe code block detected - manually verify safety".to_string(),
                 file_path:    self.file_path.clone(),
-                line_number:  Some(block.unsafe_token.span().line as usize),
-                column:       Some(block.unsafe_token.span().column as usize),
+                line_number:  Some(block.unsafe_token.span.start().line as usize),
+                column:       Some(block.unsafe_token.span.start().column as usize),
                 code_snippet: Some(format!("{:?}", block)),
                 remediation:  "Ensure all unsafe code is properly documented and justified".to_string(),
                 confidence:   0.9,

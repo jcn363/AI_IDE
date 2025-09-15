@@ -17,7 +17,13 @@ pub struct ExtractInterfaceOperation;
 /// Helper struct for extracted method information
 struct ExtractedMethod {
     signature: syn::Signature,
-    attrs:     Vec<syn::Attribute>,
+    attrs: Vec<syn::Attribute>,
+}
+
+impl quote::ToTokens for ExtractedMethod {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.signature.to_tokens(tokens);
+    }
 }
 
 impl ExtractInterfaceOperation {
@@ -37,11 +43,11 @@ impl ExtractInterfaceOperation {
                         if let Some(last_segment) = type_path.path.segments.last() {
                             if last_segment.ident == struct_name {
                                 for impl_item in &impl_block.items {
-                                    if let syn::ImplItem::Method(method) = impl_item {
+                                    if let syn::ImplItem::Fn(method) = impl_item {
                                         if matches!(method.vis, syn::Visibility::Public(_)) {
                                             methods.push(ExtractedMethod {
                                                 signature: method.sig.clone(),
-                                                attrs:     method.attrs.clone(),
+                                                attrs: method.attrs.clone(),
                                             });
                                         }
                                     }
@@ -92,7 +98,12 @@ impl ExtractInterfaceOperation {
     }
 
     /// Generate the implementation for the struct
-    fn generate_impl_code(&self, trait_name: &str, struct_name: &str, methods: &[ExtractedMethod]) -> String {
+    fn generate_impl_code(
+        &self,
+        trait_name: &str,
+        struct_name: &str,
+        methods: &[ExtractedMethod],
+    ) -> String {
         let mut impl_code = format!(
             "/// Auto-generated implementation of {} for {}\nimpl {} for {} {{\n",
             trait_name, struct_name, trait_name, struct_name
@@ -148,7 +159,11 @@ impl ExtractInterfaceOperation {
     }
 
     /// Validate that the struct has enough methods for interface extraction
-    fn validate_extraction(&self, methods: &[ExtractedMethod], struct_name: &str) -> Result<(), String> {
+    fn validate_extraction(
+        &self,
+        methods: &[ExtractedMethod],
+        struct_name: &str,
+    ) -> Result<(), String> {
         if methods.is_empty() {
             return Err(format!(
                 "Struct '{}' has no public methods to extract into an interface",
@@ -181,7 +196,7 @@ impl RefactoringOperation for ExtractInterfaceOperation {
 
         // Parse the Rust file
         let content = fs::read_to_string(file_path)?;
-        let syntax = syn::parse_file(&content)?;
+        let syntax = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
 
         // Extract the target struct name
         let struct_name = context
@@ -272,15 +287,15 @@ impl RefactoringOperation for ExtractInterfaceOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe:          context.symbol_kind == Some(SymbolKind::Struct)
+            is_safe: context.symbol_kind == Some(SymbolKind::Struct)
                 || context.symbol_kind == Some(SymbolKind::Class),
             confidence_score: 0.7,
             potential_impact: RefactoringImpact::Medium,
-            affected_files:   vec![context.file_path.clone()],
+            affected_files: vec![context.file_path.clone()],
             affected_symbols: vec![context.symbol_name.clone().unwrap_or_default()],
             breaking_changes: vec!["New interface needs to be implemented".to_string()],
-            suggestions:      vec!["Implement the interface in the original type".to_string()],
-            warnings:         vec![],
+            suggestions: vec!["Implement the interface in the original type".to_string()],
+            warnings: vec![],
         })
     }
 
@@ -289,7 +304,8 @@ impl RefactoringOperation for ExtractInterfaceOperation {
         context: &RefactoringContext,
         options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(context.symbol_kind == Some(SymbolKind::Struct) || context.symbol_kind == Some(SymbolKind::Class))
+        Ok(context.symbol_kind == Some(SymbolKind::Struct)
+            || context.symbol_kind == Some(SymbolKind::Class))
     }
 
     fn refactoring_type(&self) -> RefactoringType {
@@ -310,27 +326,39 @@ pub struct SplitClassOperation;
 /// Analyzed field information for splitting
 #[derive(Clone)]
 struct FieldInfo {
-    name:          String,
-    ty:            syn::Type,
-    visibility:    syn::Visibility,
+    name: String,
+    ty: syn::Type,
+    visibility: syn::Visibility,
     methods_using: Vec<String>,
+}
+
+impl quote::ToTokens for FieldInfo {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.ty.to_tokens(tokens);
+    }
 }
 
 /// Method information for splitting
 #[derive(Clone)]
 struct MethodInfo {
-    name:        String,
-    signature:   syn::Signature,
+    name: String,
+    signature: syn::Signature,
     fields_used: Vec<String>,
-    visibility:  syn::Visibility,
+    visibility: syn::Visibility,
+}
+
+impl quote::ToTokens for MethodInfo {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.signature.to_tokens(tokens);
+    }
 }
 
 /// Suggested split configuration
 #[derive(Clone)]
 struct SplitConfiguration {
-    class_name:   String,
-    fields:       Vec<FieldInfo>,
-    methods:      Vec<MethodInfo>,
+    class_name: String,
+    fields: Vec<FieldInfo>,
+    methods: Vec<MethodInfo>,
     dependencies: Vec<String>,
 }
 
@@ -346,32 +374,33 @@ impl SplitClassOperation {
         for item in &syntax.items {
             if let syn::Item::Struct(struct_item) = item {
                 if struct_item.ident == struct_name {
-                    for field in &struct_item.fields {
-                        if let syn::Fields::Named(named_fields) = &field.named {
-                            for field in named_fields.named {
-                                let field_name = field.ident.as_ref().unwrap().to_string();
-                                let mut methods_using = Vec::new();
+                    if let syn::Fields::Named(named_fields) = &struct_item.fields {
+                        for field in &named_fields.named {
+                            let field_name = field.ident.as_ref().unwrap().to_string();
+                            let mut methods_using = Vec::new();
 
-                                // Find methods that use this field
-                                for item in &syntax.items {
-                                    if let syn::Item::Impl(impl_block) = item {
-                                        for impl_item in &impl_block.items {
-                                            if let syn::ImplItem::Method(method) = impl_item {
-                                                if self.method_uses_field(&method.block, &field_name) {
-                                                    methods_using.push(method.sig.ident.to_string());
-                                                }
+                            // Find methods that use this field
+                            for item in &syntax.items {
+                                if let syn::Item::Impl(impl_block) = item {
+                                    for impl_item in &impl_block.items {
+                                        if let syn::ImplItem::Fn(method) = impl_item {
+                                            if self
+                                                .method_uses_field(&method.block, &field_name)
+                                            {
+                                                methods_using
+                                                    .push(method.sig.ident.to_string());
                                             }
                                         }
                                     }
                                 }
-
-                                fields.push(FieldInfo {
-                                    name: field_name,
-                                    ty: field.ty.clone(),
-                                    visibility: field.vis.clone(),
-                                    methods_using,
-                                });
                             }
+
+                            fields.push(FieldInfo {
+                                name: field_name,
+                                ty: field.ty.clone(),
+                                visibility: field.vis.clone(),
+                                methods_using,
+                            });
                         }
                     }
                 }
@@ -392,7 +421,7 @@ impl SplitClassOperation {
         for item in &syntax.items {
             if let syn::Item::Impl(impl_block) = item {
                 for impl_item in &impl_block.items {
-                    if let syn::ImplItem::Method(method) = impl_item {
+                    if let syn::ImplItem::Fn(method) = impl_item {
                         let mut fields_used = Vec::new();
 
                         // Check which fields this method uses
@@ -420,14 +449,18 @@ impl SplitClassOperation {
     fn method_uses_field(&self, block: &syn::Block, field_name: &str) -> bool {
         let mut visitor = FieldUsageVisitor {
             field_name: field_name.to_string(),
-            found:      false,
+            found: false,
         };
         syn::visit::visit_block(&mut visitor, block);
         visitor.found
     }
 
     /// Cluster fields and methods into logical groups
-    fn suggest_split_configurations(&self, fields: &[FieldInfo], methods: &[MethodInfo]) -> Vec<SplitConfiguration> {
+    fn suggest_split_configurations(
+        &self,
+        fields: &[FieldInfo],
+        methods: &[MethodInfo],
+    ) -> Vec<SplitConfiguration> {
         // Simple clustering based on field usage in methods
         let mut field_groups = std::collections::HashMap::new();
 
@@ -484,7 +517,11 @@ impl SplitClassOperation {
     }
 
     /// Check if splitting would be beneficial
-    fn validate_split_benefits(&self, fields: &[FieldInfo], _methods: &[MethodInfo]) -> Result<(), String> {
+    fn validate_split_benefits(
+        &self,
+        fields: &[FieldInfo],
+        _methods: &[MethodInfo],
+    ) -> Result<(), String> {
         if fields.len() < 4 {
             return Err(format!(
                 "Struct has only {} fields, splitting may not provide benefits",
@@ -525,7 +562,7 @@ impl RefactoringOperation for SplitClassOperation {
 
         // Read and parse source file
         let content = fs::read_to_string(file_path)?;
-        let syntax: syn::File = syn::parse_file(&content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
 
         let struct_name = context
             .symbol_name
@@ -559,27 +596,32 @@ impl RefactoringOperation for SplitClassOperation {
             let mut insert_after = 0;
 
             for (j, line) in lines.iter().enumerate() {
-                if line.contains("}") && insert_after == 0 && j > 0 && lines[j - 1].contains("struct") {
+                if line.contains("}")
+                    && insert_after == 0
+                    && j > 0
+                    && lines[j - 1].contains("struct")
+                {
                     insert_after = j + 1;
                     break;
                 }
             }
 
             // Insert new struct definition
-            let mut result_lines: Vec<String> = new_content.lines().map(|s| s.to_string()).collect();
+            let mut result_lines: Vec<String> =
+                new_content.lines().map(|s| s.to_string()).collect();
             result_lines.insert(insert_after, format!("{}\n", struct_code));
             new_content = result_lines.join("\n");
 
             changes.push(CodeChange {
-                file_path:   file_path.clone(),
-                range:       CodeRange {
-                    start_line:      1,
+                file_path: file_path.clone(),
+                range: CodeRange {
+                    start_line: 1,
                     start_character: 0,
-                    end_line:        content.lines().count(),
-                    end_character:   0,
+                    end_line: content.lines().count(),
+                    end_character: 0,
                 },
-                old_text:    content.clone(),
-                new_text:    new_content.clone(),
+                old_text: content.clone(),
+                new_text: new_content.clone(),
                 change_type: ChangeType::Replacement,
             });
         }
@@ -601,7 +643,8 @@ impl RefactoringOperation for SplitClassOperation {
                     struct_name,
                     split_configs.len()
                 ),
-                "Original struct now uses composition pattern - verify all field accesses".to_string(),
+                "Original struct now uses composition pattern - verify all field accesses"
+                    .to_string(),
                 "Consider updating trait implementations to delegate to split structs".to_string(),
                 "Check for any circular dependencies between split structs".to_string(),
             ],
@@ -614,7 +657,7 @@ impl RefactoringOperation for SplitClassOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         let content = fs::read_to_string(&context.file_path)?;
-        let syntax: syn::File = syn::parse_file(&content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
 
         let struct_name = context.symbol_name.clone().unwrap_or_default();
 
@@ -657,14 +700,16 @@ impl RefactoringOperation for SplitClassOperation {
                 }
             }
             _ => RefactoringAnalysis {
-                is_safe:          false,
+                is_safe: false,
                 confidence_score: 0.0,
                 potential_impact: RefactoringImpact::High,
-                affected_files:   vec![context.file_path.clone()],
+                affected_files: vec![context.file_path.clone()],
                 affected_symbols: vec![struct_name],
                 breaking_changes: vec!["Unable to analyze struct for splitting".to_string()],
-                suggestions:      vec!["Verify struct exists and has sufficient complexity for splitting".to_string()],
-                warnings:         vec!["Analysis failed".to_string()],
+                suggestions: vec![
+                    "Verify struct exists and has sufficient complexity for splitting".to_string(),
+                ],
+                warnings: vec!["Analysis failed".to_string()],
             },
         };
 
@@ -774,15 +819,27 @@ impl SplitClassOperation {
 /// Visitor to detect field usage in expressions
 struct FieldUsageVisitor {
     field_name: String,
-    found:      bool,
+    found: bool,
 }
 
 impl syn::visit::Visit<'_> for FieldUsageVisitor {
     fn visit_expr_field(&mut self, i: &syn::ExprField) {
         if let syn::Expr::Path(path_expr) = &*i.base {
             if let Some(ident) = path_expr.path.get_ident() {
-                if ident == "self" && i.member.to_string() == self.field_name {
-                    self.found = true;
+                if ident == "self" {
+                    // Handle different member types in syn 2.0
+                    match &i.member {
+                        syn::Member::Named(ident) => {
+                            if ident.to_string() == self.field_name {
+                                self.found = true;
+                            }
+                        }
+                        syn::Member::Unnamed(index) => {
+                            if index.index.to_string() == self.field_name {
+                                self.found = true;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -799,12 +856,12 @@ impl RefactoringOperation for MergeClassesOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success:       true,
-            changes:       vec![],
+            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success: true,
+            changes: vec![],
             error_message: None,
-            warnings:      vec!["Merge classes operation requires implementation".to_string()],
-            new_content:   None,
+            warnings: vec!["Merge classes operation requires implementation".to_string()],
+            new_content: None,
         })
     }
     async fn analyze(
@@ -812,14 +869,14 @@ impl RefactoringOperation for MergeClassesOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe:          false,
+            is_safe: false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files:   vec![context.file_path.clone()],
+            affected_files: vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Class merging changes interfaces".to_string()],
-            suggestions:      vec![],
-            warnings:         vec!["Merge classes operation requires implementation".to_string()],
+            suggestions: vec![],
+            warnings: vec!["Merge classes operation requires implementation".to_string()],
         })
     }
     async fn is_applicable(
@@ -850,12 +907,12 @@ impl RefactoringOperation for ExtractClassOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success:       true,
-            changes:       vec![],
+            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success: true,
+            changes: vec![],
             error_message: None,
-            warnings:      vec!["Extract class operation requires implementation".to_string()],
-            new_content:   None,
+            warnings: vec!["Extract class operation requires implementation".to_string()],
+            new_content: None,
         })
     }
     async fn analyze(
@@ -863,14 +920,14 @@ impl RefactoringOperation for ExtractClassOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe:          false,
+            is_safe: false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::High,
-            affected_files:   vec![context.file_path.clone()],
+            affected_files: vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Class extraction changes class structure".to_string()],
-            suggestions:      vec![],
-            warnings:         vec!["Extract class operation requires implementation".to_string()],
+            suggestions: vec![],
+            warnings: vec!["Extract class operation requires implementation".to_string()],
         })
     }
     async fn is_applicable(
@@ -901,12 +958,12 @@ impl RefactoringOperation for EncapsulateFieldOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success:       true,
-            changes:       vec![],
+            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success: true,
+            changes: vec![],
             error_message: None,
-            warnings:      vec!["Encapsulate field operation requires implementation".to_string()],
-            new_content:   None,
+            warnings: vec!["Encapsulate field operation requires implementation".to_string()],
+            new_content: None,
         })
     }
     async fn analyze(
@@ -914,14 +971,14 @@ impl RefactoringOperation for EncapsulateFieldOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe:          false,
+            is_safe: false,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Medium,
-            affected_files:   vec![context.file_path.clone()],
+            affected_files: vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec!["Field encapsulation changes access pattern".to_string()],
-            suggestions:      vec![],
-            warnings:         vec!["Encapsulate field operation requires implementation".to_string()],
+            suggestions: vec![],
+            warnings: vec!["Encapsulate field operation requires implementation".to_string()],
         })
     }
     async fn is_applicable(
@@ -952,12 +1009,12 @@ impl RefactoringOperation for GenerateGettersSettersOperation {
         _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringResult {
-            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success:       true,
-            changes:       vec![],
+            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success: true,
+            changes: vec![],
             error_message: None,
-            warnings:      vec!["Generate getters/setters operation requires implementation".to_string()],
-            new_content:   None,
+            warnings: vec!["Generate getters/setters operation requires implementation".to_string()],
+            new_content: None,
         })
     }
     async fn analyze(
@@ -965,14 +1022,14 @@ impl RefactoringOperation for GenerateGettersSettersOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         Ok(RefactoringAnalysis {
-            is_safe:          true,
+            is_safe: true,
             confidence_score: 0.0,
             potential_impact: RefactoringImpact::Low,
-            affected_files:   vec![context.file_path.clone()],
+            affected_files: vec![context.file_path.clone()],
             affected_symbols: vec![],
             breaking_changes: vec![],
-            suggestions:      vec![],
-            warnings:         vec!["Generate getters/setters operation requires implementation".to_string()],
+            suggestions: vec![],
+            warnings: vec!["Generate getters/setters operation requires implementation".to_string()],
         })
     }
     async fn is_applicable(

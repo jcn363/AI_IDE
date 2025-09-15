@@ -115,7 +115,9 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Initialize build commands for Tauri
-pub fn init_build_commands<R: tauri::Runtime>(_app: &tauri::AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init_build_commands<R: tauri::Runtime>(
+    _app: &tauri::AppHandle<R>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // The commands are already registered via the #[tauri::command] attribute
     // This function is kept for future command initialization if needed
     Ok(())

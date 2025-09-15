@@ -4,18 +4,7 @@
 //! It serves as the bridge between LSP requests and the comprehensive refactoring
 //! capabilities implemented across the various operation modules.
 
-use crate::analysis::RefactoringAnalysisEngine;
-use crate::operations::*;
-use crate::types::*;
-use crate::SuggestionEngine;
-// Define RefactoringSuggestion locally since it's not in suggestions.rs yet
-#[derive(Debug, Clone)]
-pub struct RefactoringSuggestion {
-    pub operation_type:   String,
-    pub confidence_score: f64,
-    pub description:      String,
-}
-
+// We use RefactoringSuggestion from types.rs
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -23,13 +12,18 @@ use std::sync::Arc;
 use lsp_types::{Position, Range, TextDocumentIdentifier, TextEdit, Uri, WorkspaceEdit};
 use tokio::sync::Mutex;
 
+use crate::analysis::RefactoringAnalysisEngine;
 use crate::confidence::{ConfidenceScorer, ScoringStrategy};
+use crate::engine::{ExecutionContext, RefactoringEngine};
 use crate::enhanced_backup::EnhancedBackupManager;
 use crate::logging::RefactoringLogger;
+use crate::operations::*;
 use crate::progress::ProgressTracker;
 use crate::safety::SafetyAnalyzer;
 use crate::suggestions::SuggestionContext;
+use crate::types::*;
 use crate::utils::RefactoringUtils;
+use crate::SuggestionEngine;
 
 /// Core AI-powered refactoring service
 ///
@@ -69,13 +63,8 @@ impl SecurityValidator {
 
     fn validate_request(&self, request: &RefactoringRequest) -> Result<(), String> {
         // Validate file paths to prevent path traversal attacks
-        if request.file_path.contains("..") || !request.file_path.starts_with('/') {
+        if request.context.file_path.contains("..") || !request.context.file_path.starts_with('/') {
             return Err("Invalid file path: potential security vulnerability".to_string());
-        }
-
-        // Validate operation type
-        if request.operation_type.is_empty() {
-            return Err("Empty operation type not allowed".to_string());
         }
 
         // Additional security checks can be added here
@@ -109,25 +98,29 @@ impl RefactoringService {
         // Start progress tracking
         let operation_id = self
             .progress_tracker
-            .start_operation(request.operation_type.clone())
+            .start_operation(request.refactoring_type.to_string())
             .await;
 
         // Log operation start
         self.logger
-            .log_operation_start(&request.operation_type, operation_id)
+            .log_operation_start(&request.refactoring_type.to_string(), operation_id.clone())
             .await;
 
         let result = match self.execute_operation_internal(request).await {
             Ok(result) => {
                 self.logger
-                    .log_operation_success(&request.operation_type, operation_id)
+                    .log_operation_success(&request.refactoring_type.to_string(), operation_id.clone())
                     .await;
                 self.progress_tracker.complete_operation(operation_id).await;
                 Ok(result)
             }
             Err(e) => {
                 self.logger
-                    .log_operation_error(&request.operation_type, operation_id, &e)
+                    .log_operation_error(
+                        &request.refactoring_type.to_string(),
+                        operation_id.clone(),
+                        &e,
+                    )
                     .await;
                 self.progress_tracker.fail_operation(operation_id, &e).await;
                 Err(e)
@@ -143,17 +136,10 @@ impl RefactoringService {
         request: &RefactoringRequest,
     ) -> Result<RefactoringOperationResult, String> {
         // Parse operation type
-        let operation_type = match RefactoringType::try_from(request.operation_type.as_str()) {
-            Ok(op_type) => op_type,
-            Err(_) =>
-                return Err(format!(
-                    "Unknown operation type: {}",
-                    request.operation_type
-                )),
-        };
+        let operation_type = request.refactoring_type.clone();
 
         // Create the operation instance
-        let operation = self.operation_factory.create_operation(&operation_type)?;
+        let operation = RefactoringOperationFactory::create_operation(&operation_type).map_err(|e| e.to_string())?;
 
         // Convert request to context
         let context = convert_request_to_context(request);
@@ -173,11 +159,9 @@ impl RefactoringService {
 
         // Execute the operation
         let result = operation
-            .execute(
-                &context,
-                &convert_options_to_refactoring_options(&request.options),
-            )
-            .await?;
+            .execute(&context, &request.options)
+            .await
+            .map_err(|e| e.to_string())?;
 
         Ok(result)
     }
@@ -211,14 +195,21 @@ impl RefactoringService {
                 .await?;
             if confidence >= 0.3 {
                 // Only return confidence suggestions
-                let mut scored = suggestion.clone();
-                scored.confidence_score = confidence;
+                // Convert from suggestion engine format to types format
+                let refactoring_type = suggestion.refactoring_type.clone();
+                let scored = RefactoringSuggestion {
+                    refactoring_type,
+                    confidence,
+                    description: suggestion.description.clone(),
+                    context: context.clone(),
+                    expected_changes: vec![], // Will be populated by analysis
+                };
                 scored_suggestions.push(scored);
             }
         }
 
         // Sort by confidence
-        scored_suggestions.sort_by(|a, b| b.confidence_score.partial_cmp(&a.confidence_score).unwrap());
+        scored_suggestions.sort_by(|a, b| b.confidence.partial_cmp(&a.confidence).unwrap());
 
         Ok(scored_suggestions)
     }
@@ -232,12 +223,12 @@ impl RefactoringService {
         self.security_validator.validate_request(request)?;
 
         let context = convert_request_to_context(request);
-        let options = convert_options_to_refactoring_options(&request.options);
+        let options = &request.options;
 
         // Analyze the operation
         let analysis = self
             .analysis_engine
-            .analyze_operation(&context, &options)
+            .analyze_operation(&context, options)
             .await?;
 
         // Check safety
@@ -267,7 +258,7 @@ impl RefactoringService {
         let mut available_ops = Vec::new();
 
         for op_type in RefactoringOperationFactory::available_refactorings() {
-            if let Ok(operation) = self.operation_factory.create_operation(&op_type) {
+            if let Ok(operation) = RefactoringOperationFactory::create_operation(&op_type) {
                 if let Ok(true) = operation.is_applicable(context, None).await {
                     available_ops.push(op_type);
                 }
@@ -279,7 +270,7 @@ impl RefactoringService {
 
     /// Get operation metadata
     pub fn get_operation_metadata(&self, operation_type: &RefactoringType) -> Option<RefactoringOperationMetadata> {
-        match self.operation_factory.create_operation(operation_type) {
+        match RefactoringOperationFactory::create_operation(operation_type) {
             Ok(operation) => Some(RefactoringOperationMetadata {
                 name:           operation.name().to_string(),
                 description:    operation.description().to_string(),
@@ -300,7 +291,8 @@ impl RefactoringService {
                 Ok(result) => results.push(result),
                 Err(err) => errors.push(format!(
                     "Operation {} failed: {}",
-                    operation.operation_type, err
+                    operation.refactoring_type.to_string(),
+                    err
                 )),
             }
         }
@@ -316,26 +308,7 @@ impl RefactoringService {
 
 /// Convert LSP request to refactoring context
 fn convert_request_to_context(request: &RefactoringRequest) -> RefactoringContext {
-    RefactoringContext {
-        file_path:        request.file_path.clone(),
-        cursor_line:      0, // Can be enhanced from LSP position
-        cursor_character: 0,
-        selection:        None, // Can be enhanced
-        symbol_name:      None, // Can be extracted from options
-        symbol_kind:      None,
-    }
-}
-
-/// Convert hashmap to refactoring options
-fn convert_options_to_refactoring_options(options: &HashMap<String, serde_json::Value>) -> RefactoringOptions {
-    RefactoringOptions {
-        create_backup:            true,
-        generate_tests:           true,
-        apply_to_all_occurrences: false,
-        preserve_references:      true,
-        ignore_safe_operations:   false,
-        extra_options:            Some(options.clone()),
-    }
+    request.context.clone()
 }
 
 /// Result of batch refactoring operations

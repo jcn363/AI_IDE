@@ -38,18 +38,18 @@
 //! - Async operations follow Rust's async patterns with proper error propagation
 
 // Module declarations for specialized AI functionality
-pub mod completion;
 pub mod analysis;
+pub mod completion;
 pub mod models;
-pub mod training;
 pub mod registry;
+pub mod training;
 
 // Re-exports for convenience (users can import from this module)
-pub use completion::*;
 pub use analysis::*;
+pub use completion::*;
 pub use models::*;
-pub use training::*;
 pub use registry::*;
+pub use training::*;
 
 // Common imports used across submodules
 use crate::commands::ai::services::AIServiceState;

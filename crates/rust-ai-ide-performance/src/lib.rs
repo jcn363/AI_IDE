@@ -23,6 +23,7 @@ pub mod compilation_example;
 pub mod metrics;
 pub mod metrics_server;
 pub mod instrumentation;
+pub mod state_management;
 
 pub use caching::*;
 pub use cpu_analysis::*;
@@ -41,6 +42,7 @@ pub use profiling_adapter::*;
 pub use startup_optimizer::*;
 // PerformanceMetrics is now imported from rust_ai_ide_shared_types for consistency
 pub use rust_ai_ide_shared_types::PerformanceMetrics;
+pub use state_management::*;
 
 #[derive(Debug)]
 pub struct PerformanceAnalyzer {

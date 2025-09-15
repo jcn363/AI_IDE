@@ -115,13 +115,13 @@ pub async fn quick_analyze(path: &str) -> AdvisorResult<PatternAnalysis> {
     let advisor = create_architectural_advisor();
 
     let context = ArchitecturalContext {
-        codebase_path:        path.to_string(),
-        project_type:         ProjectType::Application,
+        codebase_path: path.to_string(),
+        project_type: ProjectType::Application,
         current_architecture: None,
-        constraints:          vec![],
-        goals:                vec!["maintainability".to_string()],
-        team_size:            None,
-        expected_lifecycle:   None,
+        constraints: vec![],
+        goals: vec!["maintainability".to_string()],
+        team_size: None,
+        expected_lifecycle: None,
     };
 
     advisor.analyze_patterns(context).await
@@ -135,13 +135,13 @@ pub async fn comprehensive_assessment(path: &str) -> AdvisorResult<Architectural
     let advisor = create_architectural_advisor();
 
     let context = ArchitecturalContext {
-        codebase_path:        path.to_string(),
-        project_type:         ProjectType::Application,
+        codebase_path: path.to_string(),
+        project_type: ProjectType::Application,
         current_architecture: None,
-        constraints:          vec![],
-        goals:                vec!["maintainability".to_string(), "performance".to_string()],
-        team_size:            None,
-        expected_lifecycle:   None,
+        constraints: vec![],
+        goals: vec!["maintainability".to_string(), "performance".to_string()],
+        team_size: None,
+        expected_lifecycle: None,
     };
 
     let analysis = advisor.analyze_patterns(context).await?;
@@ -152,21 +152,21 @@ pub async fn comprehensive_assessment(path: &str) -> AdvisorResult<Architectural
 ///
 /// Allows advanced configuration of the architectural advisor
 pub struct ArchitecturalAdvisorConfig {
-    pub enable_pattern_detection:      bool,
+    pub enable_pattern_detection: bool,
     pub enable_anti_pattern_detection: bool,
-    pub confidence_threshold:          f32,
-    pub quality_threshold:             f32,
-    pub detailed_analysis:             bool,
+    pub confidence_threshold: f32,
+    pub quality_threshold: f32,
+    pub detailed_analysis: bool,
 }
 
 impl Default for ArchitecturalAdvisorConfig {
     fn default() -> Self {
         Self {
-            enable_pattern_detection:      true,
+            enable_pattern_detection: true,
             enable_anti_pattern_detection: true,
-            confidence_threshold:          DEFAULT_PATTERN_CONFIDENCE_THRESHOLD,
-            quality_threshold:             DEFAULT_MAINTAINABILITY_THRESHOLD,
-            detailed_analysis:             false,
+            confidence_threshold: DEFAULT_PATTERN_CONFIDENCE_THRESHOLD,
+            quality_threshold: DEFAULT_MAINTAINABILITY_THRESHOLD,
+            detailed_analysis: false,
         }
     }
 }
@@ -198,7 +198,9 @@ impl ArchitecturalAdvisorConfig {
 ///
 /// Note: Configuration is not yet implemented in the core system,
 /// but this function provides the API for future enhancement.
-pub fn create_configured_advisor(_config: ArchitecturalAdvisorConfig) -> IntelligentArchitecturalAdvisor {
+pub fn create_configured_advisor(
+    _config: ArchitecturalAdvisorConfig,
+) -> IntelligentArchitecturalAdvisor {
     // For now, just return the default advisor
     // Future versions will use the configuration
     create_architectural_advisor()

@@ -8,19 +8,19 @@ use tokio::sync::Mutex;
 /// Configuration for model encryption
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelEncryptionConfig {
-    pub encryption_algorithm:    String,
-    pub key_rotation_enabled:    bool,
+    pub encryption_algorithm: String,
+    pub key_rotation_enabled: bool,
     pub integrity_check_enabled: bool,
-    pub compression_enabled:     bool,
+    pub compression_enabled: bool,
 }
 
 impl Default for ModelEncryptionConfig {
     fn default() -> Self {
         Self {
-            encryption_algorithm:    "AES-256-GCM".to_string(),
-            key_rotation_enabled:    true,
+            encryption_algorithm: "AES-256-GCM".to_string(),
+            key_rotation_enabled: true,
             integrity_check_enabled: true,
-            compression_enabled:     false,
+            compression_enabled: false,
         }
     }
 }
@@ -28,27 +28,27 @@ impl Default for ModelEncryptionConfig {
 /// Encrypted model structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedModel {
-    pub model_id:              String,
-    pub encrypted_data:        Vec<u8>,
+    pub model_id: String,
+    pub encrypted_data: Vec<u8>,
     pub initialization_vector: Vec<u8>,
-    pub authentication_tag:    Vec<u8>,
-    pub metadata:              ModelMetadata,
+    pub authentication_tag: Vec<u8>,
+    pub metadata: ModelMetadata,
 }
 
 /// Model metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelMetadata {
-    pub model_type:         String,
-    pub version:            String,
+    pub model_type: String,
+    pub version: String,
     pub training_data_size: usize,
-    pub created_at:         chrono::DateTime<chrono::Utc>,
-    pub encryption_alg:     String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub encryption_alg: String,
 }
 
 /// Main encrypted models engine
 #[derive(Debug)]
 pub struct EncryptedModels {
-    config:      ModelEncryptionConfig,
+    config: ModelEncryptionConfig,
     model_store: Mutex<HashMap<String, EncryptedModel>>,
 }
 
@@ -108,9 +108,9 @@ impl EncryptedModels {
         store
             .iter()
             .map(|(_, model)| ModelInfo {
-                id:             model.model_id.clone(),
-                model_type:     model.metadata.model_type.clone(),
-                encrypted:      true,
+                id: model.model_id.clone(),
+                model_type: model.metadata.model_type.clone(),
+                encrypted: true,
                 size_encrypted: model.encrypted_data.len(),
             })
             .collect()
@@ -147,9 +147,9 @@ impl EncryptedModels {
 /// Public model information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelInfo {
-    pub id:             String,
-    pub model_type:     String,
-    pub encrypted:      bool,
+    pub id: String,
+    pub model_type: String,
+    pub encrypted: bool,
     pub size_encrypted: usize,
 }
 

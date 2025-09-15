@@ -19,6 +19,7 @@ use rust_ai_ide_ai_analysis::{ArchitectureSuggestion, CodeMetrics, CodeSmellType
 use serde::{Deserialize, Serialize};
 pub use style::*;
 pub use style_rules::*;
+use syn::visit::Visit;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
@@ -71,7 +72,7 @@ impl CodeStyleChecker {
         let metrics = self.analyze_style_metrics(content)?;
 
         Ok(StyleCheckResult {
-            issues,
+            issues: issues.clone(),
             consistency_score,
             metrics,
             suggestions: self.generate_style_suggestions(&issues).await?,

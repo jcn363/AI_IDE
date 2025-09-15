@@ -1,0 +1,77 @@
+# Pre-commit hooks for Rust AI IDE security validation
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  # Security checks
+  - repo: local
+    hooks:
+      - id: cargo-deny-quick
+        name: Quick cargo-deny check
+        entry: bash -c "cargo deny check bans --all-features --all-targets"
+        language: system
+        files: \.(toml|lock)$
+        pass_filenames: false
+        description: "Check for banned dependencies before commit"
+
+      - id: cargo-audit-quick
+        name: Quick cargo-audit vulnerability check
+        entry: bash -c "cargo audit --json | jq -e '.vulnerabilities.critical > 0 or .vulnerabilities.high > 0' && exit 1 || echo 'No critical/high vulnerabilities'"
+        language: system
+        files: \.(toml|lock)$
+        pass_filenames: false
+        description: "Check for critical/high vulnerabilities in dependencies"
+
+      - id: check-plaintext-secrets
+        name: Check for plaintext secrets
+        entry: python3
+        args: [scripts/security/check_plaintext_secrets.py]
+        language: system
+        files: .*
+        exclude: ^(target/|\.git/|node_modules/)
+        description: "Scan for potential plaintext secrets in code"
+
+  # Code quality checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(target/|\.git/|node_modules/)
+      - id: end-of-file-fixer
+        exclude: ^(target/|\.git/|node_modules/)
+      - id: check-yaml
+      - id: check-added-large-files
+        args: ['--maxkb=1024']
+      - id: check-merge-conflict
+      - id: check-json
+        exclude: ^(target/|\.git/|node_modules/)
+
+  # Rust-specific checks
+  - repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+      - id: fmt
+        args: [--check]
+      - id: clippy
+        args: [--all-targets, --all-features, --, -D, warnings]
+
+  # Security-focused markdown checks
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: forbid-crlf
+        exclude: ^(target/|\.git/|node_modules/)
+      - id: remove-crlf
+        exclude: ^(target/|\.git/|node_modules/)
+
+# CI configuration
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

@@ -5,19 +5,28 @@
 
 [advisories]
 yanked = "warn"
+vulnerability = "deny"
+unmaintained = "warn"
+unsound = "deny"
+notice = "warn"
+ignore = []
 
 [bans]
+enforce-ban = true
 multiple-versions = "warn"
 highlight = "all"
 workspace-default-features = "allow"
 external-default-features = "allow"
 deny = [
-    { name = "openssl", reason = "Use rustls instead" },
-    { name = "md5", reason = "MD5 is cryptographically broken" },
-    { name = "ring", reason = "Contains low-level cryptographic code that could introduce vulnerabilities" },
-    { name = "quick-js", reason = "Experimental JsEngine with known security concerns" },
-    { name = "libsqlite3-sys", reason = "Use rusqlite instead" },
+    { name = "openssl", version = "*", reason = "Use rustls instead for security" },
+    { name = "openssl-sys", version = "*", reason = "Use rustls instead for security" },
+    { name = "native-tls", version = "*", reason = "Use rustls instead for security" },
+    { name = "md5", version = "*", reason = "MD5 is cryptographically broken and insecure. Use sha2 instead" },
+    { name = "ring", version = "*", reason = "Contains low-level cryptographic code that could introduce vulnerabilities" },
+    { name = "quick-js", version = "*", reason = "Experimental JsEngine with known security concerns" },
+    { name = "libsqlite3-sys", version = "*", reason = "Use rusqlite instead for bundled SQLite", allow-wrappers = ["rusqlite"] },
 ]
+allow = []
 
 [versions]
 enforce = [

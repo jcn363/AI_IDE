@@ -19,7 +19,7 @@ pub enum StorageBackend {
 
 /// File-based storage backend
 pub struct FileStorage<K, V> {
-    path:     std::path::PathBuf,
+    path: std::path::PathBuf,
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
@@ -76,7 +76,7 @@ where
 /// Disk-based storage for large datasets
 #[cfg(feature = "persistent")]
 pub struct DiskStorage<K, V> {
-    sled_db:  sled::Db,
+    sled_db: sled::Db,
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
@@ -89,7 +89,7 @@ where
     pub fn new(path: std::path::PathBuf) -> Result<Self, Box<dyn Error>> {
         let db = sled::open(path)?;
         Ok(Self {
-            sled_db:  db,
+            sled_db: db,
             _phantom: std::marker::PhantomData,
         })
     }
@@ -142,7 +142,7 @@ where
 
 /// Storage manager that handles multiple storage backends
 pub struct StorageManager<K, V> {
-    memory:          MemoryStorage<K, V>,
+    memory: MemoryStorage<K, V>,
     storage_backend: StorageBackend,
 }
 
@@ -153,7 +153,7 @@ where
 {
     pub fn new(backend: StorageBackend) -> Self {
         Self {
-            memory:          MemoryStorage::new(),
+            memory: MemoryStorage::new(),
             storage_backend: backend,
         }
     }
@@ -247,8 +247,8 @@ pub mod compressed {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct CompressionConfig {
-        pub algorithm:       CompressionAlgorithm,
-        pub level:           i32,
+        pub algorithm: CompressionAlgorithm,
+        pub level: i32,
         pub threshold_bytes: usize,
     }
 
@@ -260,7 +260,7 @@ pub mod compressed {
     }
 
     pub struct CompressedStorage<K, V> {
-        config:  CompressionConfig,
+        config: CompressionConfig,
         storage: MemoryStorage<K, V>,
     }
 
@@ -276,7 +276,10 @@ pub mod compressed {
 
 #[cfg(feature = "compression")]
 impl<K, V> StorageManager<K, V> {
-    pub fn with_compression(self, config: compressed::CompressionConfig) -> compressed::CompressedStorage<K, V> {
+    pub fn with_compression(
+        self,
+        config: compressed::CompressionConfig,
+    ) -> compressed::CompressedStorage<K, V> {
         compressed::CompressedStorage::new(config)
     }
 }

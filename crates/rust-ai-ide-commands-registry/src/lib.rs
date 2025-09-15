@@ -39,6 +39,7 @@ use std::sync::Arc;
 #[cfg(feature = "ai_commands")]
 use rust_ai_ide_commands_ai;
 use serde::{Deserialize, Serialize};
+use tauri::ipc::Invoke;
 use tokio::sync::RwLock;
 
 /// Result type for command operations
@@ -75,7 +76,7 @@ pub struct CommandMetadata {
 }
 
 /// Command domain categories
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
 pub enum CommandDomain {
     AI,
     Analysis,
@@ -89,7 +90,7 @@ pub enum CommandDomain {
 }
 
 /// Type-erased command function
-pub type CommandFunction = fn(tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>>;
+pub type CommandFunction = fn(Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>>;
 
 /// Dynamic command registry
 pub struct CommandRegistry {
@@ -274,7 +275,7 @@ impl CommandHandler {
     }
 
     /// Build the invoke handler for Tauri
-    pub fn build_invoke_handler(&self) -> impl Fn(tauri::Invoke<tauri::Wry>) -> bool + Clone + Send + Sync + 'static {
+    pub fn build_invoke_handler(&self) -> impl Fn(Invoke<tauri::Wry>) -> bool + Clone + Send + Sync + 'static {
         let registry = Arc::clone(&self.registry);
 
         move |invoke| {
@@ -316,7 +317,7 @@ mod tests {
         let mut registry = CommandRegistry::new();
 
         // Mock command function
-        fn mock_command(_invoke: tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
+        fn mock_command(_invoke: Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
             None
         }
 
@@ -343,7 +344,7 @@ mod tests {
     fn test_duplicate_command_registration() {
         let mut registry = CommandRegistry::new();
 
-        fn mock_command(_invoke: tauri::Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
+        fn mock_command(_invoke: Invoke<tauri::Wry>) -> Option<Box<dyn std::any::Any + Send + Sync>> {
             None
         }
 

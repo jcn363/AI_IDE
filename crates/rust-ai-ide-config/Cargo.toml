@@ -50,7 +50,6 @@ walkdir = "2.5"
 
 # Logging
 tracing = "0.1"
-sha256 = "1.6.0"
 futures = { workspace = true }
 semver = { workspace = true }
 dirs = "6.0.0"

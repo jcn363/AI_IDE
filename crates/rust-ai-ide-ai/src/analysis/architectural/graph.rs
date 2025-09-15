@@ -9,7 +9,7 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::EdgeRef;
 use proc_macro2::Span;
 use serde::{Deserialize, Serialize};
-use syn::spanned::Spanned;
+use syn::Spanned;
 
 use crate::analysis::CodeLocation;
 

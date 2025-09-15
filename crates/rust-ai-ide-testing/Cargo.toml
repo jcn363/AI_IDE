@@ -1,0 +1,36 @@
+[package]
+name = "rust-ai-ide-testing"
+version = "0.1.0"
+edition = "2021"
+description = "Integration testing utilities for Rust AI IDE"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+# Core async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Workspace crates
+rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
+rust-ai-ide-ai-codegen = { path = "../rust-ai-ide-ai-codegen" }
+rust-ai-ide-common = { workspace = true }
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+rust-ai-ide-config = { path = "../rust-ai-ide-config" }
+
+# Testing utilities
+async-trait = { workspace = true }
+futures = { workspace = true }
+tempfile = { workspace = true }
+
+[dev-dependencies]
+# Testing frameworks
+rstest = { workspace = true }
+proptest = { workspace = true }
+assert_fs = { workspace = true }
+
+# Additional async testing utilities
+tokio-test = { workspace = true }

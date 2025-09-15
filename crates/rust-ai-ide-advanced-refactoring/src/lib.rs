@@ -10,6 +10,12 @@ pub mod suggestion_generator;
 pub mod error;
 pub mod types;
 
+// New syn-based modules
+pub mod execution_orchestrator;
+pub mod impact_assessor;
+pub mod safety_guard;
+pub mod transformation_validator;
+
 pub use engine::AdvancedRefactoringEngine;
 pub use error::*;
 pub use types::*;

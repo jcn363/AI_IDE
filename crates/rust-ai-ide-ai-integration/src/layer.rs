@@ -15,11 +15,11 @@ use crate::router::AiPerformanceRouter;
 /// Main integration layer state
 pub struct IntegrationLayerState {
     /// Layer configuration
-    config:            IntegrationConfig,
+    config: IntegrationConfig,
     /// Layer status
-    status:            IntegrationStatus,
+    status: IntegrationStatus,
     /// Start time
-    start_time:        chrono::DateTime<chrono::Utc>,
+    start_time: chrono::DateTime<chrono::Utc>,
     /// Last health check
     last_health_check: chrono::DateTime<chrono::Utc>,
 }
@@ -27,9 +27,9 @@ pub struct IntegrationLayerState {
 impl Default for IntegrationLayerState {
     fn default() -> Self {
         Self {
-            config:            IntegrationConfig::default(),
-            status:            IntegrationStatus::Initializing,
-            start_time:        chrono::Utc::now(),
+            config: IntegrationConfig::default(),
+            status: IntegrationStatus::Initializing,
+            start_time: chrono::Utc::now(),
             last_health_check: chrono::Utc::now(),
         }
     }
@@ -39,28 +39,28 @@ impl Default for IntegrationLayerState {
 #[derive(Debug, Clone)]
 pub struct IntegrationConfig {
     /// Enable LSP AI bridge
-    pub enable_lsp_bridge:          bool,
+    pub enable_lsp_bridge: bool,
     /// Enable frontend interface
-    pub enable_frontend_interface:  bool,
+    pub enable_frontend_interface: bool,
     /// Enable performance router
-    pub enable_performance_router:  bool,
+    pub enable_performance_router: bool,
     /// Enable metrics collection
-    pub enable_metrics:             bool,
+    pub enable_metrics: bool,
     /// Health check interval in seconds
     pub health_check_interval_secs: u64,
     /// Maximum concurrent requests
-    pub max_concurrent_requests:    usize,
+    pub max_concurrent_requests: usize,
 }
 
 impl Default for IntegrationConfig {
     fn default() -> Self {
         Self {
-            enable_lsp_bridge:          true,
-            enable_frontend_interface:  true,
-            enable_performance_router:  true,
-            enable_metrics:             true,
+            enable_lsp_bridge: true,
+            enable_frontend_interface: true,
+            enable_performance_router: true,
+            enable_metrics: true,
             health_check_interval_secs: 30,
-            max_concurrent_requests:    100,
+            max_concurrent_requests: 100,
         }
     }
 }
@@ -87,15 +87,15 @@ pub enum IntegrationStatus {
 /// Comprehensive AI service integration layer
 pub struct AIServiceIntegrationLayer {
     /// LSP AI bridge component
-    lsp_bridge:         std::sync::Arc<LSPAiBridge>,
+    lsp_bridge: std::sync::Arc<LSPAiBridge>,
     /// Frontend interface component
     frontend_interface: std::sync::Arc<AITauriInterface>,
     /// Performance router component
     performance_router: std::sync::Arc<AiPerformanceRouter>,
     /// Metrics collector
-    metrics_collector:  std::sync::Arc<MetricsCollector>,
+    metrics_collector: std::sync::Arc<MetricsCollector>,
     /// Layer state
-    state:              std::sync::Arc<RwLock<IntegrationLayerState>>,
+    state: std::sync::Arc<RwLock<IntegrationLayerState>>,
 }
 
 impl AIServiceIntegrationLayer {
@@ -103,11 +103,11 @@ impl AIServiceIntegrationLayer {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            lsp_bridge:         std::sync::Arc::new(LSPAiBridge::new()),
+            lsp_bridge: std::sync::Arc::new(LSPAiBridge::new()),
             frontend_interface: std::sync::Arc::new(AITauriInterface::new()),
             performance_router: std::sync::Arc::new(AiPerformanceRouter::new()),
-            metrics_collector:  std::sync::Arc::new(MetricsCollector::new()),
-            state:              std::sync::Arc::new(RwLock::new(IntegrationLayerState::default())),
+            metrics_collector: std::sync::Arc::new(MetricsCollector::new()),
+            state: std::sync::Arc::new(RwLock::new(IntegrationLayerState::default())),
         }
     }
 
@@ -295,7 +295,8 @@ impl AIServiceIntegrationLayer {
             let mut health_status = HealthStatus::default();
 
             // Check LSP bridge health
-            health_status.lsp_bridge_healthy = self.check_component_health(Component::LspBridge).await;
+            health_status.lsp_bridge_healthy =
+                self.check_component_health(Component::LspBridge).await;
 
             // Check frontend interface health
             health_status.frontend_interface_healthy = self
@@ -334,13 +335,13 @@ impl AIServiceIntegrationLayer {
             // Return cached health status
             let state = self.state.read().await;
             Ok(HealthStatus {
-                overall_healthy:            state.status == IntegrationStatus::Running,
-                lsp_bridge_healthy:         true,
+                overall_healthy: state.status == IntegrationStatus::Running,
+                lsp_bridge_healthy: true,
                 frontend_interface_healthy: true,
                 performance_router_healthy: true,
-                metrics_collector_healthy:  true,
-                last_check:                 state.last_health_check,
-                next_check:                 now
+                metrics_collector_healthy: true,
+                last_check: state.last_health_check,
+                next_check: now
                     + chrono::Duration::seconds(state.config.health_check_interval_secs as i64),
             })
         }
@@ -376,12 +377,12 @@ impl AIServiceIntegrationLayer {
 
         Ok(crate::types::FrontendAiResponse {
             request_id: request.request_id,
-            content:    crate::types::AiResponseContent::Status {
-                message:  "AI completion processed successfully".to_string(),
+            content: crate::types::AiResponseContent::Status {
+                message: "AI completion processed successfully".to_string(),
                 progress: Some(100),
             },
-            metadata:   std::collections::HashMap::new(),
-            status:     crate::types::ResponseStatus::Success,
+            metadata: std::collections::HashMap::new(),
+            status: crate::types::ResponseStatus::Success,
         })
     }
 
@@ -392,12 +393,12 @@ impl AIServiceIntegrationLayer {
     ) -> Result<crate::types::FrontendAiResponse, IntegrationError> {
         Ok(crate::types::FrontendAiResponse {
             request_id: request.request_id,
-            content:    crate::types::AiResponseContent::Status {
-                message:  "AI diagnostics processed successfully".to_string(),
+            content: crate::types::AiResponseContent::Status {
+                message: "AI diagnostics processed successfully".to_string(),
                 progress: Some(100),
             },
-            metadata:   std::collections::HashMap::new(),
-            status:     crate::types::ResponseStatus::Success,
+            metadata: std::collections::HashMap::new(),
+            status: crate::types::ResponseStatus::Success,
         })
     }
 
@@ -408,12 +409,12 @@ impl AIServiceIntegrationLayer {
     ) -> Result<crate::types::FrontendAiResponse, IntegrationError> {
         Ok(crate::types::FrontendAiResponse {
             request_id: request.request_id,
-            content:    crate::types::AiResponseContent::Status {
-                message:  "AI refactoring processed successfully".to_string(),
+            content: crate::types::AiResponseContent::Status {
+                message: "AI refactoring processed successfully".to_string(),
                 progress: Some(100),
             },
-            metadata:   std::collections::HashMap::new(),
-            status:     crate::types::ResponseStatus::Success,
+            metadata: std::collections::HashMap::new(),
+            status: crate::types::ResponseStatus::Success,
         })
     }
 
@@ -424,12 +425,12 @@ impl AIServiceIntegrationLayer {
     ) -> Result<crate::types::FrontendAiResponse, IntegrationError> {
         Ok(crate::types::FrontendAiResponse {
             request_id: request.request_id,
-            content:    crate::types::AiResponseContent::Status {
-                message:  "AI request processed successfully".to_string(),
+            content: crate::types::AiResponseContent::Status {
+                message: "AI request processed successfully".to_string(),
                 progress: Some(100),
             },
-            metadata:   std::collections::HashMap::new(),
-            status:     crate::types::ResponseStatus::Success,
+            metadata: std::collections::HashMap::new(),
+            status: crate::types::ResponseStatus::Success,
         })
     }
 
@@ -501,32 +502,32 @@ pub enum IntegrationError {
 #[derive(Debug, Clone)]
 pub struct HealthStatus {
     /// Overall health status
-    pub overall_healthy:            bool,
+    pub overall_healthy: bool,
     /// LSP bridge health
-    pub lsp_bridge_healthy:         bool,
+    pub lsp_bridge_healthy: bool,
     /// Frontend interface health
     pub frontend_interface_healthy: bool,
     /// Performance router health
     pub performance_router_healthy: bool,
     /// Metrics collector health
-    pub metrics_collector_healthy:  bool,
+    pub metrics_collector_healthy: bool,
     /// Last health check timestamp
-    pub last_check:                 chrono::DateTime<chrono::Utc>,
+    pub last_check: chrono::DateTime<chrono::Utc>,
     /// Next health check timestamp
-    pub next_check:                 chrono::DateTime<chrono::Utc>,
+    pub next_check: chrono::DateTime<chrono::Utc>,
 }
 
 impl Default for HealthStatus {
     fn default() -> Self {
         let now = chrono::Utc::now();
         Self {
-            overall_healthy:            true,
-            lsp_bridge_healthy:         true,
+            overall_healthy: true,
+            lsp_bridge_healthy: true,
             frontend_interface_healthy: true,
             performance_router_healthy: true,
-            metrics_collector_healthy:  true,
-            last_check:                 now,
-            next_check:                 now + chrono::Duration::seconds(30),
+            metrics_collector_healthy: true,
+            last_check: now,
+            next_check: now + chrono::Duration::seconds(30),
         }
     }
 }
@@ -535,13 +536,13 @@ impl Default for HealthStatus {
 #[derive(Debug, Clone)]
 pub struct LayerStatus {
     /// Current layer status
-    pub status:  IntegrationStatus,
+    pub status: IntegrationStatus,
     /// Layer uptime
-    pub uptime:  chrono::Duration,
+    pub uptime: chrono::Duration,
     /// Layer configuration
-    pub config:  IntegrationConfig,
+    pub config: IntegrationConfig,
     /// Current metrics
     pub metrics: crate::metrics::MetricsSnapshot,
     /// Health status
-    pub health:  HealthStatus,
+    pub health: HealthStatus,
 }

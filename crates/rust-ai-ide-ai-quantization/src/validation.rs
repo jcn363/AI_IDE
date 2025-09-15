@@ -9,41 +9,41 @@ use crate::IDEError;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuantizationValidationResult {
     /// Whether the quantization passed validation
-    pub passed:              bool,
+    pub passed: bool,
     /// Mean Squared Error between original and quantized
-    pub mse:                 f64,
+    pub mse: f64,
     /// Peak Signal-to-Noise Ratio
-    pub psnr:                f64,
+    pub psnr: f64,
     /// Maximum absolute error
-    pub max_error:           f64,
+    pub max_error: f64,
     /// Mean absolute error
     pub mean_absolute_error: f64,
     /// Validation score (0-100)
-    pub quality_score:       f32,
+    pub quality_score: f32,
     /// Whether quality thresholds were met
-    pub meets_threshold:     bool,
+    pub meets_threshold: bool,
 }
 
 /// Quality thresholds for quantization validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityThresholds {
     /// Maximum acceptable MSE
-    pub max_mse:                 f64,
+    pub max_mse: f64,
     /// Minimum acceptable PSNR (dB)
-    pub min_psnr:                f64,
+    pub min_psnr: f64,
     /// Maximum acceptable mean absolute error
     pub max_mean_absolute_error: f64,
     /// Minimum acceptable quality score
-    pub min_quality_score:       f32,
+    pub min_quality_score: f32,
 }
 
 impl Default for QualityThresholds {
     fn default() -> Self {
         Self {
-            max_mse:                 0.1,  // Reasonable MSE for most applications
-            min_psnr:                30.0, // 30dB PSNR minimum
+            max_mse: 0.1,                  // Reasonable MSE for most applications
+            min_psnr: 30.0,                // 30dB PSNR minimum
             max_mean_absolute_error: 0.05, // Max 5% mean absolute error
-            min_quality_score:       85.0, // Minimum 85% quality score
+            min_quality_score: 85.0,       // Minimum 85% quality score
         }
     }
 }
@@ -85,9 +85,9 @@ impl QuantizationValidator {
         let mut tensor_count = 0;
 
         for (name, original) in original_tensors {
-            let quantized = quantized_tensors
-                .get(name)
-                .ok_or_else(|| IDEError::InvalidArgument(format!("Missing quantized tensor: {}", name)))?;
+            let quantized = quantized_tensors.get(name).ok_or_else(|| {
+                IDEError::InvalidArgument(format!("Missing quantized tensor: {}", name))
+            })?;
 
             let result = self.validate_single_tensor(original, quantized).await?;
             total_mse += result.mse;
@@ -114,7 +114,8 @@ impl QuantizationValidator {
         let avg_mean_absolute_error = mean_absolute_error / tensor_count as f64;
 
         // Calculate quality score (0-100)
-        let quality_score = self.calculate_quality_score(avg_mse, avg_psnr, max_error, avg_mean_absolute_error);
+        let quality_score =
+            self.calculate_quality_score(avg_mse, avg_psnr, max_error, avg_mean_absolute_error);
 
         let meets_threshold = quality_score >= self.thresholds.min_quality_score;
 
@@ -194,7 +195,13 @@ impl QuantizationValidator {
     }
 
     /// Calculate overall quality score from metrics
-    fn calculate_quality_score(&self, mse: f64, psnr: f64, max_error: f64, mean_absolute_error: f64) -> f32 {
+    fn calculate_quality_score(
+        &self,
+        mse: f64,
+        psnr: f64,
+        max_error: f64,
+        mean_absolute_error: f64,
+    ) -> f32 {
         // Normalize each metric to 0-1 range and weight them
         let mse_score = if mse <= self.thresholds.max_mse {
             1.0 - (mse / self.thresholds.max_mse) as f32
@@ -244,25 +251,27 @@ impl QuantizationValidator {
     }
 
     /// Create recommended thresholds for different quantization strategies
-    pub fn get_recommended_thresholds(strategy: &super::quantizer::QuantizationStrategy) -> QualityThresholds {
+    pub fn get_recommended_thresholds(
+        strategy: &super::quantizer::QuantizationStrategy,
+    ) -> QualityThresholds {
         match strategy {
             super::quantizer::QuantizationStrategy::GGUF_Q4_0 => QualityThresholds {
-                max_mse:                 0.05,
-                min_psnr:                35.0,
+                max_mse: 0.05,
+                min_psnr: 35.0,
                 max_mean_absolute_error: 0.03,
-                min_quality_score:       90.0,
+                min_quality_score: 90.0,
             },
             super::quantizer::QuantizationStrategy::GGUF_Q5_0 => QualityThresholds {
-                max_mse:                 0.02,
-                min_psnr:                40.0,
+                max_mse: 0.02,
+                min_psnr: 40.0,
                 max_mean_absolute_error: 0.02,
-                min_quality_score:       95.0,
+                min_quality_score: 95.0,
             },
             super::quantizer::QuantizationStrategy::SafeTensorOptimized => QualityThresholds {
-                max_mse:                 0.001,
-                min_psnr:                50.0,
+                max_mse: 0.001,
+                min_psnr: 50.0,
                 max_mean_absolute_error: 0.005,
-                min_quality_score:       98.0,
+                min_quality_score: 98.0,
             },
         }
     }

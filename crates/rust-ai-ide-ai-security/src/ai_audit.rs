@@ -20,39 +20,39 @@ pub enum AIAuditEventType {
 /// Individual audit event
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIAuditEvent {
-    pub timestamp:     chrono::DateTime<chrono::Utc>,
-    pub event_type:    AIAuditEventType,
-    pub user_id:       Option<String>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub event_type: AIAuditEventType,
+    pub user_id: Option<String>,
     pub model_version: String,
-    pub request_id:    String,
-    pub details:       HashMap<String, serde_json::Value>,
+    pub request_id: String,
+    pub details: HashMap<String, serde_json::Value>,
 }
 
 /// Explainability report for AI decisions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExplainabilityReport {
-    pub inference_id:       String,
-    pub model:              String,
-    pub prompt:             String,
-    pub response:           String,
-    pub confidence_score:   f32,
+    pub inference_id: String,
+    pub model: String,
+    pub prompt: String,
+    pub response: String,
+    pub confidence_score: f32,
     pub feature_importance: Vec<(String, f32)>,
     pub privacy_guarantees: Vec<String>,
-    pub audit_events:       Vec<AIAuditEvent>,
-    pub created_at:         chrono::DateTime<chrono::Utc>,
+    pub audit_events: Vec<AIAuditEvent>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Main AI audit trail system
 #[derive(Debug)]
 pub struct AIAuditTrail {
-    events:  Mutex<HashMap<String, Vec<AIAuditEvent>>>,
+    events: Mutex<HashMap<String, Vec<AIAuditEvent>>>,
     reports: Mutex<HashMap<String, ExplainabilityReport>>,
 }
 
 impl AIAuditTrail {
     pub fn new() -> Result<Self> {
         Ok(Self {
-            events:  Mutex::new(HashMap::new()),
+            events: Mutex::new(HashMap::new()),
             reports: Mutex::new(HashMap::new()),
         })
     }
@@ -66,12 +66,12 @@ impl AIAuditTrail {
         let audit_id = uuid::Uuid::new_v4().to_string();
 
         let event = AIAuditEvent {
-            timestamp:     chrono::Utc::now(),
-            event_type:    AIAuditEventType::InferenceCompleted,
-            user_id:       None, // TODO: from auth
+            timestamp: chrono::Utc::now(),
+            event_type: AIAuditEventType::InferenceCompleted,
+            user_id: None, // TODO: from auth
             model_version: request.model.clone(),
-            request_id:    audit_id.clone(),
-            details:       HashMap::new(), // TODO: populate
+            request_id: audit_id.clone(),
+            details: HashMap::new(), // TODO: populate
         };
 
         let mut events = self.events.lock().await;
@@ -84,7 +84,10 @@ impl AIAuditTrail {
     }
 
     /// Generate explainability report
-    pub async fn generate_explainability_report(&self, inference_id: &str) -> Result<ExplainabilityReport> {
+    pub async fn generate_explainability_report(
+        &self,
+        inference_id: &str,
+    ) -> Result<ExplainabilityReport> {
         let events = self.events.lock().await;
         let audit_events = events.get(inference_id).cloned().unwrap_or_default();
 

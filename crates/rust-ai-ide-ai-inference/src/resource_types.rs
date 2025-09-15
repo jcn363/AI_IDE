@@ -34,9 +34,9 @@ pub enum ModelType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceUsage {
     pub memory_usage_bytes: u64,
-    pub last_accessed:      DateTime<Utc>,
-    pub access_count:       u64,
-    pub load_timestamp:     DateTime<Utc>,
+    pub last_accessed: DateTime<Utc>,
+    pub access_count: u64,
+    pub load_timestamp: DateTime<Utc>,
 }
 
 /// Unloading policy configuration

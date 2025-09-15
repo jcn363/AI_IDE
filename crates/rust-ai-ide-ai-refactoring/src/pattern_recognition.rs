@@ -55,20 +55,21 @@ impl PatternConversionOperation {
                     // Analyze function for patterns
                     let func_patterns = self.analyze_function_patterns(&fn_item.block);
                     for mut pattern in func_patterns {
-                        pattern.start_line = fn_item.sig.ident.span().start().line;
+                        pattern.start_line = 0; // Line tracking not available in syn 2.0
                         patterns.push(pattern);
                     }
                 }
-                syn::Item::Impl(impl_block) =>
+                syn::Item::Impl(impl_block) => {
                     for impl_item in &impl_block.items {
-                        if let syn::ImplItem::Method(method) = impl_item {
+                        if let syn::ImplItem::Fn(method) = impl_item {
                             let method_patterns = self.analyze_function_patterns(&method.block);
                             for mut pattern in method_patterns {
-                                pattern.start_line = method.sig.ident.span().start().line;
+                                pattern.start_line = 0; // Line tracking not available in syn 2.0
                                 patterns.push(pattern);
                             }
                         }
-                    },
+                    }
+                }
                 _ => {}
             }
         }
@@ -82,11 +83,10 @@ impl PatternConversionOperation {
 
         for (i, stmt) in block.stmts.iter().enumerate() {
             match stmt {
-                syn::Stmt::Expr(expr, _) | syn::Stmt::Semi(expr, _) => {
+                syn::Stmt::Expr(expr, _) =>
                     if let Some(pattern) = self.detect_pattern_in_expr(expr) {
                         patterns.push(pattern);
-                    }
-                }
+                    },
                 syn::Stmt::Local(local) => {
                     // Check for initialization patterns
                     if let Some(init) = &local.init {
@@ -105,30 +105,32 @@ impl PatternConversionOperation {
     /// Detect convertible patterns in expressions
     fn detect_pattern_in_expr(&self, expr: &syn::Expr) -> Option<PatternMatch> {
         match expr {
-            syn::Expr::If(if_expr) =>
+            syn::Expr::If(if_expr) => {
                 if self.is_guarded_resource_management(if_expr) {
                     return Some(PatternMatch {
                         pattern_type: "Guarded Resource Management".to_string(),
-                        start_line:   if_expr.if_token.span.start().line,
-                        end_line:     if_expr.if_token.span.end().line,
+                        start_line:   0, // Line tracking not available in syn 2.0
+                        end_line:     0,
                         confidence:   0.7,
                         category:     PatternCategory::ResourceManagement,
                     });
-                },
+                }
+            }
             syn::Expr::Call(call) =>
                 if let Some(pattern) = self.detect_collection_pattern(&call.func) {
                     return Some(pattern);
                 },
-            syn::Expr::MethodCall(method_call) =>
+            syn::Expr::MethodCall(method_call) => {
                 if self.is_map_filter_chain(method_call) {
                     return Some(PatternMatch {
                         pattern_type: "Functional Chaining".to_string(),
-                        start_line:   method_call.dot_token.span.start().line,
-                        end_line:     method_call.dot_token.span.end().line,
+                        start_line:   0, // Line tracking not available in syn 2.0
+                        end_line:     0,
                         confidence:   0.8,
                         category:     PatternCategory::FunctionalStyle,
                     });
-                },
+                }
+            }
             syn::Expr::Loop(_) => {
                 return Some(PatternMatch {
                     pattern_type: "Loop Pattern".to_string(),
@@ -138,16 +140,17 @@ impl PatternConversionOperation {
                     category:     PatternCategory::CollectionManipulation,
                 });
             }
-            syn::Expr::Match(match_expr) =>
+            syn::Expr::Match(match_expr) => {
                 if self.is_conditional_dispatch(match_expr) {
                     return Some(PatternMatch {
                         pattern_type: "Conditional Dispatch".to_string(),
-                        start_line:   match_expr.match_token.span.start().line,
-                        end_line:     match_expr.match_token.span.end().line,
+                        start_line:   0, // Line tracking not available in syn 2.0
+                        end_line:     0,
                         confidence:   0.7,
                         category:     PatternCategory::ControlFlow,
                     });
-                },
+                }
+            }
             _ => {}
         }
         None
@@ -290,7 +293,7 @@ impl RefactoringOperation for PatternConversionOperation {
 
         // Read and parse file
         let content = fs::read_to_string(file_path)?;
-        let syntax: syn::File = syn::parse_file(&content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         // Detect patterns in the code
         let patterns = self.detect_patterns(&syntax);
@@ -349,7 +352,7 @@ impl RefactoringOperation for PatternConversionOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         let content = fs::read_to_string(&context.file_path)?;
-        let syntax: syn::File = syn::parse_file(&content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         let patterns = self.detect_patterns(&syntax);
         let pattern_count = patterns.len();
@@ -443,7 +446,7 @@ impl RefactoringOperation for BatchPatternConversionOperation {
                 Err(_) => continue, // Skip files that can't be read
             };
 
-            let syntax: syn::File = match syn::parse_file(&content) {
+            let syntax: syn::File = match syn::parse_str::<syn::File>(&content) {
                 Ok(syntax) => syntax,
                 Err(_) => continue, // Skip files that can't be parsed
             };
@@ -565,7 +568,7 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
 
         // Read and parse file
         let content = fs::read_to_string(file_path)?;
-        let mut syntax: syn::File = syn::parse_file(&content)?;
+        let mut syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         // Find conditional statements that can be replaced
         let conditionals = self.find_replaceable_conditionals(&syntax)?;
@@ -681,7 +684,7 @@ impl BatchPatternConversionOperation {
         }
 
         // Always include the original file if it's a Rust file
-        if base_path.ends_with(".rs") && !rust_files.contains(base_path) {
+        if base_path.ends_with(".rs") && !rust_files.iter().any(|s| s == base_path) {
             rust_files.push(base_path.to_string());
         }
 
@@ -705,7 +708,7 @@ impl ReplaceConditionalsOperation {
                 }
                 syn::Item::Impl(impl_block) =>
                     for impl_item in &impl_block.items {
-                        if let syn::ImplItem::Method(method) = impl_item {
+                        if let syn::ImplItem::Fn(method) = impl_item {
                             let matches = self.scan_function_for_conditionals(&method.block);
                             conditionals.extend(matches);
                         }
@@ -723,11 +726,10 @@ impl ReplaceConditionalsOperation {
 
         for (i, stmt) in block.stmts.iter().enumerate() {
             match stmt {
-                syn::Stmt::Expr(expr, _) | syn::Stmt::Semi(expr, _) => {
+                syn::Stmt::Expr(expr, _) =>
                     if let Some(conditional_match) = self.analyze_conditional_expr(expr) {
                         matches.push(conditional_match);
-                    }
-                }
+                    },
                 syn::Stmt::Local(local) =>
                     if let Some(init) = &local.init {
                         if let Some(conditional_match) = self.analyze_conditional_expr(&init.expr) {

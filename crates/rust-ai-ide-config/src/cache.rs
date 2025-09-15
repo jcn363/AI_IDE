@@ -238,9 +238,10 @@ impl ConfigCache {
     where
         C: serde::Serialize,
     {
-        use sha256::digest;
+        use sha2::{Digest, Sha256};
         let json = serde_json::to_string(config).unwrap_or_default();
-        digest(json)
+        let hash = Sha256::digest(json.as_bytes());
+        format!("{:x}", hash)
     }
 }
 

@@ -26,42 +26,42 @@ pub type EnhancedCollaborationState = Arc<RwLock<Option<EnhancedCollaborationSer
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoBuildRequest {
     pub manifest_path: Option<PathBuf>,
-    pub features:      Option<Vec<String>>,
-    pub release:       bool,
+    pub features: Option<Vec<String>>,
+    pub release: bool,
 }
 
 /// Cargo test request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoTestRequest {
     pub manifest_path: Option<PathBuf>,
-    pub filter:        Option<String>,
-    pub release:       bool,
+    pub filter: Option<String>,
+    pub release: bool,
 }
 
 /// Build result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildResult {
-    pub success:  bool,
-    pub output:   String,
+    pub success: bool,
+    pub output: String,
     pub warnings: Vec<String>,
-    pub errors:   Vec<String>,
+    pub errors: Vec<String>,
 }
 
 /// Test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestResult {
-    pub passed:  u32,
-    pub failed:  u32,
+    pub passed: u32,
+    pub failed: u32,
     pub ignored: u32,
-    pub output:  String,
+    pub output: String,
 }
 
 /// Collaboration cargo session request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollabCargoSessionRequest {
-    pub session_id:    String,
+    pub session_id: String,
     pub manifest_path: Option<PathBuf>,
-    pub participants:  Vec<String>,
+    pub participants: Vec<String>,
 }
 
 /// Shared dependency management request
@@ -69,25 +69,25 @@ pub struct CollabCargoSessionRequest {
 pub struct SharedDependencyRequest {
     pub session_id: String,
     pub crate_name: String,
-    pub version:    String,
-    pub features:   Option<Vec<String>>,
+    pub version: String,
+    pub features: Option<Vec<String>>,
 }
 
 /// Collaborative build request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollabBuildRequest {
-    pub session_id:    String,
-    pub build_type:    String, // "build", "test", "check"
+    pub session_id: String,
+    pub build_type: String, // "build", "test", "check"
     pub manifest_path: Option<PathBuf>,
-    pub features:      Option<Vec<String>>,
+    pub features: Option<Vec<String>>,
 }
 
 /// Build session status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildSessionStatus {
-    pub session_id:          String,
-    pub active_builds:       Vec<String>,
-    pub completed_builds:    Vec<String>,
+    pub session_id: String,
+    pub active_builds: Vec<String>,
+    pub completed_builds: Vec<String>,
     pub shared_dependencies: HashMap<String, String>,
 }
 
@@ -352,10 +352,10 @@ pub async fn cargo_build(request: CargoBuildRequest) -> Result<BuildResult, Stri
 
     // Placeholder implementation - TODO: Implement actual Cargo build
     Ok(BuildResult {
-        success:  true,
-        output:   "Build completed successfully".to_string(),
+        success: true,
+        output: "Build completed successfully".to_string(),
         warnings: vec![],
-        errors:   vec![],
+        errors: vec![],
     })
 }
 
@@ -366,10 +366,10 @@ pub async fn cargo_test(request: CargoTestRequest) -> Result<TestResult, String>
 
     // Placeholder implementation - TODO: Implement actual Cargo testing
     Ok(TestResult {
-        passed:  42,
-        failed:  0,
+        passed: 42,
+        failed: 0,
         ignored: 2,
-        output:  "All tests passed".to_string(),
+        output: "All tests passed".to_string(),
     })
 }
 
@@ -380,9 +380,9 @@ pub async fn cargo_metadata(manifest_path: Option<String>) -> Result<CargoMetada
 
     // Placeholder - TODO: Implement metadata retrieval
     Ok(CargoMetadata {
-        workspace_root:   PathBuf::from("/tmp/placeholder"),
+        workspace_root: PathBuf::from("/tmp/placeholder"),
         target_directory: PathBuf::from("/tmp/target"),
-        packages:         vec![],
+        packages: vec![],
     })
 }
 
@@ -397,7 +397,9 @@ pub async fn cargo_check(manifest_path: Option<String>) -> Result<String, String
 
 /// Legacy cargo dependencies handler (non-collaborative)
 #[tauri::command]
-pub async fn cargo_dependencies(manifest_path: Option<String>) -> Result<serde_json::Value, String> {
+pub async fn cargo_dependencies(
+    manifest_path: Option<String>,
+) -> Result<serde_json::Value, String> {
     log::info!("Getting dependency graph for {:?}", manifest_path);
 
     // Placeholder dependency graph
@@ -417,7 +419,7 @@ pub fn init_cargo_handlers() -> Result<(), String> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollabSessionJoinRequest {
-    pub session_id:     String,
+    pub session_id: String,
     pub participant_id: String,
 }
 
@@ -435,5 +437,5 @@ pub struct SessionRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildResultShareRequest {
     pub session_id: String,
-    pub build_id:   String,
+    pub build_id: String,
 }

@@ -14,36 +14,36 @@ use crate::OptimizationSuggestion;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CrateMetrics {
     /// Name of the crate
-    pub name:                String,
+    pub name: String,
     /// Version of the crate
-    pub version:             String,
+    pub version: String,
     /// Build time for this crate
-    pub build_time:          Duration,
+    pub build_time: Duration,
     /// Whether this is a workspace member
     pub is_workspace_member: bool,
     /// Dependencies of this crate
-    pub dependencies:        Vec<String>,
+    pub dependencies: Vec<String>,
     /// Time spent in code generation
-    pub codegen_time:        Duration,
+    pub codegen_time: Duration,
     /// Number of codegen units used
-    pub codegen_units:       usize,
+    pub codegen_units: usize,
     /// Whether incremental compilation is enabled
-    pub incremental:         bool,
+    pub incremental: bool,
     /// Features enabled for this crate
-    pub features:            Vec<String>,
+    pub features: Vec<String>,
 }
 
 /// Performance metrics for a build
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BuildMetrics {
     /// Total build time
-    pub total_time:   Duration,
+    pub total_time: Duration,
     /// Time spent in each compilation unit
-    pub crates:       HashMap<String, CrateMetrics>,
+    pub crates: HashMap<String, CrateMetrics>,
     /// Dependencies and their build times
     pub dependencies: HashMap<String, Duration>,
     /// Feature flags used during the build
-    pub features:     HashMap<String, Vec<String>>,
+    pub features: HashMap<String, Vec<String>>,
 }
 
 impl BuildMetrics {
@@ -87,9 +87,9 @@ pub struct BuildMetricsCollector<'a> {
     /// Path to the Cargo project
     project_path: &'a Path,
     /// Whether to build in release mode
-    release:      bool,
+    release: bool,
     /// Whether to enable incremental compilation
-    incremental:  bool,
+    incremental: bool,
 }
 
 impl<'a> BuildMetricsCollector<'a> {
@@ -195,7 +195,8 @@ impl<'a> BuildMetricsCollector<'a> {
                 println!("--- Message #{} ---", parsed_count);
                 println!(
                     "Full message: {}",
-                    serde_json::to_string_pretty(&value).unwrap_or_else(|_| "[Invalid JSON]".to_string())
+                    serde_json::to_string_pretty(&value)
+                        .unwrap_or_else(|_| "[Invalid JSON]".to_string())
                 );
                 if let Some(reason) = value.get("reason").and_then(|r| r.as_str()) {
                     println!("Reason: {}", reason);
@@ -231,7 +232,8 @@ impl<'a> BuildMetricsCollector<'a> {
                             let codegen_units = profile
                                 .get("codegen_units")
                                 .and_then(|u| u.as_u64())
-                                .unwrap_or(16) as usize;
+                                .unwrap_or(16)
+                                as usize;
 
                             let incremental = profile
                                 .get("incremental")
@@ -265,19 +267,20 @@ impl<'a> BuildMetricsCollector<'a> {
                             features.insert(crate_name.clone(), crate_features.clone());
 
                             // Update or create crate metrics
-                            let entry = crates
-                                .entry(crate_name.clone())
-                                .or_insert_with(|| CrateMetrics {
-                                    name: crate_name.clone(),
-                                    version: String::new(),
-                                    build_time: Duration::default(),
-                                    is_workspace_member: false,
-                                    dependencies: Vec::new(),
-                                    codegen_time: Duration::default(),
-                                    codegen_units,
-                                    incremental,
-                                    features: Vec::new(),
-                                });
+                            let entry =
+                                crates
+                                    .entry(crate_name.clone())
+                                    .or_insert_with(|| CrateMetrics {
+                                        name: crate_name.clone(),
+                                        version: String::new(),
+                                        build_time: Duration::default(),
+                                        is_workspace_member: false,
+                                        dependencies: Vec::new(),
+                                        codegen_time: Duration::default(),
+                                        codegen_units,
+                                        incremental,
+                                        features: Vec::new(),
+                                    });
 
                             // Update the entry with build info
                             entry.dependencies = deps_list.clone();
@@ -304,12 +307,15 @@ impl<'a> BuildMetricsCollector<'a> {
                             println!("Build script executed - {}: {:.2?}", name, duration);
                         }
                     }
-                    "build-finished" =>
+                    "build-finished" => {
                         if let Some(success) = value.get("success").and_then(|s| s.as_bool()) {
                             if !success {
-                                return Err(anyhow::anyhow!("Build completed but was not successful"));
+                                return Err(anyhow::anyhow!(
+                                    "Build completed but was not successful"
+                                ));
                             }
-                        },
+                        }
+                    }
                     _ => {}
                 }
             }

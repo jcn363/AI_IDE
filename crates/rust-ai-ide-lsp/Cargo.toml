@@ -16,8 +16,8 @@ lsp-types = { workspace = true, features = ["proposed"] }
 async-trait = { workspace = true }
 lsp-server = { workspace = true }
 tower-lsp = { workspace = true }
-tokio-tungstenite = { version = "0.27.0", features = ["native-tls"] }
-tungstenite = { version = "0.27.0", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.27.0", default-features = false, features = ["rustls-tls-webpki-roots"] }
+tungstenite = { version = "0.27.0", default-features = false, features = ["rustls-tls-webpki-roots"] }
 futures-util = { workspace = true }
 url = { workspace = true, features = ["serde"] }
 serde_repr = { workspace = true }

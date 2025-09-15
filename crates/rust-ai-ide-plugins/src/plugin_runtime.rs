@@ -11,12 +11,12 @@ use wasmtime::{Engine, Instance, Memory, Module, Store};
 
 /// Plugin runtime for secure execution of IDE extensions
 pub struct PluginRuntime {
-    pub(crate) engine:             Engine,
-    pub(crate) loaded_plugins:     Arc<RwLock<HashMap<String, PluginInstance>>>,
+    pub(crate) engine: Engine,
+    pub(crate) loaded_plugins: Arc<RwLock<HashMap<String, PluginInstance>>>,
     pub(crate) plugin_permissions: Arc<RwLock<HashMap<String, PluginPermissions>>>,
     pub(crate) execution_contexts: Arc<Mutex<HashMap<String, ExecutionContext>>>,
-    pub(crate) plugin_scheduler:   Arc<PluginScheduler>,
-    pub(crate) plugin_monitor:     Arc<PluginMonitor>,
+    pub(crate) plugin_scheduler: Arc<PluginScheduler>,
+    pub(crate) plugin_monitor: Arc<PluginMonitor>,
 }
 
 impl PluginRuntime {
@@ -39,7 +39,11 @@ impl PluginRuntime {
         }
     }
 
-    pub async fn load_plugin(&self, plugin_path: &str, permissions: PluginPermissions) -> Result<String, IDEError> {
+    pub async fn load_plugin(
+        &self,
+        plugin_path: &str,
+        permissions: PluginPermissions,
+    ) -> Result<String, IDEError> {
         let plugin_id = uuid::Uuid::new_v4().to_string();
 
         // Validate plugin path
@@ -48,11 +52,15 @@ impl PluginRuntime {
         // Load WebAssembly module
         let module = spawn_blocking(move || {
             std::fs::read(plugin_path)
-                .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to read plugin file").with_source(e))
+                .map_err(|e| {
+                    IDEError::new(IDEErrorKind::FileOperation, "Failed to read plugin file")
+                        .with_source(e)
+                })
                 .and_then(|bytes| {
                     //@ Validate WASM module
                     wasmtime::Module::validate(&Engine::default(), &bytes).map_err(|e| {
-                        IDEError::new(IDEErrorKind::ValidationError, "Invalid WebAssembly module").with_source(e)
+                        IDEError::new(IDEErrorKind::ValidationError, "Invalid WebAssembly module")
+                            .with_source(e)
                     })?;
                     Ok(bytes)
                 })
@@ -69,12 +77,12 @@ impl PluginRuntime {
 
         // Create plugin instance
         let plugin_instance = PluginInstance {
-            id:                plugin_id.clone(),
-            module:            wasm_module,
-            permissions:       permissions.clone(),
-            memory_limit:      permissions.memory_limit,
+            id: plugin_id.clone(),
+            module: wasm_module,
+            permissions: permissions.clone(),
+            memory_limit: permissions.memory_limit,
             execution_timeout: permissions.execution_timeout,
-            loaded_at:         std::time::SystemTime::now(),
+            loaded_at: std::time::SystemTime::now(),
         };
 
         // Store plugin
@@ -91,10 +99,10 @@ impl PluginRuntime {
 
         // Initialize execution context
         let context = ExecutionContext {
-            plugin_id:       plugin_id.clone(),
-            memory:          0,
+            plugin_id: plugin_id.clone(),
+            memory: 0,
             execution_count: 0,
-            last_execution:  std::time::SystemTime::now(),
+            last_execution: std::time::SystemTime::now(),
         };
 
         {
@@ -184,26 +192,37 @@ impl PluginRuntime {
         context: &mut ExecutionContext,
     ) -> Result<Vec<u8>, IDEError> {
         // Create WASM store
-        let mut store = Store::new(&self.engine, WasmtimeRuntimeData {
-            input:  input.to_vec(),
-            output: Vec::new(),
-            memory: Memory::new(&mut store, wasmtime::MemoryType::new(1, Some(2)))
-                .map_err(|e| IDEError::new(IDEErrorKind::MemoryError, "").with_source(e))?,
-        });
+        let mut store = Store::new(
+            &self.engine,
+            WasmtimeRuntimeData {
+                input: input.to_vec(),
+                output: Vec::new(),
+                memory: Memory::new(&mut store, wasmtime::MemoryType::new(1, Some(2)))
+                    .map_err(|e| IDEError::new(IDEErrorKind::MemoryError, "").with_source(e))?,
+            },
+        );
 
         // Instantiate module
-        let instance = Instance::new(&mut store, &plugin_instance.module, &[])
-            .map_err(|e| IDEError::new(IDEErrorKind::ExecutionError, "Failed to instantiate plugin").with_source(e))?;
+        let instance = Instance::new(&mut store, &plugin_instance.module, &[]).map_err(|e| {
+            IDEError::new(IDEErrorKind::ExecutionError, "Failed to instantiate plugin")
+                .with_source(e)
+        })?;
 
         // Call main function
         let main_fn = instance
             .get_typed_func::<(u64, u64), u64>(&mut store, "_plugin_main")
-            .map_err(|e| IDEError::new(IDEErrorKind::ExecutionError, "Plugin missing main function").with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::ExecutionError, "Plugin missing main function")
+                    .with_source(e)
+            })?;
 
         let (input_ptr, input_len) = self.allocate_input(&store, input)?;
         let result_ptr = main_fn
             .call(&mut store, (input_ptr, input_len as u64))
-            .map_err(|e| IDEError::new(IDEErrorKind::ExecutionError, "Plugin execution failed").with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::ExecutionError, "Plugin execution failed")
+                    .with_source(e)
+            })?;
 
         // Extract output
         let output = self.extract_output(&store, result_ptr)?;
@@ -211,13 +230,21 @@ impl PluginRuntime {
         Ok(output)
     }
 
-    fn allocate_input(&self, _store: &Store<WasmtimeRuntimeData>, input: &[u8]) -> Result<(u64, u64), IDEError> {
+    fn allocate_input(
+        &self,
+        _store: &Store<WasmtimeRuntimeData>,
+        input: &[u8],
+    ) -> Result<(u64, u64), IDEError> {
         // Placeholder for WASM memory allocation
         // In a real implementation, this would allocate WASM memory and copy input
         Ok((0, input.len() as u64))
     }
 
-    fn extract_output(&self, _store: &Store<WasmtimeRuntimeData>, result_ptr: u64) -> Result<Vec<u8>, IDEError> {
+    fn extract_output(
+        &self,
+        _store: &Store<WasmtimeRuntimeData>,
+        result_ptr: u64,
+    ) -> Result<Vec<u8>, IDEError> {
         // Placeholder for extracting output from WASM memory
         Ok(vec![])
     }
@@ -265,7 +292,11 @@ impl PluginRuntime {
         Ok(())
     }
 
-    async fn check_permissions(&self, plugin: &PluginInstance, operation: &str) -> Result<(), IDEError> {
+    async fn check_permissions(
+        &self,
+        plugin: &PluginInstance,
+        operation: &str,
+    ) -> Result<(), IDEError> {
         let perms = self.plugin_permissions.read().await;
         let permissions = perms.get(&plugin.id).ok_or_else(|| {
             IDEError::new(
@@ -275,27 +306,30 @@ impl PluginRuntime {
         })?;
 
         match operation {
-            "execute" =>
+            "execute" => {
                 if !permissions.can_execute {
                     return Err(IDEError::new(
                         IDEErrorKind::SecurityViolation,
                         "Plugin does not have execution permission",
                     ));
-                },
-            "filesystem" =>
+                }
+            }
+            "filesystem" => {
                 if !permissions.can_access_filesystem {
                     return Err(IDEError::new(
                         IDEErrorKind::SecurityViolation,
                         "Plugin does not have filesystem access permission",
                     ));
-                },
-            "network" =>
+                }
+            }
+            "network" => {
                 if !permissions.can_make_network_requests {
                     return Err(IDEError::new(
                         IDEErrorKind::SecurityViolation,
                         "Plugin does not have network access permission",
                     ));
-                },
+                }
+            }
             _ => {}
         }
 
@@ -311,18 +345,18 @@ impl PluginRuntime {
             .map(|id| {
                 let status = if let Some(context) = contexts.get(id) {
                     PluginStatus {
-                        id:             id.clone(),
-                        loaded:         true,
-                        executing:      false, // Could be improved to track current execution
-                        memory_usage:   context.memory,
+                        id: id.clone(),
+                        loaded: true,
+                        executing: false, // Could be improved to track current execution
+                        memory_usage: context.memory,
                         last_execution: context.last_execution,
                     }
                 } else {
                     PluginStatus {
-                        id:             id.clone(),
-                        loaded:         true,
-                        executing:      false,
-                        memory_usage:   0,
+                        id: id.clone(),
+                        loaded: true,
+                        executing: false,
+                        memory_usage: 0,
                         last_execution: std::time::SystemTime::UNIX_EPOCH,
                     }
                 };
@@ -339,51 +373,55 @@ impl PluginRuntime {
 /// Plugin instance representing a loaded WebAssembly module
 #[derive(Clone)]
 pub struct PluginInstance {
-    pub id:                String,
-    pub module:            Module,
-    pub permissions:       PluginPermissions,
-    pub memory_limit:      usize,
+    pub id: String,
+    pub module: Module,
+    pub permissions: PluginPermissions,
+    pub memory_limit: usize,
     pub execution_timeout: Duration,
-    pub loaded_at:         std::time::SystemTime,
+    pub loaded_at: std::time::SystemTime,
 }
 
 /// Plugin permissions configuration
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginPermissions {
-    pub can_execute:               bool,
-    pub can_access_filesystem:     bool,
+    pub can_execute: bool,
+    pub can_access_filesystem: bool,
     pub can_make_network_requests: bool,
-    pub can_interact_with_ui:      bool,
-    pub memory_limit:              usize,
-    pub execution_timeout:         Duration,
-    pub allowed_domains:           Vec<String>,
-    pub allowed_file_patterns:     Vec<String>,
+    pub can_interact_with_ui: bool,
+    pub memory_limit: usize,
+    pub execution_timeout: Duration,
+    pub allowed_domains: Vec<String>,
+    pub allowed_file_patterns: Vec<String>,
 }
 
 /// Execution context tracking plugin state
 #[derive(Clone, Debug)]
 pub struct ExecutionContext {
-    pub plugin_id:       String,
-    pub memory:          usize,
+    pub plugin_id: String,
+    pub memory: usize,
     pub execution_count: u64,
-    pub last_execution:  std::time::SystemTime,
+    pub last_execution: std::time::SystemTime,
 }
 
 /// Plugin scheduler for managing plugin execution
 pub struct PluginScheduler {
-    pub(crate) execution_queue:   Arc<Mutex<Vec<ExecutionRequest>>>,
+    pub(crate) execution_queue: Arc<Mutex<Vec<ExecutionRequest>>>,
     pub(crate) active_executions: Arc<RwLock<HashSet<String>>>,
 }
 
 impl PluginScheduler {
     pub fn new() -> Self {
         Self {
-            execution_queue:   Arc::new(Mutex::new(Vec::new())),
+            execution_queue: Arc::new(Mutex::new(Vec::new())),
             active_executions: Arc::new(RwLock::new(HashSet::new())),
         }
     }
 
-    pub async fn schedule_execution(&self, plugin_id: String, priority: ExecutionPriority) -> Result<String, IDEError> {
+    pub async fn schedule_execution(
+        &self,
+        plugin_id: String,
+        priority: ExecutionPriority,
+    ) -> Result<String, IDEError> {
         let execution_token = uuid::Uuid::new_v4().to_string();
 
         let request = ExecutionRequest {
@@ -421,22 +459,22 @@ impl PluginScheduler {
 
 /// Plugin monitor for tracking plugin metrics and health
 pub struct PluginMonitor {
-    pub(crate) load_events:      Arc<Mutex<Vec<PluginLoadEvent>>>,
+    pub(crate) load_events: Arc<Mutex<Vec<PluginLoadEvent>>>,
     pub(crate) execution_events: Arc<Mutex<Vec<PluginExecutionEvent>>>,
 }
 
 impl PluginMonitor {
     pub fn new() -> Self {
         Self {
-            load_events:      Arc::new(Mutex::new(Vec::new())),
+            load_events: Arc::new(Mutex::new(Vec::new())),
             execution_events: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
     pub async fn record_plugin_load(&self, plugin_id: &str) {
         let event = PluginLoadEvent {
-            plugin_id:  plugin_id.to_string(),
-            timestamp:  std::time::SystemTime::now(),
+            plugin_id: plugin_id.to_string(),
+            timestamp: std::time::SystemTime::now(),
             event_type: LoadEventType::Loaded,
         };
 
@@ -446,8 +484,8 @@ impl PluginMonitor {
 
     pub async fn record_plugin_unload(&self, plugin_id: &str) {
         let event = PluginLoadEvent {
-            plugin_id:  plugin_id.to_string(),
-            timestamp:  std::time::SystemTime::now(),
+            plugin_id: plugin_id.to_string(),
+            timestamp: std::time::SystemTime::now(),
             event_type: LoadEventType::Unloaded,
         };
 
@@ -517,34 +555,34 @@ impl PluginMonitor {
 
 #[derive(Clone)]
 pub struct WasmtimeRuntimeData {
-    pub input:  Vec<u8>,
+    pub input: Vec<u8>,
     pub output: Vec<u8>,
     pub memory: Memory,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginStatus {
-    pub id:             String,
-    pub loaded:         bool,
-    pub executing:      bool,
-    pub memory_usage:   usize,
+    pub id: String,
+    pub loaded: bool,
+    pub executing: bool,
+    pub memory_usage: usize,
     pub last_execution: std::time::SystemTime,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PluginMetrics {
-    pub plugin_id:             String,
-    pub load_count:            usize,
-    pub total_executions:      usize,
+    pub plugin_id: String,
+    pub load_count: usize,
+    pub total_executions: usize,
     pub successful_executions: usize,
-    pub avg_execution_time:    Duration,
-    pub error_rate:            f64,
+    pub avg_execution_time: Duration,
+    pub error_rate: f64,
 }
 
 #[derive(Clone, Debug)]
 pub struct PluginLoadEvent {
-    pub plugin_id:  String,
-    pub timestamp:  std::time::SystemTime,
+    pub plugin_id: String,
+    pub timestamp: std::time::SystemTime,
     pub event_type: LoadEventType,
 }
 
@@ -556,18 +594,18 @@ pub enum LoadEventType {
 
 #[derive(Clone, Debug)]
 pub struct PluginExecutionEvent {
-    pub plugin_id:      String,
-    pub timestamp:      std::time::SystemTime,
+    pub plugin_id: String,
+    pub timestamp: std::time::SystemTime,
     pub execution_time: Duration,
-    pub output_size:    usize,
-    pub success:        bool,
+    pub output_size: usize,
+    pub success: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct ExecutionRequest {
-    pub token:        String,
-    pub plugin_id:    String,
-    pub priority:     ExecutionPriority,
+    pub token: String,
+    pub plugin_id: String,
+    pub priority: ExecutionPriority,
     pub scheduled_at: std::time::SystemTime,
 }
 

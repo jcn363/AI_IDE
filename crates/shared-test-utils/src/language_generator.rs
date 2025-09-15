@@ -84,7 +84,11 @@ pub trait LanguageTestGenerator: Send + Sync {
     async fn validate_code(&self, code: &str) -> Result<(), TestError>;
 
     /// Estimate test coverage for generated tests
-    async fn estimate_coverage(&self, tests: &[GeneratedTest], code: &str) -> Result<Vec<TestCoverage>, TestError>;
+    async fn estimate_coverage(
+        &self,
+        tests: &[GeneratedTest],
+        code: &str,
+    ) -> Result<Vec<TestCoverage>, TestError>;
 }
 
 /// Test framework enumeration
@@ -104,13 +108,13 @@ pub enum TestFramework {
 /// Test template set for a framework
 #[derive(Debug, Clone)]
 pub struct TestTemplateSet {
-    pub unit_test_template:        String,
+    pub unit_test_template: String,
     pub integration_test_template: String,
-    pub property_test_template:    Option<String>,
-    pub benchmark_template:        Option<String>,
-    pub assert_true_template:      String,
-    pub assert_equal_template:     String,
-    pub assert_not_null_template:  String,
+    pub property_test_template: Option<String>,
+    pub benchmark_template: Option<String>,
+    pub assert_true_template: String,
+    pub assert_equal_template: String,
+    pub assert_not_null_template: String,
 }
 
 /// Factory for creating language generators

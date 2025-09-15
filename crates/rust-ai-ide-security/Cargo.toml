@@ -11,50 +11,88 @@ publish = { workspace = true }
 repository = { workspace = true }
 
 [dependencies]
+# Core dependencies
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+chrono = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true, features = ["full", "process"] }
 async-trait = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.143"
-thiserror = "2.0.16"
-anyhow = "1.0.99"
-tracing = "0.1.41"
-tracing-subscriber = { workspace = true }
+futures = { workspace = true }
 
-# Pattern matching and file operations
+# Logging and tracing
+tracing = { version = "0.1.41", features = ["log"] }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+log = { workspace = true }
+
+# Security and utilities
+governor = { workspace = true, features = ["std"] }
+lazy_static = { workspace = true, features = ["spin_no_std"] }
 regex = { workspace = true }
-walkdir = { workspace = true }
 
-# Security-specific dependencies
-jsonwebtoken = "9.3.1"
-bcrypt = "0.17.1"
+# Cryptography and security
+jsonwebtoken = { workspace = true, default-features = false, features = [
+  "pem",
+  "use_pem",
+] }
+url = { workspace = true, features = ["serde"] }
+bcrypt = { workspace = true }
 rand = { workspace = true }
-sha2 = "0.10.9"
-aes-gcm = "0.10.3"
-chacha20poly1305 = "0.10.1"
-generic-array = "1.2.0"
-argon2 = "0.5.3"
-rsa = "0.10.0-rc.6"
-base64 = "0.22.1"
-uuid = { version = "1.18.1", features = ["v4", "serde"] }
-chrono = { version = "0.4.41", features = ["serde"] }
+sha2 = { workspace = true }
+aes-gcm = { workspace = true }
+rsa = { workspace = true, features = ["pem", "std"] }
+webauthn-rs = { version = "0.5.2", features = [
+  "danger-allow-state-serialisation",
+], optional = true }
+webauthn-rs-proto = { version = "0.5.2", optional = true }
+webauthn-rs-core = { version = "0.5.2", optional = true }
+base64 = { workspace = true }
+uuid = { workspace = true, features = ["v4", "serde"] }
 
-# WebAuthn dependencies
-webauthn-rs = { version = "0.5.0", features = ["danger-insecure-allow-software-keys", "danger-allow-state-serialisation"] }
+# CLI and file operations
+clap = { workspace = true, features = ["derive", "env"] }
+walkdir = { workspace = true }
+ignore = { workspace = true }
+path-absolutize = { workspace = true }
+
+# Code analysis and scanning
+syn = { workspace = true, features = ["full", "visit", "extra-traits"] }
+quote = { workspace = true }
+proc-macro2 = { workspace = true, features = ["span-locations"] }
+cargo_metadata = { workspace = true }
+
+# Report generation and serialization
+quick-xml = { workspace = true, features = ["serialize"] }
+xml-rs = { workspace = true }
 
 # HTTP client for external services
-reqwest = { version = "0.12.23", features = ["json", "rustls-tls"] }
-
-# Database for audit logging (temporarily disabled due to SQLite linking conflicts)
-# To enable, uncomment and resolve dependency conflicts with rusqlite
-# sqlx = { version = "0.7", features = ["sqlite", "runtime-tokio", "chrono"], optional = true, default-features = false }
+reqwest = { workspace = true, features = ["json", "rustls-tls"] }
 
 # Integration with other crates
-rust-ai-ide-types = { path = "../rust-ai-ide-types" }
-rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-types = { workspace = true }
+rust-ai-ide-errors = { workspace = true }
+
+[dev-dependencies]
+# Testing utilities
+mockall = { workspace = true , features = ["nightly"] }
+tokio-test = { workspace = true }
+rstest = { workspace = true }
+log = { workspace = true }
+tempfile = { workspace = true }
+hex = { workspace = true }
+chacha20poly1305 = { workspace = true }
+generic-array = { workspace = true }
+argon2 = { workspace = true }
+base64 = { workspace = true }
+cargo-fuzz = { workspace = true }
 
 [features]
-default = ["std"]
-std = []
+default = ["webauthn"]
+webauthn = ["dep:webauthn-rs", "dep:webauthn-rs-proto", "dep:webauthn-rs-core"]
 
 # Security components
 zero-trust = []
@@ -66,14 +104,13 @@ encrypted-config = []
 
 # Enterprise features
 compliance = ["audit-logging", "rbac", "key-management", "encrypted-config"]
-full-security = ["compliance", "zero-trust"]  # Removed sqlx from default full-security
+full-security = [
+  "compliance",
+  "zero-trust",
+] # Removed sqlx from default full-security
 full = ["full-security"]
 
 # Database backends (temporarily disabled)
 # sqlite-audit = ["sqlx"]
 # postgres-audit = ["sqlx", "sqlx/postgres"]
 # mysql-audit = ["sqlx", "sqlx/mysql"]
-
-[dev-dependencies]
-# Fuzz testing infrastructure
-cargo-fuzz = "0.11.2"

@@ -7,7 +7,7 @@ use crate::error::{RecoveryStrategy, SIMDError, SIMDResult};
 
 /// SIMD memory allocator for aligned memory allocation
 pub struct SIMDAllocator {
-    cache:            moka::sync::Cache<String, NonNull<u8>>,
+    cache: moka::sync::Cache<String, NonNull<u8>>,
     allocation_count: std::sync::atomic::AtomicUsize,
 }
 
@@ -15,7 +15,7 @@ impl SIMDAllocator {
     /// Create new SIMD allocator with caching enabled
     pub fn new() -> Self {
         Self {
-            cache:            moka::sync::Cache::builder()
+            cache: moka::sync::Cache::builder()
                 .max_capacity(100) // Cache up to 100 allocations
                 .time_to_live(std::time::Duration::from_secs(300)) // 5 minute TTL
                 .build(),
@@ -28,11 +28,11 @@ impl SIMDAllocator {
         let caps = get_cached_capabilities();
         let alignment = caps.recommended_alignment();
 
-        let size_bytes = count
-            .checked_mul(std::mem::size_of::<T>())
-            .ok_or(SIMDError::MemoryAllocationError {
+        let size_bytes = count.checked_mul(std::mem::size_of::<T>()).ok_or(
+            SIMDError::MemoryAllocationError {
                 reason: "Integer overflow in size calculation".to_string(),
-            })?;
+            },
+        )?;
 
         // Ensure minimum alignment and natural alignment for type
         let alignment = alignment.max(std::mem::align_of::<T>());
@@ -44,11 +44,13 @@ impl SIMDAllocator {
             });
         }
 
-        let layout = Layout::from_size_align(size_bytes, alignment).map_err(|_| SIMDError::MemoryAllocationError {
-            reason: format!(
-                "Invalid layout for size {} and alignment {}",
-                size_bytes, alignment
-            ),
+        let layout = Layout::from_size_align(size_bytes, alignment).map_err(|_| {
+            SIMDError::MemoryAllocationError {
+                reason: format!(
+                    "Invalid layout for size {} and alignment {}",
+                    size_bytes, alignment
+                ),
+            }
         })?;
 
         // Use cached allocation if available
@@ -142,7 +144,12 @@ impl SIMDAllocator {
     }
 
     /// Create SIMDVector from an allocated pointer
-    fn create_vector_from_ptr<T>(&self, ptr: NonNull<u8>, count: usize, alignment: usize) -> SIMDResult<SIMDVector<T>> {
+    fn create_vector_from_ptr<T>(
+        &self,
+        ptr: NonNull<u8>,
+        count: usize,
+        alignment: usize,
+    ) -> SIMDResult<SIMDVector<T>> {
         let data_ptr = ptr.cast::<T>();
 
         // Verify alignment
@@ -156,7 +163,7 @@ impl SIMDAllocator {
             }
             return Err(SIMDError::AlignmentError {
                 required: std::mem::align_of::<T>(),
-                actual:   actual_alignment,
+                actual: actual_alignment,
             });
         }
 
@@ -174,8 +181,8 @@ impl SIMDAllocator {
             total_allocations: self
                 .allocation_count
                 .load(std::sync::atomic::Ordering::SeqCst),
-            cache_hits:        0, // TODO: Implement cache hit tracking
-            cache_size:        self.cache.run_pending_tasks(),
+            cache_hits: 0, // TODO: Implement cache hit tracking
+            cache_size: self.cache.run_pending_tasks(),
         }
     }
 }
@@ -198,8 +205,8 @@ pub enum PrefetchHint {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct AllocationStats {
     pub total_allocations: usize,
-    pub cache_hits:        usize,
-    pub cache_size:        moka::sync::Cache<String, NonNull<u8>>,
+    pub cache_hits: usize,
+    pub cache_size: moka::sync::Cache<String, NonNull<u8>>,
 }
 
 /// Fast copy operations optimized for SIMD data movement
@@ -219,7 +226,7 @@ impl SIMDDataMover {
         if dst.len() != src.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: dst.len(),
-                actual:   src.len(),
+                actual: src.len(),
             });
         }
 

@@ -8,31 +8,45 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 /// Global performance monitor instance
-static PERFORMANCE_MONITOR: once_cell::sync::OnceCell<Arc<PerformanceMonitor>> = once_cell::sync::OnceCell::new();
+static PERFORMANCE_MONITOR: once_cell::sync::OnceCell<Arc<PerformanceMonitor>> =
+    once_cell::sync::OnceCell::new();
 
 /// Performance monitor for tracking lazy loading and memory usage
 pub struct PerformanceMonitor {
-    startup_time:         Instant,
+    startup_time: Instant,
     component_load_times: Arc<RwLock<HashMap<String, Vec<Duration>>>>,
     memory_usage_history: Arc<RwLock<Vec<MemoryUsagePoint>>>,
-    pool_stats_history:   Arc<RwLock<Vec<PoolStatsPoint>>>,
-    enabled:              bool,
+    pool_stats_history: Arc<RwLock<Vec<PoolStatsPoint>>>,
+    enabled: bool,
+}
+
+/// Implement Default for PerformanceMonitor since Instant cannot derive Default
+impl Default for PerformanceMonitor {
+    fn default() -> Self {
+        Self {
+            startup_time: Instant::now(),
+            component_load_times: Arc::new(RwLock::new(HashMap::new())),
+            memory_usage_history: Arc::new(RwLock::new(Vec::new())),
+            pool_stats_history: Arc::new(RwLock::new(Vec::new())),
+            enabled: true,
+        }
+    }
 }
 
 impl PerformanceMonitor {
     /// Initialize the global performance monitor
     pub async fn init() -> crate::LazyResult<()> {
         let monitor = Arc::new(Self {
-            startup_time:         Instant::now(),
+            startup_time: Instant::now(),
             component_load_times: Arc::new(RwLock::new(HashMap::new())),
             memory_usage_history: Arc::new(RwLock::new(Vec::new())),
-            pool_stats_history:   Arc::new(RwLock::new(Vec::new())),
-            enabled:              true,
+            pool_stats_history: Arc::new(RwLock::new(Vec::new())),
+            enabled: true,
         });
 
-        PERFORMANCE_MONITOR
-            .set(monitor)
-            .map_err(|_| crate::LazyLoadingError::internal("Performance monitor already initialized"))?;
+        PERFORMANCE_MONITOR.set(monitor).map_err(|_| {
+            crate::LazyLoadingError::internal("Performance monitor already initialized")
+        })?;
 
         Ok(())
     }
@@ -87,7 +101,10 @@ impl PerformanceMonitor {
     }
 
     /// Get component load statistics
-    pub async fn get_component_load_stats(&self, component_name: &str) -> Option<ComponentLoadStats> {
+    pub async fn get_component_load_stats(
+        &self,
+        component_name: &str,
+    ) -> Option<ComponentLoadStats> {
         let load_times = self.component_load_times.read().await;
         let times = load_times.get(component_name)?;
 
@@ -126,9 +143,9 @@ impl PerformanceMonitor {
         let current_usage = *usage_values.last().unwrap();
 
         MemoryUsageStats {
-            total_measurements:  total_points,
+            total_measurements: total_points,
             average_usage_bytes: avg_usage,
-            peak_usage_bytes:    peak_usage,
+            peak_usage_bytes: peak_usage,
             current_usage_bytes: current_usage,
         }
     }
@@ -148,13 +165,16 @@ impl PerformanceMonitor {
         stats_by_pool
             .into_iter()
             .map(|(pool_name, points)| {
-                let analysis_sizes: Vec<usize> = points.iter().map(|p| p.stats.analysis_pool_size).collect();
-                let model_sizes: Vec<usize> = points.iter().map(|p| p.stats.model_pool_size).collect();
+                let analysis_sizes: Vec<usize> =
+                    points.iter().map(|p| p.stats.analysis_pool_size).collect();
+                let model_sizes: Vec<usize> =
+                    points.iter().map(|p| p.stats.model_pool_size).collect();
 
                 PoolPerformanceStats {
                     pool_name,
                     total_measurements: points.len(),
-                    avg_analysis_pool_size: analysis_sizes.iter().sum::<usize>() / analysis_sizes.len(),
+                    avg_analysis_pool_size: analysis_sizes.iter().sum::<usize>()
+                        / analysis_sizes.len(),
                     avg_model_pool_size: model_sizes.iter().sum::<usize>() / model_sizes.len(),
                     max_analysis_pool_size: *analysis_sizes.iter().max().unwrap_or(&0),
                     max_model_pool_size: *model_sizes.iter().max().unwrap_or(&0),
@@ -182,21 +202,21 @@ impl PerformanceMonitor {
             .unwrap_or(Duration::from_secs(0));
 
         StartupPerformance {
-            total_startup_time:        Instant::now().duration_since(self.startup_time),
+            total_startup_time: Instant::now().duration_since(self.startup_time),
             total_component_load_time: total_load_time,
-            critical_path_load_time:   critical_path_time,
-            components_loaded:         component_stats.len(),
-            component_load_stats:      component_stats,
+            critical_path_load_time: critical_path_time,
+            components_loaded: component_stats.len(),
+            component_load_stats: component_stats,
         }
     }
 
     /// Generate performance report
     pub async fn generate_performance_report(&self) -> PerformanceReport {
         PerformanceReport {
-            startup_performance:    self.get_startup_performance().await,
-            memory_usage_stats:     self.get_memory_usage_stats().await,
+            startup_performance: self.get_startup_performance().await,
+            memory_usage_stats: self.get_memory_usage_stats().await,
             pool_performance_stats: self.get_pool_performance_stats().await,
-            timestamp:              std::time::SystemTime::now(),
+            timestamp: std::time::SystemTime::now(),
         }
     }
 
@@ -226,66 +246,78 @@ impl PerformanceMonitor {
 /// Memory usage data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryUsagePoint {
-    pub timestamp:   Duration,
+    pub timestamp: Duration,
     pub usage_bytes: usize,
-    pub pool_name:   Option<String>,
+    pub pool_name: Option<String>,
 }
 
 /// Pool statistics data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolStatsPoint {
     pub timestamp: Duration,
-    pub stats:     crate::memory_pool::PoolStats,
+    pub stats: crate::memory_pool::PoolStats,
 }
 
 /// Component load statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentLoadStats {
-    pub component_name:  String,
-    pub total_loads:     usize,
-    pub avg_load_time:   Duration,
-    pub min_load_time:   Duration,
-    pub max_load_time:   Duration,
+    pub component_name: String,
+    pub total_loads: usize,
+    pub avg_load_time: Duration,
+    pub min_load_time: Duration,
+    pub max_load_time: Duration,
     pub total_load_time: Duration,
 }
 
 /// Memory usage statistics
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MemoryUsageStats {
-    pub total_measurements:  usize,
+    pub total_measurements: usize,
     pub average_usage_bytes: usize,
-    pub peak_usage_bytes:    usize,
+    pub peak_usage_bytes: usize,
     pub current_usage_bytes: usize,
 }
 
 /// Pool performance statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolPerformanceStats {
-    pub pool_name:              String,
-    pub total_measurements:     usize,
+    pub pool_name: String,
+    pub total_measurements: usize,
     pub avg_analysis_pool_size: usize,
-    pub avg_model_pool_size:    usize,
+    pub avg_model_pool_size: usize,
     pub max_analysis_pool_size: usize,
-    pub max_model_pool_size:    usize,
+    pub max_model_pool_size: usize,
 }
 
 /// Startup performance metrics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StartupPerformance {
-    pub total_startup_time:        Duration,
+    pub total_startup_time: Duration,
     pub total_component_load_time: Duration,
-    pub critical_path_load_time:   Duration,
-    pub components_loaded:         usize,
-    pub component_load_stats:      Vec<ComponentLoadStats>,
+    pub critical_path_load_time: Duration,
+    pub components_loaded: usize,
+    pub component_load_stats: Vec<ComponentLoadStats>,
+}
+
+impl Default for StartupPerformance {
+    fn default() -> Self {
+        Self {
+            total_startup_time: Duration::from_secs(0),
+            total_component_load_time: Duration::from_secs(0),
+            critical_path_load_time: Duration::from_secs(0),
+            components_loaded: 0,
+            component_load_stats: Vec::new(),
+        }
+    }
 }
 
 /// Complete performance report
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceReport {
-    pub startup_performance:    StartupPerformance,
-    pub memory_usage_stats:     MemoryUsageStats,
+    pub startup_performance: StartupPerformance,
+    pub memory_usage_stats: MemoryUsageStats,
     pub pool_performance_stats: Vec<PoolPerformanceStats>,
-    pub timestamp:              std::time::SystemTime,
+    pub timestamp: std::time::SystemTime,
 }
 
 #[cfg(test)]
@@ -305,11 +337,11 @@ mod tests {
     #[tokio::test]
     async fn test_component_load_recording() {
         let monitor = PerformanceMonitor {
-            startup_time:         Instant::now(),
+            startup_time: Instant::now(),
             component_load_times: Arc::new(RwLock::new(HashMap::new())),
             memory_usage_history: Arc::new(RwLock::new(Vec::new())),
-            pool_stats_history:   Arc::new(RwLock::new(Vec::new())),
-            enabled:              true,
+            pool_stats_history: Arc::new(RwLock::new(Vec::new())),
+            enabled: true,
         };
 
         let duration = Duration::from_millis(100);
@@ -329,11 +361,11 @@ mod tests {
     #[tokio::test]
     async fn test_memory_usage_recording() {
         let monitor = PerformanceMonitor {
-            startup_time:         Instant::now(),
+            startup_time: Instant::now(),
             component_load_times: Arc::new(RwLock::new(HashMap::new())),
             memory_usage_history: Arc::new(RwLock::new(Vec::new())),
-            pool_stats_history:   Arc::new(RwLock::new(Vec::new())),
-            enabled:              true,
+            pool_stats_history: Arc::new(RwLock::new(Vec::new())),
+            enabled: true,
         };
 
         monitor.record_memory_usage(1024, Some("test_pool")).await;
@@ -349,11 +381,11 @@ mod tests {
     #[tokio::test]
     async fn test_disabled_monitoring() {
         let mut monitor = PerformanceMonitor {
-            startup_time:         Instant::now(),
+            startup_time: Instant::now(),
             component_load_times: Arc::new(RwLock::new(HashMap::new())),
             memory_usage_history: Arc::new(RwLock::new(Vec::new())),
-            pool_stats_history:   Arc::new(RwLock::new(Vec::new())),
-            enabled:              true,
+            pool_stats_history: Arc::new(RwLock::new(Vec::new())),
+            enabled: true,
         };
 
         monitor.set_enabled(false);

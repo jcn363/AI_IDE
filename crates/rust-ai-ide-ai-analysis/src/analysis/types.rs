@@ -10,6 +10,7 @@ pub enum Severity {
     Info,
     Warning,
     Error,
+    High,
     Critical,
 }
 
@@ -19,6 +20,7 @@ impl fmt::Display for Severity {
             Self::Info => write!(f, "Info"),
             Self::Warning => write!(f, "Warning"),
             Self::Error => write!(f, "Error"),
+            Self::High => write!(f, "High"),
             Self::Critical => write!(f, "Critical"),
         }
     }
@@ -31,6 +33,39 @@ pub struct Location {
     pub line:   usize,
     pub column: usize,
     pub offset: usize,
+}
+
+/// Code range in source
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Range {
+    pub start_line: u32,
+    pub start_col:  u32,
+    pub end_line:   u32,
+    pub end_col:    u32,
+}
+
+/// Categories of analysis
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum AnalysisCategory {
+    Security,
+    Performance,
+    CodeQuality,
+    Architecture,
+    Documentation,
+    Other,
+}
+
+impl fmt::Display for AnalysisCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Security => write!(f, "Security"),
+            Self::Performance => write!(f, "Performance"),
+            Self::CodeQuality => write!(f, "CodeQuality"),
+            Self::Architecture => write!(f, "Architecture"),
+            Self::Documentation => write!(f, "Documentation"),
+            Self::Other => write!(f, "Other"),
+        }
+    }
 }
 
 /// Suggestion for improvement

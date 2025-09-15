@@ -16,8 +16,8 @@ use crate::ObservabilityConfig;
 
 /// Metrics recorder for collecting and managing metrics
 pub struct MetricsRecorder {
-    config:         ObservabilityConfig,
-    system:         Arc<RwLock<System>>,
+    config: ObservabilityConfig,
+    system: Arc<RwLock<System>>,
     custom_metrics: Arc<RwLock<HashMap<String, MetricValue>>>,
 }
 
@@ -50,7 +50,10 @@ impl MetricsRecorder {
                 .build()
             {
                 metrics::set_global_recorder(recorder).map_err(|e| {
-                    crate::errors::ObservabilityError::metrics(format!("Failed to set global recorder: {}", e))
+                    crate::errors::ObservabilityError::metrics(format!(
+                        "Failed to set global recorder: {}",
+                        e
+                    ))
                 })?;
             }
         }
@@ -88,15 +91,15 @@ impl MetricsRecorder {
             .unwrap_or(0.0);
 
         let metrics = SystemMetrics {
-            timestamp:            Utc::now(),
-            cpu_usage_percent:    cpu_usage,
+            timestamp: Utc::now(),
+            cpu_usage_percent: cpu_usage,
             memory_usage_percent: memory_usage,
-            memory_used_mb:       used_memory / 1024.0 / 1024.0,
-            memory_total_mb:      total_memory / 1024.0 / 1024.0,
-            disk_usage_percent:   disk_usage,
-            process_count:        system.processes().len() as u32,
-            load_average:         system.load_average(),
-            temperature_celsius:  None, // Would need additional crate for temperature
+            memory_used_mb: used_memory / 1024.0 / 1024.0,
+            memory_total_mb: total_memory / 1024.0 / 1024.0,
+            disk_usage_percent: disk_usage,
+            process_count: system.processes().len() as u32,
+            load_average: system.load_average(),
+            temperature_celsius: None, // Would need additional crate for temperature
         };
 
         // Record metrics if enabled
@@ -186,8 +189,9 @@ impl MetricsRecorder {
         #[cfg(feature = "metrics")]
         {
             use metrics_exporter_prometheus::Matcher;
-            let recorder = metrics::try_recorder()
-                .ok_or_else(|| crate::errors::ObservabilityError::metrics("No global recorder set"))?;
+            let recorder = metrics::try_recorder().ok_or_else(|| {
+                crate::errors::ObservabilityError::metrics("No global recorder set")
+            })?;
 
             if let Some(prometheus_recorder) =
                 recorder.downcast_ref::<metrics_exporter_prometheus::PrometheusRecorder>()
@@ -203,15 +207,15 @@ impl MetricsRecorder {
 /// System metrics snapshot
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMetrics {
-    pub timestamp:            DateTime<Utc>,
-    pub cpu_usage_percent:    f64,
+    pub timestamp: DateTime<Utc>,
+    pub cpu_usage_percent: f64,
     pub memory_usage_percent: f64,
-    pub memory_used_mb:       f64,
-    pub memory_total_mb:      f64,
-    pub disk_usage_percent:   f64,
-    pub process_count:        u32,
-    pub load_average:         sysinfo::LoadAvg,
-    pub temperature_celsius:  Option<f64>,
+    pub memory_used_mb: f64,
+    pub memory_total_mb: f64,
+    pub disk_usage_percent: f64,
+    pub process_count: u32,
+    pub load_average: sysinfo::LoadAvg,
+    pub temperature_celsius: Option<f64>,
 }
 
 /// Performance metrics summary
@@ -219,7 +223,7 @@ pub struct SystemMetrics {
 pub struct PerformanceMetrics {
     pub system_metrics: SystemMetrics,
     pub custom_metrics: HashMap<String, MetricValue>,
-    pub timestamp:      DateTime<Utc>,
+    pub timestamp: DateTime<Utc>,
 }
 
 /// Value types for custom metrics
@@ -256,7 +260,12 @@ pub mod helpers {
     use super::*;
 
     /// Record HTTP request metrics
-    pub async fn record_http_request(method: &str, path: &str, status: u16, duration_ms: f64) -> Result<()> {
+    pub async fn record_http_request(
+        method: &str,
+        path: &str,
+        status: u16,
+        duration_ms: f64,
+    ) -> Result<()> {
         #[cfg(feature = "metrics")]
         {
             metrics::counter!("http_requests_total", 1, "method" => method.to_string(), "status" => status.to_string());
@@ -277,7 +286,11 @@ pub mod helpers {
     }
 
     /// Record cache operation metrics
-    pub async fn record_cache_operation(operation: &str, hit: bool, duration_ms: f64) -> Result<()> {
+    pub async fn record_cache_operation(
+        operation: &str,
+        hit: bool,
+        duration_ms: f64,
+    ) -> Result<()> {
         #[cfg(feature = "metrics")]
         {
             let hit_miss = if hit { "hit" } else { "miss" };

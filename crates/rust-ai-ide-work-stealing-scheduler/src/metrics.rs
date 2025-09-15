@@ -9,22 +9,22 @@ use tokio::sync::RwLock;
 #[derive(Debug, Clone)]
 pub struct CpuMetrics {
     /// Overall CPU usage percentage (0.0-100.0)
-    pub overall_usage:  f64,
+    pub overall_usage: f64,
     /// Per-core usage percentages
     pub per_core_usage: Vec<f64>,
     /// System load average (1, 5, 15 minute averages)
-    pub load_average:   (f64, f64, f64),
+    pub load_average: (f64, f64, f64),
     /// Timestamp when metrics were collected
-    pub timestamp:      chrono::DateTime<chrono::Utc>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
 impl Default for CpuMetrics {
     fn default() -> Self {
         Self {
-            overall_usage:  0.0,
+            overall_usage: 0.0,
             per_core_usage: Vec::new(),
-            load_average:   (0.0, 0.0, 0.0),
-            timestamp:      chrono::Utc::now(),
+            load_average: (0.0, 0.0, 0.0),
+            timestamp: chrono::Utc::now(),
         }
     }
 }
@@ -33,31 +33,31 @@ impl Default for CpuMetrics {
 #[derive(Debug, Clone)]
 pub struct TaskExecutionMetrics {
     /// Total tasks executed
-    pub total_executed:           u64,
+    pub total_executed: u64,
     /// Tasks executed successfully
-    pub successful:               u64,
+    pub successful: u64,
     /// Tasks that failed
-    pub failed:                   u64,
+    pub failed: u64,
     /// Average execution time in milliseconds
-    pub avg_execution_time_ms:    f64,
+    pub avg_execution_time_ms: f64,
     /// Median execution time in milliseconds
     pub median_execution_time_ms: f64,
     /// 95th percentile execution time
-    pub p95_execution_time_ms:    f64,
+    pub p95_execution_time_ms: f64,
     /// 99th percentile execution time
-    pub p99_execution_time_ms:    f64,
+    pub p99_execution_time_ms: f64,
 }
 
 impl Default for TaskExecutionMetrics {
     fn default() -> Self {
         Self {
-            total_executed:           0,
-            successful:               0,
-            failed:                   0,
-            avg_execution_time_ms:    0.0,
+            total_executed: 0,
+            successful: 0,
+            failed: 0,
+            avg_execution_time_ms: 0.0,
             median_execution_time_ms: 0.0,
-            p95_execution_time_ms:    0.0,
-            p99_execution_time_ms:    0.0,
+            p95_execution_time_ms: 0.0,
+            p99_execution_time_ms: 0.0,
         }
     }
 }
@@ -66,28 +66,28 @@ impl Default for TaskExecutionMetrics {
 #[derive(Debug, Clone)]
 pub struct WorkStealingMetrics {
     /// Total steal attempts
-    pub steal_attempts:       u64,
+    pub steal_attempts: u64,
     /// Successful steals
-    pub successful_steals:    u64,
+    pub successful_steals: u64,
     /// Failed steal attempts
-    pub failed_steals:        u64,
+    pub failed_steals: u64,
     /// Steal success rate (0.0-1.0)
-    pub steal_success_rate:   f64,
+    pub steal_success_rate: f64,
     /// Average tasks per worker
     pub avg_tasks_per_worker: f64,
     /// Worker load distribution variance
-    pub load_variance:        f64,
+    pub load_variance: f64,
 }
 
 impl Default for WorkStealingMetrics {
     fn default() -> Self {
         Self {
-            steal_attempts:       0,
-            successful_steals:    0,
-            failed_steals:        0,
-            steal_success_rate:   0.0,
+            steal_attempts: 0,
+            successful_steals: 0,
+            failed_steals: 0,
+            steal_success_rate: 0.0,
             avg_tasks_per_worker: 0.0,
-            load_variance:        0.0,
+            load_variance: 0.0,
         }
     }
 }
@@ -96,11 +96,11 @@ impl Default for WorkStealingMetrics {
 #[derive(Debug, Clone)]
 pub struct QueueMetrics {
     /// Average queue depth across all workers
-    pub avg_queue_depth:   f64,
+    pub avg_queue_depth: f64,
     /// Maximum queue depth observed
-    pub max_queue_depth:   usize,
+    pub max_queue_depth: usize,
     /// Queue overflow events
-    pub overflow_events:   u64,
+    pub overflow_events: u64,
     /// Average time tasks spend in queue (milliseconds)
     pub avg_queue_time_ms: f64,
 }
@@ -108,9 +108,9 @@ pub struct QueueMetrics {
 impl Default for QueueMetrics {
     fn default() -> Self {
         Self {
-            avg_queue_depth:   0.0,
-            max_queue_depth:   0,
-            overflow_events:   0,
+            avg_queue_depth: 0.0,
+            max_queue_depth: 0,
+            overflow_events: 0,
             avg_queue_time_ms: 0.0,
         }
     }
@@ -120,34 +120,34 @@ impl Default for QueueMetrics {
 #[derive(Debug, Clone)]
 pub struct SchedulerMetrics {
     /// CPU utilization metrics
-    pub cpu_metrics:     CpuMetrics,
+    pub cpu_metrics: CpuMetrics,
     /// Task execution metrics
-    pub task_metrics:    TaskExecutionMetrics,
+    pub task_metrics: TaskExecutionMetrics,
     /// Work-stealing metrics
-    pub work_stealing:   WorkStealingMetrics,
+    pub work_stealing: WorkStealingMetrics,
     /// Queue performance metrics
-    pub queue_metrics:   QueueMetrics,
+    pub queue_metrics: QueueMetrics,
     /// Per-worker statistics
-    pub worker_stats:    HashMap<usize, WorkerStats>,
+    pub worker_stats: HashMap<usize, WorkerStats>,
     /// Per-task-type statistics
     pub task_type_stats: HashMap<String, TaskTypeStats>,
     /// Scheduler uptime in seconds
-    pub uptime_seconds:  u64,
+    pub uptime_seconds: u64,
     /// Timestamp when metrics were collected
-    pub collected_at:    chrono::DateTime<chrono::Utc>,
+    pub collected_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl Default for SchedulerMetrics {
     fn default() -> Self {
         Self {
-            cpu_metrics:     CpuMetrics::default(),
-            task_metrics:    TaskExecutionMetrics::default(),
-            work_stealing:   WorkStealingMetrics::default(),
-            queue_metrics:   QueueMetrics::default(),
-            worker_stats:    HashMap::new(),
+            cpu_metrics: CpuMetrics::default(),
+            task_metrics: TaskExecutionMetrics::default(),
+            work_stealing: WorkStealingMetrics::default(),
+            queue_metrics: QueueMetrics::default(),
+            worker_stats: HashMap::new(),
             task_type_stats: HashMap::new(),
-            uptime_seconds:  0,
-            collected_at:    chrono::Utc::now(),
+            uptime_seconds: 0,
+            collected_at: chrono::Utc::now(),
         }
     }
 }
@@ -156,17 +156,17 @@ impl Default for SchedulerMetrics {
 #[derive(Debug, Clone)]
 pub struct WorkerStats {
     /// Worker ID
-    pub worker_id:        usize,
+    pub worker_id: usize,
     /// Tasks executed by this worker
-    pub tasks_executed:   u64,
+    pub tasks_executed: u64,
     /// Current queue depth
-    pub queue_depth:      usize,
+    pub queue_depth: usize,
     /// Successful steals performed
     pub steals_performed: u64,
     /// Successful steals received
-    pub steals_received:  u64,
+    pub steals_received: u64,
     /// Worker uptime in seconds
-    pub uptime_seconds:   u64,
+    pub uptime_seconds: u64,
     /// CPU time used by worker (seconds)
     pub cpu_time_seconds: f64,
 }
@@ -174,12 +174,12 @@ pub struct WorkerStats {
 impl Default for WorkerStats {
     fn default() -> Self {
         Self {
-            worker_id:        0,
-            tasks_executed:   0,
-            queue_depth:      0,
+            worker_id: 0,
+            tasks_executed: 0,
+            queue_depth: 0,
             steals_performed: 0,
-            steals_received:  0,
-            uptime_seconds:   0,
+            steals_received: 0,
+            uptime_seconds: 0,
             cpu_time_seconds: 0.0,
         }
     }
@@ -189,48 +189,48 @@ impl Default for WorkerStats {
 #[derive(Debug, Clone)]
 pub struct TaskTypeStats {
     /// Task type name
-    pub task_type:             String,
+    pub task_type: String,
     /// Total tasks of this type
-    pub total_count:           u64,
+    pub total_count: u64,
     /// Successful executions
-    pub successful_count:      u64,
+    pub successful_count: u64,
     /// Failed executions
-    pub failed_count:          u64,
+    pub failed_count: u64,
     /// Average execution time (milliseconds)
     pub avg_execution_time_ms: f64,
     /// Success rate (0.0-1.0)
-    pub success_rate:          f64,
+    pub success_rate: f64,
 }
 
 impl Default for TaskTypeStats {
     fn default() -> Self {
         Self {
-            task_type:             String::new(),
-            total_count:           0,
-            successful_count:      0,
-            failed_count:          0,
+            task_type: String::new(),
+            total_count: 0,
+            successful_count: 0,
+            failed_count: 0,
             avg_execution_time_ms: 0.0,
-            success_rate:          0.0,
+            success_rate: 0.0,
         }
     }
 }
 
 /// Metrics collector for gathering system and scheduler statistics
 pub struct MetricsCollector {
-    start_time:      std::time::Instant,
+    start_time: std::time::Instant,
     execution_times: Arc<RwLock<Vec<u64>>>,
-    task_counts:     Arc<RwLock<HashMap<String, u64>>>,
-    worker_stats:    Arc<RwLock<HashMap<usize, WorkerStats>>>,
+    task_counts: Arc<RwLock<HashMap<String, u64>>>,
+    worker_stats: Arc<RwLock<HashMap<usize, WorkerStats>>>,
 }
 
 impl MetricsCollector {
     /// Create new metrics collector
     pub fn new() -> Self {
         Self {
-            start_time:      std::time::Instant::now(),
+            start_time: std::time::Instant::now(),
             execution_times: Arc::new(RwLock::new(Vec::new())),
-            task_counts:     Arc::new(RwLock::new(HashMap::new())),
-            worker_stats:    Arc::new(RwLock::new(HashMap::new())),
+            task_counts: Arc::new(RwLock::new(HashMap::new())),
+            worker_stats: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -302,12 +302,12 @@ impl MetricsCollector {
                 let stats = task_type_stats
                     .entry(task_type.clone())
                     .or_insert(TaskTypeStats {
-                        task_type:             task_type.clone(),
-                        total_count:           0,
-                        successful_count:      0,
-                        failed_count:          0,
+                        task_type: task_type.clone(),
+                        total_count: 0,
+                        successful_count: 0,
+                        failed_count: 0,
                         avg_execution_time_ms: avg_execution_time,
-                        success_rate:          0.0,
+                        success_rate: 0.0,
                     });
 
                 stats.total_count += *count;
@@ -323,13 +323,13 @@ impl MetricsCollector {
         Ok(SchedulerMetrics {
             cpu_metrics: CpuMetrics::default(), // Would be collected from system
             task_metrics: TaskExecutionMetrics {
-                total_executed:           sorted_times.len() as u64,
-                successful:               task_counts.get("success").copied().unwrap_or(0),
-                failed:                   task_counts.get("failure").copied().unwrap_or(0),
-                avg_execution_time_ms:    avg_execution_time,
+                total_executed: sorted_times.len() as u64,
+                successful: task_counts.get("success").copied().unwrap_or(0),
+                failed: task_counts.get("failure").copied().unwrap_or(0),
+                avg_execution_time_ms: avg_execution_time,
                 median_execution_time_ms: median,
-                p95_execution_time_ms:    p95,
-                p99_execution_time_ms:    p99,
+                p95_execution_time_ms: p95,
+                p99_execution_time_ms: p99,
             },
             work_stealing: WorkStealingMetrics::default(), // Would be collected from scheduler
             queue_metrics: QueueMetrics::default(),        // Would be collected from queues

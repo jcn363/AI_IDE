@@ -1,13 +1,14 @@
+use std::path::Path;
+
+use serde::{Deserialize, Serialize};
+use tokio::fs;
+
 /// AI model training and fine-tuning commands module
 ///
 /// This module handles fine-tuning job management, dataset preparation,
 /// training progress monitoring, and hyperparameter management.
-
 use crate::commands::ai::services::AIServiceState;
 use crate::utils;
-use std::path::Path;
-use serde::{Deserialize, Serialize};
-use tokio::fs;
 
 /// Fine-tuning configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,7 +42,7 @@ pub struct FinetuneJob {
     pub status: FinetuneStatus,
     pub progress_percentage: f32,
     pub start_time: chrono::DateTime<chrono::Utc>,
-    pub estimated_completion: Option<chrono::DateTime<chrono::Utc>,
+    pub estimated_completion: Option<chrono::DateTime<chrono::Utc>>,
     pub current_epoch: u32,
     pub total_epochs: u32,
     pub current_step: u32,
@@ -94,7 +95,10 @@ pub async fn start_finetune_job(
     request: StartFinetuneRequest,
     ai_service_state: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    log::info!("Starting fine-tuning job for model: {}", request.config.model_name);
+    log::info!(
+        "Starting fine-tuning job for model: {}",
+        request.config.model_name
+    );
 
     // Validate input
     if request.config.model_name.is_empty() {
@@ -103,8 +107,14 @@ pub async fn start_finetune_job(
     }
 
     if !Path::new(&request.config.dataset_path).exists() {
-        log::error!("Dataset path does not exist: {}", request.config.dataset_path);
-        return Err(format!("Dataset path does not exist: {}", request.config.dataset_path));
+        log::error!(
+            "Dataset path does not exist: {}",
+            request.config.dataset_path
+        );
+        return Err(format!(
+            "Dataset path does not exist: {}",
+            request.config.dataset_path
+        ));
     }
 
     // Get AI service from managed state
@@ -112,7 +122,11 @@ pub async fn start_finetune_job(
 
     // In a real implementation, this would start a fine-tuning job
     let job_id = format!("finetune_{}", chrono::Utc::now().timestamp());
-    log::info!("Fine-tuning job {} started for model {}", job_id, request.config.model_name);
+    log::info!(
+        "Fine-tuning job {} started for model {}",
+        job_id,
+        request.config.model_name
+    );
 
     Ok(job_id)
 }
@@ -186,33 +200,29 @@ pub async fn list_finetune_jobs(
     let _ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     // In a real implementation, this would list all fine-tuning jobs
-    let jobs = vec![
-        FinetuneJob {
-            id: "finetune_123".to_string(),
-            model_name: "gpt-4".to_string(),
-            dataset_path: "/path/to/dataset".to_string(),
-            status: FinetuneStatus::Training,
-            progress_percentage: 45.0,
-            start_time: chrono::Utc::now() - chrono::Duration::hours(2),
-            estimated_completion: Some(chrono::Utc::now() + chrono::Duration::hours(4)),
-            current_epoch: 4,
-            total_epochs: 10,
-            current_step: 2000,
-            total_steps: 5000,
-            loss: Some(0.85),
-            validation_loss: Some(0.95),
-            error_message: None,
-        }
-    ];
+    let jobs = vec![FinetuneJob {
+        id: "finetune_123".to_string(),
+        model_name: "gpt-4".to_string(),
+        dataset_path: "/path/to/dataset".to_string(),
+        status: FinetuneStatus::Training,
+        progress_percentage: 45.0,
+        start_time: chrono::Utc::now() - chrono::Duration::hours(2),
+        estimated_completion: Some(chrono::Utc::now() + chrono::Duration::hours(4)),
+        current_epoch: 4,
+        total_epochs: 10,
+        current_step: 2000,
+        total_steps: 5000,
+        loss: Some(0.85),
+        validation_loss: Some(0.95),
+        error_message: None,
+    }];
 
     Ok(jobs)
 }
 
 /// Prepare dataset for fine-tuning
 #[tauri::command]
-pub async fn prepare_dataset(
-    request: PrepareDatasetRequest,
-) -> Result<String, String> {
+pub async fn prepare_dataset(request: PrepareDatasetRequest) -> Result<String, String> {
     log::info!("Preparing dataset from: {}", request.input_path);
 
     // Validate input path exists
@@ -223,13 +233,17 @@ pub async fn prepare_dataset(
 
     // Validate output path doesn't already exist
     if Path::new(&request.output_path).exists() {
-        log::warn!("Output path already exists, will be overwritten: {}", request.output_path);
+        log::warn!(
+            "Output path already exists, will be overwritten: {}",
+            request.output_path
+        );
     }
 
     // Create output directory
     let output_path = Path::new(&request.output_path);
     if let Some(parent) = output_path.parent() {
-        fs::create_dir_all(parent).await
+        fs::create_dir_all(parent)
+            .await
             .map_err(|e| format!("Failed to create output directory: {}", e))?;
     }
 
@@ -250,7 +264,10 @@ pub async fn prepare_dataset(
     }
 
     log::info!("Dataset prepared successfully: {}", request.output_path);
-    Ok(format!("Dataset prepared successfully: {}", request.output_path))
+    Ok(format!(
+        "Dataset prepared successfully: {}",
+        request.output_path
+    ))
 }
 
 /// Validate dataset format and content
@@ -301,37 +318,31 @@ pub struct DatasetValidation {
 }
 
 /// Helper function to prepare JSONL dataset
-async fn prepare_jsonlines_dataset(
-    input_path: &str,
-    output_path: &str
-) -> Result<(), String> {
+async fn prepare_jsonlines_dataset(input_path: &str, output_path: &str) -> Result<(), String> {
     // In a real implementation, this would validate and process JSONL format
     // For now, just copy the file
-    fs::copy(input_path, output_path).await
+    fs::copy(input_path, output_path)
+        .await
         .map_err(|e| format!("Failed to copy dataset: {}", e))?;
     Ok(())
 }
 
 /// Helper function to prepare CSV dataset
-async fn prepare_csv_dataset(
-    input_path: &str,
-    output_path: &str
-) -> Result<(), String> {
+async fn prepare_csv_dataset(input_path: &str, output_path: &str) -> Result<(), String> {
     // In a real implementation, this would validate and process CSV format
     // For now, just copy the file
-    fs::copy(input_path, output_path).await
+    fs::copy(input_path, output_path)
+        .await
         .map_err(|e| format!("Failed to copy dataset: {}", e))?;
     Ok(())
 }
 
 /// Helper function to prepare text dataset
-async fn prepare_text_dataset(
-    input_path: &str,
-    output_path: &str
-) -> Result<(), String> {
+async fn prepare_text_dataset(input_path: &str, output_path: &str) -> Result<(), String> {
     // In a real implementation, this would validate and process text format
     // For now, just copy the file
-    fs::copy(input_path, output_path).await
+    fs::copy(input_path, output_path)
+        .await
         .map_err(|e| format!("Failed to copy dataset: {}", e))?;
     Ok(())
 }

@@ -56,8 +56,22 @@ export default defineConfig(({ mode }) => ({
     cssCodeSplit: true,
     // Optimize for large codebases
     minify: 'esbuild',
+    // Enable compression for better performance
+    reportCompressedSize: true,
     // Asset optimization
     assetsInlineLimit: 4096, // Inline assets smaller than 4kb
+    // Advanced tree shaking
+    rollupOptions: {
+      treeshake: {
+        preset: 'recommended',
+        moduleSideEffects: false,
+      },
+      output: {
+        // ... existing output config
+    // Preload modules for better performance
+    modulePreload: {
+      polyfill: false,
+    },
     rollupOptions: {
       output: {
         // Asset optimization with better naming and compression
@@ -77,25 +91,63 @@ export default defineConfig(({ mode }) => ({
         // Optimize chunk naming for better caching
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
-        manualChunks: {
-          // Split heavy libraries into separate chunks
-          react: ['react', 'react-dom'],
-          mui: ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          monaco: ['monaco-editor', '@monaco-editor/react', '@codingame/monaco-languageclient'],
-          vscode: [
-            'vscode-jsonrpc',
-            'vscode-languageserver',
-            'vscode-languageserver-protocol',
-            'vscode-languageserver-types',
-            'vscode-ws-jsonrpc',
-          ],
-          tauri: ['@tauri-apps/api', '@tauri-apps/plugin-fs', '@tauri-apps/plugin-dialog'],
-          // New AI/ML and performance libraries
-          virtualization: ['react-window', 'react-virtuoso'],
-          webgl: ['three', '@types/three'],
-          webvitals: ['web-vitals'],
-          // WASM chunks
-          wasm: ['./src/wasm/**/*'],
+        manualChunks: (id) => {
+          // Vendor chunk for node_modules
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // Material UI ecosystem
+            if (id.includes('@mui') || id.includes('@emotion')) {
+              return 'mui-vendor';
+            }
+            // Monaco Editor
+            if (id.includes('monaco') || id.includes('@monaco')) {
+              return 'monaco-vendor';
+            }
+            // VSCode/LSP libraries
+            if (id.includes('vscode-') || id.includes('languageclient')) {
+              return 'lsp-vendor';
+            }
+            // Tauri libraries
+            if (id.includes('@tauri-apps')) {
+              return 'tauri-vendor';
+            }
+            // D3 and charting libraries
+            if (id.includes('d3') || id.includes('three') || id.includes('@types/three')) {
+              return 'visualization-vendor';
+            }
+            // UI libraries (Ant Design, etc.)
+            if (id.includes('antd')) {
+              return 'ui-vendor';
+            }
+            // Other vendor libraries
+            return 'vendor';
+          }
+
+          // Application chunks
+          if (id.includes('src/features/ai/') || id.includes('src/features/editor/')) {
+            return 'ai-editor-chunk';
+          }
+          if (id.includes('src/features/cargoToml/') || id.includes('src/features/dependency/')) {
+            return 'cargo-deps-chunk';
+          }
+          if (id.includes('src/features/terminal/') || id.includes('src/features/command-palette/')) {
+            return 'terminal-cmd-chunk';
+          }
+          if (id.includes('src/features/performance/') || id.includes('src/features/search/')) {
+            return 'performance-search-chunk';
+          }
+
+          // Pages chunks
+          if (id.includes('src/pages/')) {
+            const pageMatch = id.match(/src\/pages\/([^\/]+)/);
+            if (pageMatch) {
+              return `${pageMatch[1].toLowerCase()}-page`;
+            }
+            return 'pages-chunk';
+          }
         },
       },
       // WASM import resolution

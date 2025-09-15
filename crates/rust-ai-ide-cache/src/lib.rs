@@ -572,9 +572,7 @@ impl CacheManager {
             // Check user limit if configured
             if let Some(max_users) = self.collab_config.max_users_per_session {
                 if metadata.user_count >= max_users {
-                    return Err(rust_ai_ide_errors::IDEResult::from_error(
-                        std::io::Error::new(std::io::ErrorKind::Other, "Session full"),
-                    ));
+                    return Err(std::io::Error::new(std::io::ErrorKind::Other, "Session full").into());
                 }
             }
 
@@ -585,9 +583,7 @@ impl CacheManager {
 
             Ok(())
         } else {
-            Err(rust_ai_ide_errors::IDEResult::from_error(
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Session not found"),
-            ))
+            Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Session not found").into())
         }
     }
 
@@ -639,7 +635,7 @@ impl CacheManager {
             let expired_sessions: Vec<_> = sessions
                 .iter()
                 .filter_map(|(id, metadata)| {
-                    if (now - metadata.last_activity) > session_ttl {
+                    if (now - metadata.last_activity).num_seconds() as u64 > session_ttl.as_secs() {
                         Some(id.clone())
                     } else {
                         None
@@ -980,11 +976,8 @@ where
     }
 
     /// Share cache entry across session users
-    async fn share_entry(&self, session_id: &SessionId, key: &K, shared_key: String) -> IDEResult<()> {
+    async fn share_entry(&self, session_id: &SessionId, key: &K, shared_key: K) -> IDEResult<()> {
         if let Some(value) = self.get(key).await? {
-            let shared_prefixed_key = format!("shared:{}:{}", session_id.as_string(), shared_key);
-            let hashed_shared_key = sha256::digest(shared_prefixed_key);
-
             let mut cache_entry = CacheEntry::new(value);
             cache_entry
                 .metadata
@@ -997,12 +990,9 @@ where
                 .insert("cache_type".to_string(), "shared".to_string());
 
             // Store with shared key
-            self.insert(shared_key.into(), cache_entry.value, None)
-                .await
+            self.insert(shared_key, cache_entry.value, None).await
         } else {
-            Err(rust_ai_ide_errors::IDEResult::from_error(
-                std::io::Error::new(std::io::ErrorKind::NotFound, "Entry not found"),
-            ))
+            Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Entry not found").into())
         }
     }
 }

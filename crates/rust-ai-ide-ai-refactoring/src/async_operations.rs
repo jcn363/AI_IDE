@@ -15,12 +15,12 @@ pub struct ConvertToAsyncOperation;
 
 /// Analyzed function information for async conversion
 struct AsyncConversionInfo {
-    function_name:    String,
-    function_span:    proc_macro2::Span,
+    function_name: String,
+    function_span: proc_macro2::Span,
     is_already_async: bool,
-    return_type:      Option<syn::Type>,
-    calls_awaitable:  bool,
-    callees:          Vec<String>,
+    return_type: Option<syn::Type>,
+    calls_awaitable: bool,
+    callees: Vec<String>,
 }
 
 impl ConvertToAsyncOperation {
@@ -47,13 +47,17 @@ impl ConvertToAsyncOperation {
                     };
 
                     // Analyze function body for async operations
-                    self.analyze_block_for_async(&item_fn.block, &mut calls_awaitable, &mut callees);
+                    self.analyze_block_for_async(
+                        &item_fn.block,
+                        &mut calls_awaitable,
+                        &mut callees,
+                    );
 
                     break;
                 }
             } else if let syn::Item::Impl(impl_block) = item {
                 for impl_item in &impl_block.items {
-                    if let syn::ImplItem::Method(method) = impl_item {
+                    if let syn::ImplItem::Fn(method) = impl_item {
                         if method.sig.ident == function_name {
                             function_span = method.sig.ident.span();
                             is_already_async = method.sig.asyncness.is_some();
@@ -62,7 +66,11 @@ impl ConvertToAsyncOperation {
                                 syn::ReturnType::Type(_, ty) => Some(*ty.clone()),
                             };
 
-                            self.analyze_block_for_async(&method.block, &mut calls_awaitable, &mut callees);
+                            self.analyze_block_for_async(
+                                &method.block,
+                                &mut calls_awaitable,
+                                &mut callees,
+                            );
 
                             break;
                         }
@@ -82,23 +90,34 @@ impl ConvertToAsyncOperation {
     }
 
     /// Analyze function body for async operations
-    fn analyze_block_for_async(&self, block: &syn::Block, calls_awaitable: &mut bool, callees: &mut Vec<String>) {
+    fn analyze_block_for_async(
+        &self,
+        block: &syn::Block,
+        calls_awaitable: &mut bool,
+        callees: &mut Vec<String>,
+    ) {
         for stmt in &block.stmts {
             match stmt {
-                syn::Stmt::Expr(expr, _) | syn::Stmt::Semi(expr, _) => {
+                syn::Stmt::Expr(expr, _) => {
                     self.analyze_expr_for_async(expr, calls_awaitable, callees);
                 }
-                syn::Stmt::Local(local) =>
+                syn::Stmt::Local(local) => {
                     if let Some(init) = &local.init {
                         self.analyze_expr_for_async(&init.expr, calls_awaitable, callees);
-                    },
+                    }
+                }
                 _ => {}
             }
         }
     }
 
     /// Analyze expression for async operations
-    fn analyze_expr_for_async(&self, expr: &syn::Expr, calls_awaitable: &mut bool, callees: &mut Vec<String>) {
+    fn analyze_expr_for_async(
+        &self,
+        expr: &syn::Expr,
+        calls_awaitable: &mut bool,
+        callees: &mut Vec<String>,
+    ) {
         match expr {
             syn::Expr::Await(await_expr) => {
                 *calls_awaitable = true;
@@ -135,8 +154,8 @@ impl ConvertToAsyncOperation {
                 self.analyze_expr_for_async(&if_expr.cond, calls_awaitable, callees);
                 self.analyze_block_for_async(&if_expr.then_branch, calls_awaitable, callees);
                 for else_branch in &if_expr.else_branch {
-                    if let syn::Expr::Block(else_block) = else_branch.1 {
-                        self.analyze_block_for_async(&else_block, calls_awaitable, callees);
+                    if let syn::Expr::Block(else_block) = else_branch.1.as_ref() {
+                        self.analyze_block_for_async(&else_block.block, calls_awaitable, callees);
                     }
                 }
             }
@@ -186,7 +205,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
 
         // Read and parse file
         let content = fs::read_to_string(file_path)?;
-        let mut syntax: syn::File = syn::parse_file(&content)?;
+        let mut syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
 
         // Get target function name
         let function_name = context
@@ -211,7 +230,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
 
         // Visitor to modify function async-ness
         struct AsyncFunctionVisitor {
-            target_name:       String,
+            target_name: String,
             should_make_async: bool,
         }
 
@@ -227,16 +246,21 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                             syn::ReturnType::Default => {
                                 i.sig.output = syn::ReturnType::Type(
                                     syn::token::RArrow::default(),
-                                    Box::new(syn::parse_quote!(impl std::future::Future<Output = ()>)),
+                                    Box::new(syn::parse_quote!(
+                                        impl std::future::Future<Output = ()>
+                                    )),
                                 );
                             }
-                            syn::ReturnType::Type(_, ty) =>
+                            syn::ReturnType::Type(_, ty) => {
                                 if !matches!(**ty, syn::Type::ImplTrait(_)) {
                                     i.sig.output = syn::ReturnType::Type(
                                         syn::token::RArrow::default(),
-                                        Box::new(syn::parse_quote!(impl std::future::Future<Output = #ty>)),
+                                        Box::new(
+                                            syn::parse_quote!(impl std::future::Future<Output = #ty>),
+                                        ),
                                     );
-                                },
+                                }
+                            }
                         }
                     }
                 }
@@ -246,7 +270,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
 
         // Apply AST transformation
         let mut visitor = AsyncFunctionVisitor {
-            target_name:       function_name.to_string(),
+            target_name: function_name.to_string(),
             should_make_async: true,
         };
         visitor.visit_file_mut(&mut syntax);
@@ -258,22 +282,22 @@ impl RefactoringOperation for ConvertToAsyncOperation {
         let caller_updates = self.find_callers_needing_await(&syntax, function_name);
 
         Ok(RefactoringResult {
-            id:            Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
-            success:       true,
-            changes:       vec![CodeChange {
-                file_path:   file_path.clone(),
-                range:       CodeRange {
-                    start_line:      1,
+            id: Some(crate::utils::RefactoringUtils::generate_refactoring_id()),
+            success: true,
+            changes: vec![CodeChange {
+                file_path: file_path.clone(),
+                range: CodeRange {
+                    start_line: 1,
                     start_character: 0,
-                    end_line:        content.lines().count(),
-                    end_character:   0,
+                    end_line: content.lines().count(),
+                    end_character: 0,
                 },
-                old_text:    content,
-                new_text:    modified_content.clone(),
+                old_text: content,
+                new_text: modified_content.clone(),
                 change_type: ChangeType::Replacement,
             }],
             error_message: None,
-            warnings:      vec![
+            warnings: vec![
                 format!(
                     "Function '{}' converted to async - update all callers to use .await",
                     function_name
@@ -288,7 +312,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                     .map(|caller| format!("Update caller in {} to use .await", caller)),
             )
             .collect(),
-            new_content:   Some(modified_content),
+            new_content: Some(modified_content),
         })
     }
 
@@ -298,7 +322,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         // Parse file to analyze function
         let content = fs::read_to_string(&context.file_path)?;
-        let syntax: syn::File = syn::parse_file(&content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
 
         let function_name = context.symbol_name.clone().unwrap_or_default();
         let analysis = match self.analyze_function_for_async(&syntax, &function_name) {
@@ -312,10 +336,10 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                 }
 
                 RefactoringAnalysis {
-                    is_safe:          !info.is_already_async,
+                    is_safe: !info.is_already_async,
                     confidence_score: confidence,
                     potential_impact: RefactoringImpact::High,
-                    affected_files:   vec![context.file_path.clone()],
+                    affected_files: vec![context.file_path.clone()],
                     affected_symbols: vec![function_name.clone()],
                     breaking_changes: if info.calls_awaitable {
                         vec![
@@ -328,12 +352,12 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                             function_name
                         )]
                     },
-                    suggestions:      vec![
+                    suggestions: vec![
                         "Ensure all async chains properly handle errors ".to_string(),
                         "Consider using tokio::spawn for CPU-intensive operations ".to_string(),
                         "Review await points for potential deadlocks ".to_string(),
                     ],
-                    warnings:         if info.calls_awaitable {
+                    warnings: if info.calls_awaitable {
                         vec!["High impact - all callers must be updated ".to_string()]
                     } else {
                         vec!["Lower risk - can be gradually migrated ".to_string()]
@@ -341,14 +365,16 @@ impl RefactoringOperation for ConvertToAsyncOperation {
                 }
             }
             Err(_) => RefactoringAnalysis {
-                is_safe:          false,
+                is_safe: false,
                 confidence_score: 0.0,
                 potential_impact: RefactoringImpact::High,
-                affected_files:   vec![context.file_path.clone()],
+                affected_files: vec![context.file_path.clone()],
                 affected_symbols: vec![function_name],
-                breaking_changes: vec!["Unable to analyze function for async conversion ".to_string()],
-                suggestions:      vec!["Verify function exists and is convertible ".to_string()],
-                warnings:         vec!["Analysis failed - conversion may be unsafe ".to_string()],
+                breaking_changes: vec![
+                    "Unable to analyze function for async conversion ".to_string()
+                ],
+                suggestions: vec!["Verify function exists and is convertible ".to_string()],
+                warnings: vec!["Analysis failed - conversion may be unsafe ".to_string()],
             },
         };
 
@@ -383,20 +409,22 @@ impl ConvertToAsyncOperation {
 
         for item in &syntax.items {
             match item {
-                syn::Item::Fn(fn_item) =>
+                syn::Item::Fn(fn_item) => {
                     if self.function_calls_target(&fn_item.block, target_function) {
                         let fn_name = format!("{}", fn_item.sig.ident);
                         callers.push(format!("function \"{}\"", fn_name));
-                    },
-                syn::Item::Impl(impl_block) =>
+                    }
+                }
+                syn::Item::Impl(impl_block) => {
                     for impl_item in &impl_block.items {
-                        if let syn::ImplItem::Method(method) = impl_item {
+                        if let syn::ImplItem::Fn(method) = impl_item {
                             if self.function_calls_target(&method.block, target_function) {
                                 let method_name = format!("{}", method.sig.ident);
                                 callers.push(format!("method \"{}\"", method_name));
                             }
                         }
-                    },
+                    }
+                }
                 _ => {}
             }
         }
@@ -408,16 +436,18 @@ impl ConvertToAsyncOperation {
     fn function_calls_target(&self, block: &syn::Block, target: &str) -> bool {
         for stmt in &block.stmts {
             match stmt {
-                syn::Stmt::Expr(expr, _) | syn::Stmt::Semi(expr, _) =>
+                syn::Stmt::Expr(expr, _) => {
                     if self.expr_calls_target(expr, target) {
                         return true;
-                    },
-                syn::Stmt::Local(local) =>
+                    }
+                }
+                syn::Stmt::Local(local) => {
                     if let Some(init) = &local.init {
                         if self.expr_calls_target(&init.expr, target) {
                             return true;
                         }
-                    },
+                    }
+                }
                 _ => {}
             }
         }
@@ -427,20 +457,22 @@ impl ConvertToAsyncOperation {
     /// Check if an expression calls the target function
     fn expr_calls_target(&self, expr: &syn::Expr, target: &str) -> bool {
         match expr {
-            syn::Expr::Call(call) =>
+            syn::Expr::Call(call) => {
                 if let syn::Expr::Path(path) = &*call.func {
                     if let Some(ident) = path.path.get_ident() {
                         return ident == target;
                     }
-                },
+                }
+            }
             syn::Expr::MethodCall(_) => {
                 // Method calls would be more complex to track
                 // For now, we'll skip detailed method call analysis
             }
-            syn::Expr::Block(block) =>
+            syn::Expr::Block(block) => {
                 if self.function_calls_target(&block.block, target) {
                     return true;
-                },
+                }
+            }
             syn::Expr::If(if_expr) => {
                 if self.expr_calls_target(&if_expr.cond, target) {
                     return true;
@@ -449,8 +481,8 @@ impl ConvertToAsyncOperation {
                     return true;
                 }
                 for branch in &if_expr.else_branch {
-                    if let syn::Expr::Block(else_block) = branch.1 {
-                        if self.function_calls_target(&else_block, target) {
+                    if let syn::Expr::Block(else_block) = branch.1.as_ref() {
+                        if self.function_calls_target(&else_block.block, target) {
                             return true;
                         }
                     }

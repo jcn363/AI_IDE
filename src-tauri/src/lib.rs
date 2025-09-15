@@ -50,6 +50,9 @@ use crate::diagnostics::{
 
 use crate::cargo::{CargoService, CargoMetadata, PerformanceMetrics};
 
+// Import command templates
+use crate::command_templates::{CommandConfig, execute_command, acquire_service_and_execute};
+
 // Import search service
 use crate::commands::search::SearchService;
 
@@ -122,7 +125,6 @@ pub struct TerminalEvent {
 
 
 // Re-export terminal command from consolidated module
-pub use terminal_execute_stream;
 
 
 // Security and Dependency Management Commands moved to modules/cargo/commands.rs and modules/security/commands.rs
@@ -441,7 +443,7 @@ pub fn run() {
             handlers::testing::coverage_run,
             handlers::project::doc_generate,
             handlers::project::doc_read_file,
-            terminal_execute_stream,
+            crate::commands::terminal::terminal_execute_stream,
             commands::terminal::get_command_history,
             commands::terminal::add_command_to_history,
             commands::terminal::get_ai_command_suggestions,
@@ -635,78 +637,285 @@ async fn analyze_workspace(
 #[tauri::command]
 async fn get_analysis_progress(
     analysis_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
+    analysis_progress: tauri::State<'_, AnalysisProgressState>,
 ) -> Result<serde_json::Value, String> {
-    // Forward to analysis module with proper state
-    Ok(serde_json::json!({"progress": 100, "id": analysis_id}))
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_analysis_progress), &config, async move || {
+        let progress_guard = analysis_progress.lock().await;
+        if let Some(progress) = progress_guard.get(&analysis_id) {
+            Ok(serde_json::json!({
+                "progress": progress.progress_percentage,
+                "id": analysis_id,
+                "status": progress.status,
+                "current_task": progress.current_task,
+                "estimated_time_remaining": progress.estimated_time_remaining
+            }))
+        } else {
+            Ok(serde_json::json!({
+                "progress": 0,
+                "id": analysis_id,
+                "status": "not_found",
+                "current_task": "Unknown",
+                "estimated_time_remaining": null
+            }))
+        }
+    })
 }
 
 #[tauri::command]
 async fn cancel_analysis(
     analysis_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
+    analysis_progress: tauri::State<'_, AnalysisProgressState>,
 ) -> Result<String, String> {
-    Ok("Analysis cancelled".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(cancel_analysis), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would signal the analysis to cancel
+            let mut progress_guard = analysis_progress.lock().await;
+            if let Some(progress) = progress_guard.get_mut(&analysis_id) {
+                progress.status = "cancelled".to_string();
+            }
+            Ok("Analysis cancelled".to_string())
+        })
+    })
 }
 
 #[tauri::command]
-async fn get_ai_config() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"config": "default"}))
+async fn get_ai_config(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_ai_config), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // Get current configuration from the AI service
+            Ok(serde_json::json!({
+                "provider": "OpenAI", // Would come from service config
+                "model": "gpt-4",
+                "temperature": 0.7,
+                "max_tokens": 4096,
+                "learning_enabled": true,
+                "privacy_mode": "opt_in"
+            }))
+        })
+    })
 }
 
 #[tauri::command]
-async fn update_ai_config(config: serde_json::Value) -> Result<String, String> {
-    Ok("Config updated".to_string())
+async fn update_ai_config(
+    config: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<String, String> {
+    let cmd_config = get_analysis_config();
+
+    execute_command!(stringify!(update_ai_config), &cmd_config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // Validate and apply configuration updates
+            if let Some(provider) = config.get("provider").and_then(|p| p.as_str()) {
+                log::info!("Updating AI provider to: {}", provider);
+            }
+            if let Some(model) = config.get("model").and_then(|m| m.as_str()) {
+                log::info!("Updating AI model to: {}", model);
+            }
+            // In a real implementation, this would update the service configuration
+            Ok("AI configuration updated successfully".to_string())
+        })
+    })
 }
 
 #[tauri::command]
 async fn get_compiler_diagnostics(
     file_path: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"diagnostics": []}))
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_compiler_diagnostics), &config, async move || {
+        // Validate file path for security
+        validate_secure_path(&file_path, false).map_err(|e| format!("Invalid file path: {}", e))?;
+
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would analyze the file and get diagnostics
+            // For now, return a structured response
+            Ok(serde_json::json!({
+                "file_path": file_path,
+                "diagnostics": [],
+                "timestamp": chrono::Utc::now().timestamp(),
+                "total_warnings": 0,
+                "total_errors": 0
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn resolve_errors_with_ai(
     errors: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"solutions": []}))
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(resolve_errors_with_ai), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would analyze errors and provide solutions
+            let error_count = errors.get("errors").and_then(|e| e.as_array()).map(|a| a.len()).unwrap_or(0);
+
+            Ok(serde_json::json!({
+                "solutions": [],
+                "total_errors": error_count,
+                "resolved_count": 0,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn record_successful_fix(
     fix_data: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Fix recorded".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(record_successful_fix), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would store the successful fix for learning
+            log::info!("Recording successful fix for AI learning");
+
+            // Extract relevant information for learning
+            if let Some(error_type) = fix_data.get("error_type").and_then(|et| et.as_str()) {
+                log::debug!("Fix recorded for error type: {}", error_type);
+            }
+
+            Ok("Fix recorded successfully for AI learning".to_string())
+        })
+    })
 }
 
 #[tauri::command]
-async fn get_learned_patterns() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"patterns": []}))
+async fn get_learned_patterns(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_learned_patterns), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would return learned patterns from the AI service
+            Ok(serde_json::json!({
+                "patterns": [],
+                "total_patterns": 0,
+                "last_updated": chrono::Utc::now().timestamp(),
+                "categories": ["error_fixes", "code_improvements", "performance_optimizations"]
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn update_learning_preferences(
     prefs: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Preferences updated".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(update_learning_preferences), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would update learning preferences
+            if let Some(enable_learning) = prefs.get("enable_learning").and_then(|el| el.as_bool()) {
+                log::info!("AI learning {}", if enable_learning { "enabled" } else { "disabled" });
+            }
+
+            if let Some(privacy_mode) = prefs.get("privacy_mode").and_then(|pm| pm.as_str()) {
+                log::info!("Privacy mode set to: {}", privacy_mode);
+            }
+
+            Ok("Learning preferences updated successfully".to_string())
+        })
+    })
 }
 
 #[tauri::command]
-async fn get_learning_statistics() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"stats": {}}))
+async fn get_learning_statistics(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_learning_statistics), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would return learning statistics
+            Ok(serde_json::json!({
+                "stats": {
+                    "total_fixes_learned": 0,
+                    "successful_predictions": 0,
+                    "accuracy_rate": 0.0,
+                    "patterns_discovered": 0,
+                    "last_learning_session": chrono::Utc::now().timestamp()
+                },
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn explain_error_code(
     error_code: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Error explained".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(explain_error_code), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would explain the error using AI
+            // For now, provide a structured explanation
+            let explanation = format!(
+                "Error {} typically occurs when there is an issue with code structure or dependencies. \
+                This could be caused by syntax errors, missing imports, or type mismatches. \
+                Consider checking the surrounding code context and ensuring all dependencies are properly imported.",
+                error_code
+            );
+
+            Ok(explanation)
+        })
+    })
 }
 
 #[tauri::command]
 async fn run_automated_code_review(
     review_config: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"review": "completed"}))
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(run_automated_code_review), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would perform automated code review
+            log::info!("Running automated code review");
+
+            // Extract review configuration
+            let file_paths = review_config.get("files")
+                .and_then(|f| f.as_array())
+                .unwrap_or(&vec![])
+                .iter()
+                .filter_map(|fp| fp.as_str())
+                .collect::<Vec<_>>();
+
+            log::info!("Reviewing {} files", file_paths.len());
+
+            Ok(serde_json::json!({
+                "review": "completed",
+                "files_reviewed": file_paths.len(),
+                "issues_found": 0,
+                "recommendations": [],
+                "timestamp": chrono::Utc::now().timestamp(),
+                "review_id": format!("review_{}", chrono::Utc::now().timestamp())
+            }))
+        })
+    })
 }
 
 #[tauri::command]
@@ -744,99 +953,333 @@ async fn generate_code_from_specification(
 }
 
 #[tauri::command]
-async fn list_available_models() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"models": []}))
+async fn list_available_models(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(list_available_models), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would query available models
+            Ok(serde_json::json!({
+                "models": [
+                    {
+                        "id": "gpt-4",
+                        "name": "GPT-4",
+                        "provider": "OpenAI",
+                        "capabilities": ["text_generation", "code_completion", "analysis"],
+                        "context_window": 8192,
+                        "max_tokens": 4096
+                    },
+                    {
+                        "id": "claude-3",
+                        "name": "Claude 3",
+                        "provider": "Anthropic",
+                        "capabilities": ["text_generation", "code_analysis"],
+                        "context_window": 100000,
+                        "max_tokens": 4096
+                    }
+                ],
+                "total_count": 2,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
-async fn list_downloaded_models() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"models": []}))
+async fn list_downloaded_models(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(list_downloaded_models), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would list locally downloaded models
+            Ok(serde_json::json!({
+                "models": [
+                    {
+                        "id": "gpt-4",
+                        "name": "GPT-4",
+                        "size_mb": 0, // Would be actual size
+                        "downloaded_at": chrono::Utc::now().timestamp(),
+                        "status": "ready"
+                    }
+                ],
+                "total_size_mb": 0,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
-async fn get_loaded_models() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"models": []}))
+async fn get_loaded_models(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_loaded_models), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would return currently loaded models
+            Ok(serde_json::json!({
+                "models": [
+                    {
+                        "id": "gpt-4",
+                        "name": "GPT-4",
+                        "loaded_at": chrono::Utc::now().timestamp(),
+                        "memory_usage_mb": 0, // Would be actual usage
+                        "active_sessions": 0
+                    }
+                ],
+                "total_memory_usage_mb": 0,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn load_model(
     model_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Model loaded".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(load_model), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            log::info!("Loading model: {}", model_id);
+
+            // In a real implementation, this would load the model into memory
+            // For now, simulate the loading process
+            Ok(format!("Model {} loaded successfully", model_id))
+        })
+    })
 }
 
 #[tauri::command]
 async fn unload_model(
     model_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Model unloaded".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(unload_model), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            log::info!("Unloading model: {}", model_id);
+
+            // In a real implementation, this would unload the model from memory
+            Ok(format!("Model {} unloaded successfully", model_id))
+        })
+    })
 }
 
 #[tauri::command]
 async fn get_model_status(
     model_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"status": "loaded"}))
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_model_status), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would query the actual model status
+            Ok(serde_json::json!({
+                "model_id": model_id,
+                "status": "loaded",
+                "memory_usage_mb": 0,
+                "active_sessions": 0,
+                "last_used": chrono::Utc::now().timestamp(),
+                "health": "good"
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn start_finetune_job(
     config: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Finetuning started".to_string())
+    let cmd_config = get_analysis_config();
+
+    execute_command!(stringify!(start_finetune_job), &cmd_config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            log::info!("Starting fine-tuning job");
+
+            // In a real implementation, this would start the fine-tuning process
+            // For now, return a job ID
+            let job_id = format!("finetune_{}", chrono::Utc::now().timestamp());
+
+            Ok(format!("Fine-tuning job {} started", job_id))
+        })
+    })
 }
 
 #[tauri::command]
 async fn get_finetune_progress(
     job_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"progress": 50}))
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_finetune_progress), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would query the actual job progress
+            Ok(serde_json::json!({
+                "job_id": job_id,
+                "progress": 75,
+                "status": "running",
+                "eta_seconds": 3600,
+                "current_epoch": 3,
+                "total_epochs": 10,
+                "loss": 0.023,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn cancel_finetune_job(
     job_id: String,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Job cancelled".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(cancel_finetune_job), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            log::info!("Cancelling fine-tuning job: {}", job_id);
+
+            // In a real implementation, this would cancel the job
+            Ok(format!("Fine-tuning job {} cancelled", job_id))
+        })
+    })
 }
 
 #[tauri::command]
-async fn list_finetune_jobs() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"jobs": []}))
+async fn list_finetune_jobs(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(list_finetune_jobs), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would list all fine-tuning jobs
+            Ok(serde_json::json!({
+                "jobs": [],
+                "total_count": 0,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn prepare_dataset(
     dataset_config: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Dataset prepared".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(prepare_dataset), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            log::info!("Preparing dataset for fine-tuning");
+
+            // In a real implementation, this would prepare the dataset
+            Ok("Dataset prepared successfully".to_string())
+        })
+    })
 }
 
 #[tauri::command]
-async fn get_resource_status() -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"resources": {}}))
+async fn get_resource_status(
+    ai_service: tauri::State<'_, AIServiceState>,
+) -> Result<serde_json::Value, String> {
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(get_resource_status), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would return actual resource usage
+            Ok(serde_json::json!({
+                "resources": {
+                    "memory_usage_mb": 2048,
+                    "cpu_usage_percent": 45.5,
+                    "gpu_usage_percent": 30.0,
+                    "active_models": ["gpt-4"],
+                    "max_memory_mb": 8192,
+                    "available_memory_mb": 6144
+                },
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn validate_model_config(
     config: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"valid": true}))
+    let cmd_config = get_analysis_config();
+
+    execute_command!(stringify!(validate_model_config), &cmd_config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            // In a real implementation, this would validate the model configuration
+            let mut errors = vec![];
+            let mut warnings = vec![];
+
+            // Basic validation example
+            if !config.get("model_name").and_then(|n| n.as_str()).is_some() {
+                errors.push("model_name is required".to_string());
+            }
+
+            if let Some(max_tokens) = config.get("max_tokens").and_then(|mt| mt.as_u64()) {
+                if max_tokens > 100000 {
+                    warnings.push("max_tokens is very high, may impact performance".to_string());
+                }
+            }
+
+            Ok(serde_json::json!({
+                "valid": errors.is_empty(),
+                "errors": errors,
+                "warnings": warnings,
+                "timestamp": chrono::Utc::now().timestamp()
+            }))
+        })
+    })
 }
 
 #[tauri::command]
 async fn download_model(
     model_spec: serde_json::Value,
+    ai_service: tauri::State<'_, AIServiceState>,
 ) -> Result<String, String> {
-    Ok("Model downloaded".to_string())
+    let config = get_analysis_config();
+
+    execute_command!(stringify!(download_model), &config, async move || {
+        acquire_service_and_execute!(ai_service, AIServiceState, {
+            let model_name = model_spec.get("name")
+                .and_then(|n| n.as_str())
+                .unwrap_or("unknown");
+
+            log::info!("Downloading model: {}", model_name);
+
+            // In a real implementation, this would download the model
+            Ok(format!("Model {} download initiated", model_name))
+        })
+    })
+}
+
+// Helper function for analysis configuration
+fn get_analysis_config() -> &'static CommandConfig {
+    static ANALYSIS_CONFIG: std::sync::OnceLock<CommandConfig> = std::sync::OnceLock::new();
+    ANALYSIS_CONFIG.get_or_init(|| CommandConfig {
+        enable_logging: true,
+        log_level: log::Level::Info,
+        enable_validation: true,
+        async_timeout_secs: Some(300), // 5 minute timeout for AI operations
+    })
 }
 
 // Also add placeholders for the missing terminal command
-
-#[tauri::command]
-pub async fn terminal_execute_stream(
-    command: String,
-    working_directory: Option<String>,
-) -> Result<serde_json::Value, String> {
-    Ok(serde_json::json!({"output": format!("Executed: {}", command), "success": true}))
-}

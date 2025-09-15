@@ -34,9 +34,9 @@ impl HealthChecker {
         if !self.config.health.enabled {
             return Ok(HealthStatus {
                 overall_status: HealthCheckStatus::Healthy,
-                timestamp:      Utc::now(),
-                checks:         HashMap::new(),
-                message:        "Health checks disabled".to_string(),
+                timestamp: Utc::now(),
+                checks: HashMap::new(),
+                message: "Health checks disabled".to_string(),
             });
         }
 
@@ -118,21 +118,21 @@ impl HealthChecker {
 
         if duration < Duration::from_secs(self.config.health.max_response_time_secs) {
             HealthCheckResult {
-                name:        "database".to_string(),
-                status:      HealthCheckStatus::Healthy,
-                timestamp:   Utc::now(),
+                name: "database".to_string(),
+                status: HealthCheckStatus::Healthy,
+                timestamp: Utc::now(),
                 duration_ms: duration.as_millis() as u64,
-                message:     "Database connection successful".to_string(),
-                details:     None,
+                message: "Database connection successful".to_string(),
+                details: None,
             }
         } else {
             HealthCheckResult {
-                name:        "database".to_string(),
-                status:      HealthCheckStatus::Unhealthy,
-                timestamp:   Utc::now(),
+                name: "database".to_string(),
+                status: HealthCheckStatus::Unhealthy,
+                timestamp: Utc::now(),
                 duration_ms: duration.as_millis() as u64,
-                message:     "Database response time too slow".to_string(),
-                details:     Some(serde_json::json!({
+                message: "Database response time too slow".to_string(),
+                details: Some(serde_json::json!({
                     "response_time_ms": duration.as_millis(),
                     "threshold_ms": self.config.health.max_response_time_secs * 1000
                 })),
@@ -150,12 +150,12 @@ impl HealthChecker {
         let duration = start.elapsed();
 
         HealthCheckResult {
-            name:        "lsp_servers".to_string(),
-            status:      HealthCheckStatus::Healthy,
-            timestamp:   Utc::now(),
+            name: "lsp_servers".to_string(),
+            status: HealthCheckStatus::Healthy,
+            timestamp: Utc::now(),
             duration_ms: duration.as_millis() as u64,
-            message:     "LSP servers responding normally".to_string(),
-            details:     Some(serde_json::json!({
+            message: "LSP servers responding normally".to_string(),
+            details: Some(serde_json::json!({
                 "active_servers": ["rust-analyzer", "typescript-language-server"],
                 "total_servers": 2
             })),
@@ -173,24 +173,24 @@ impl HealthChecker {
 
         if duration < Duration::from_secs(self.config.health.max_response_time_secs) {
             HealthCheckResult {
-                name:        "ai_services".to_string(),
-                status:      HealthCheckStatus::Healthy,
-                timestamp:   Utc::now(),
+                name: "ai_services".to_string(),
+                status: HealthCheckStatus::Healthy,
+                timestamp: Utc::now(),
                 duration_ms: duration.as_millis() as u64,
-                message:     "AI services operational".to_string(),
-                details:     Some(serde_json::json!({
+                message: "AI services operational".to_string(),
+                details: Some(serde_json::json!({
                     "active_models": ["gpt-4", "claude-3"],
                     "queue_depth": 0
                 })),
             }
         } else {
             HealthCheckResult {
-                name:        "ai_services".to_string(),
-                status:      HealthCheckStatus::Degraded,
-                timestamp:   Utc::now(),
+                name: "ai_services".to_string(),
+                status: HealthCheckStatus::Degraded,
+                timestamp: Utc::now(),
                 duration_ms: duration.as_millis() as u64,
-                message:     "AI services responding slowly".to_string(),
-                details:     Some(serde_json::json!({
+                message: "AI services responding slowly".to_string(),
+                details: Some(serde_json::json!({
                     "response_time_ms": duration.as_millis(),
                     "queue_depth": 5
                 })),
@@ -257,7 +257,10 @@ impl HealthChecker {
     }
 
     /// Determine overall health status from individual checks
-    fn determine_overall_status(&self, checks: &HashMap<String, HealthCheckResult>) -> HealthCheckStatus {
+    fn determine_overall_status(
+        &self,
+        checks: &HashMap<String, HealthCheckResult>,
+    ) -> HealthCheckStatus {
         let mut has_critical = false;
         let mut has_degraded = false;
 
@@ -291,20 +294,20 @@ impl HealthChecker {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthStatus {
     pub overall_status: HealthCheckStatus,
-    pub timestamp:      DateTime<Utc>,
-    pub checks:         HashMap<String, HealthCheckResult>,
-    pub message:        String,
+    pub timestamp: DateTime<Utc>,
+    pub checks: HashMap<String, HealthCheckResult>,
+    pub message: String,
 }
 
 /// Individual health check result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthCheckResult {
-    pub name:        String,
-    pub status:      HealthCheckStatus,
-    pub timestamp:   DateTime<Utc>,
+    pub name: String,
+    pub status: HealthCheckStatus,
+    pub timestamp: DateTime<Utc>,
     pub duration_ms: u64,
-    pub message:     String,
-    pub details:     Option<serde_json::Value>,
+    pub message: String,
+    pub details: Option<serde_json::Value>,
 }
 
 /// Health check status levels
@@ -335,32 +338,37 @@ pub mod helpers {
     /// Create a simple health check result
     pub fn simple_result(name: &str, healthy: bool, message: &str) -> HealthCheckResult {
         HealthCheckResult {
-            name:        name.to_string(),
-            status:      if healthy {
+            name: name.to_string(),
+            status: if healthy {
                 HealthCheckStatus::Healthy
             } else {
                 HealthCheckStatus::Unhealthy
             },
-            timestamp:   Utc::now(),
+            timestamp: Utc::now(),
             duration_ms: 0,
-            message:     message.to_string(),
-            details:     None,
+            message: message.to_string(),
+            details: None,
         }
     }
 
     /// Create a health check result with timing
-    pub fn timed_result(name: &str, duration: Duration, healthy: bool, message: &str) -> HealthCheckResult {
+    pub fn timed_result(
+        name: &str,
+        duration: Duration,
+        healthy: bool,
+        message: &str,
+    ) -> HealthCheckResult {
         HealthCheckResult {
-            name:        name.to_string(),
-            status:      if healthy {
+            name: name.to_string(),
+            status: if healthy {
                 HealthCheckStatus::Healthy
             } else {
                 HealthCheckStatus::Unhealthy
             },
-            timestamp:   Utc::now(),
+            timestamp: Utc::now(),
             duration_ms: duration.as_millis() as u64,
-            message:     message.to_string(),
-            details:     None,
+            message: message.to_string(),
+            details: None,
         }
     }
 

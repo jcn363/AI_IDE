@@ -8,12 +8,12 @@ use crate::code_generation::*;
 /// Completion context containing information about the current code state
 #[derive(Debug, Clone)]
 pub struct CompletionContext {
-    pub current_line:     String,
-    pub cursor_position:  usize,
+    pub current_line: String,
+    pub cursor_position: usize,
     pub surrounding_code: Vec<String>,
     pub imported_modules: Vec<String>,
-    pub project_context:  ProjectContext,
-    pub completion_type:  CompletionType,
+    pub project_context: ProjectContext,
+    pub completion_type: CompletionType,
 }
 
 #[derive(Debug, Clone)]
@@ -31,10 +31,10 @@ pub enum CompletionType {
 /// Completion suggestion with metadata
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CompletionSuggestion {
-    pub text:            String,
-    pub kind:            CompletionKind,
-    pub description:     String,
-    pub confidence:      f32,
+    pub text: String,
+    pub kind: CompletionKind,
+    pub description: String,
+    pub confidence: f32,
     pub additional_info: Option<String>,
 }
 
@@ -56,7 +56,7 @@ pub enum CompletionKind {
 /// Code completer implementation
 #[derive(Debug)]
 pub struct CodeCompleter {
-    templates:        std::collections::HashMap<String, Vec<CompletionSuggestion>>,
+    templates: std::collections::HashMap<String, Vec<CompletionSuggestion>>,
     context_analyzer: Option<ContextAnalyzer>,
 }
 
@@ -67,7 +67,7 @@ impl CodeCompleter {
     /// Create a new code completer
     pub fn new() -> Self {
         Self {
-            templates:        std::collections::HashMap::new(),
+            templates: std::collections::HashMap::new(),
             context_analyzer: Some(ContextAnalyzer::new()),
         }
     }
@@ -107,11 +107,13 @@ impl CodeCompleter {
 
         // Analyze function signature patterns from context
         let completion = CompletionSuggestion {
-            text:            "async fn process_data(input: Vec<String>) -> Result<(), String> {".to_string(),
-            kind:            CompletionKind::Snippet,
-            description:     "Async function with error handling".to_string(),
-            confidence:      0.8,
-            additional_info: Some("Generates async function with proper error handling".to_string()),
+            text: "async fn process_data(input: Vec<String>) -> Result<(), String> {".to_string(),
+            kind: CompletionKind::Snippet,
+            description: "Async function with error handling".to_string(),
+            confidence: 0.8,
+            additional_info: Some(
+                "Generates async function with proper error handling".to_string(),
+            ),
         };
         suggestions.push(completion);
 
@@ -125,17 +127,17 @@ impl CodeCompleter {
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let suggestions = vec![
             CompletionSuggestion {
-                text:            "use std::collections::HashMap;".to_string(),
-                kind:            CompletionKind::Import,
-                description:     "Standard HashMap import".to_string(),
-                confidence:      0.9,
+                text: "use std::collections::HashMap;".to_string(),
+                kind: CompletionKind::Import,
+                description: "Standard HashMap import".to_string(),
+                confidence: 0.9,
                 additional_info: None,
             },
             CompletionSuggestion {
-                text:            "use std::{io, fs};".to_string(),
-                kind:            CompletionKind::Import,
-                description:     "Multiple std imports".to_string(),
-                confidence:      0.8,
+                text: "use std::{io, fs};".to_string(),
+                kind: CompletionKind::Import,
+                description: "Multiple std imports".to_string(),
+                confidence: 0.8,
                 additional_info: Some("Combines io and fs modules".to_string()),
             },
         ];
@@ -150,17 +152,17 @@ impl CodeCompleter {
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let suggestions = vec![
             CompletionSuggestion {
-                text:            "HashMap<String, Vec<u8>>".to_string(),
-                kind:            CompletionKind::Type,
-                description:     "Map of strings to byte vectors".to_string(),
-                confidence:      0.85,
+                text: "HashMap<String, Vec<u8>>".to_string(),
+                kind: CompletionKind::Type,
+                description: "Map of strings to byte vectors".to_string(),
+                confidence: 0.85,
                 additional_info: None,
             },
             CompletionSuggestion {
-                text:            "Option<(String, u32)>".to_string(),
-                kind:            CompletionKind::Type,
-                description:     "Optional tuple of string and u32".to_string(),
-                confidence:      0.8,
+                text: "Option<(String, u32)>".to_string(),
+                kind: CompletionKind::Type,
+                description: "Optional tuple of string and u32".to_string(),
+                confidence: 0.8,
                 additional_info: None,
             },
         ];
@@ -175,17 +177,17 @@ impl CodeCompleter {
     ) -> Result<Vec<CompletionSuggestion>, CodeGenerationError> {
         let suggestions = vec![
             CompletionSuggestion {
-                text:            "if ".to_string(),
-                kind:            CompletionKind::Keyword,
-                description:     "Conditional statement".to_string(),
-                confidence:      0.95,
+                text: "if ".to_string(),
+                kind: CompletionKind::Keyword,
+                description: "Conditional statement".to_string(),
+                confidence: 0.95,
                 additional_info: Some("Insert if condition block".to_string()),
             },
             CompletionSuggestion {
-                text:            "match ".to_string(),
-                kind:            CompletionKind::Keyword,
-                description:     "Pattern matching".to_string(),
-                confidence:      0.9,
+                text: "match ".to_string(),
+                kind: CompletionKind::Keyword,
+                description: "Pattern matching".to_string(),
+                confidence: 0.9,
                 additional_info: Some("Insert match expression".to_string()),
             },
         ];

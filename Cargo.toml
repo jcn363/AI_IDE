@@ -74,6 +74,7 @@ members = [
   "crates/rust-ai-ide-parallel-processing",
   "crates/rust-ai-ide-perfdevel-tools",
   "crates/rust-ai-ide-work-stealing-scheduler",
+  "crates/rust-ai-ide-workspace-optimizer",
   "crates/rust-ai-ide-performance",
   "crates/rust-ai-ide-performance-monitoring",
   "crates/rust-ai-ide-plugins",
@@ -145,7 +146,7 @@ hmac = { version = "0.13.0-rc.1" }
 statrs = { version = "0.18.0" }
 sha2 = { version = "0.10.9" }
 sha3 = { version = "0.11.0-rc.3" }
-rsa = { version = "0.10.0-rc.6" }
+rsa = { version = "0.10.0-rc.8" }
 futures = { version = "^0.3.31" }
 governor = { version = "0.10.1" }
 lazy_static = { version = "^1.5.0" }
@@ -153,12 +154,14 @@ log = { version = "^0.4.28" }
 lru = { version = "0.16.1" }
 once_cell = { version = "^1.21.3" }
 petgraph = { version = "^0.8.2" }
-semver = { version = "^1.0.26", default-features = false, features = ["serde"] }
-serde = { version = "^1.0.219", default-features = false, features = [
+semver = { version = "^1.0.27", default-features = false, features = ["serde"] }
+serde = { version = "^1.0.223", default-features = false, features = [
   "derive",
 ] }
-serde_json = "^1.0.143"
+serde_json = "^1.0.145"
+quick-xml = "0.38.3"
 thiserror = { version = "2.0.16" }
+xml-rs = "1.0"
 tracing = { version = "0.1.41" }
 tracing-opentelemetry = { version = "0.30.0" }
 opentelemetry = { version = "0.30.0" }
@@ -190,6 +193,7 @@ reqwest = { version = "^0.12.23", default-features = false, features = [
 ] }
 serde_yaml = { version = "0.9.34" }
 syn = { version = "2.0.106", default-features = false, features = [
+  "clone-impls",
   "parsing",
   "printing",
   "visit",
@@ -237,6 +241,7 @@ tauri-plugin-log = { version = "^2.7", default-features = false, features = [
 async-trait = { version = "^0.1.89" }
 cargo-deny = { version = "0.18.4" }
 cargo-audit = { version = "0.21.0" }
+cargo-fuzz = { version = "0.13.1" }
 cargo-geiger = { version = "0.13.0" }
 color-eyre = { version = "0.6.5" }
 criterion = { version = "0.7.0" }
@@ -244,6 +249,7 @@ fancy-regex = { version = "0.16.1" }
 handlebars = { version = "6.3.2" }
 ignore = { version = "^0.4.23" }
 moka = { version = "0.12.10", default-features = false, features = ["future"] }
+mockall = { version = "0.13.1", features = ["nightly"] }
 num_cpus = { version = "^1.17.0" }
 rayon = { version = "^1.11.0" }
 rust-ai-ide-errors = { path = "./crates/rust-ai-ide-errors" }
@@ -281,6 +287,7 @@ parking_lot = { version = "^0.12.4" }
 tracing-subscriber = { version = "^0.3.20", default-features = false, features = [
   "env-filter",
 ] }
+generic-array = { version = "0.14" }
 crossbeam-deque = { version = "^0.8.5" }
 
 # Color output library as replacement for unmaintained ansi_term
@@ -307,14 +314,19 @@ url = { version = "^2.5.7", features = ["serde"] }
 serde_repr = { version = "^0.1.20" }
 pathdiff = { version = "^0.2.3" }
 which = { version = "^8.0.0" }
-clap = { version = "^4.5.47", default-features = false, features = ["derive"] }
+clap = { version = "^4.5.47", default-features = false, features = ["derive", "std"] }
+indicatif = "^0.17.7"
 
 # Encryption dependencies (compliant with security policies)
-aes_gcm = { version = "0.10.3", default-features = false, features = [
+aes-gcm = { version = "0.10.3", default-features = false, features = [
   "aes",
   "alloc",
 ] }
+bcrypt = { version = "0.15" }
+jsonwebtoken = { version = "9.0" }
 base64 = { version = "^0.22.1" }
+argon2 = "0.5"
+chacha20poly1305 = { version = "0.10" }
 
 # Dependencies required by src-tauri
 cargo-edit = { version = "^0.13.7" }
@@ -329,6 +341,7 @@ filesystem = { version = "^0.4.4" }
 proptest = { version = "^1.7.0", default-features = false, features = ["std"] }
 async-lsp = { version = "0.2.2" }
 assert_fs = { version = "^1.1.3" }
+rstest = { version = "0.18" }
 
 # Workspace hack for dependency deduplication
 

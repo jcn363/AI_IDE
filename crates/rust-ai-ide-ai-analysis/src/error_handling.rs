@@ -1,3 +1,4 @@
+use rust_ai_ide_common::errors::IdeError;
 use thiserror::Error;
 
 /// Errors that can occur during code analysis
@@ -33,6 +34,12 @@ pub enum AnalysisError {
     #[error("unsupported language: {0}")]
     UnsupportedLanguage(String),
 
+    #[error("AI inference error: {0}")]
+    InferenceError(String),
+
+    #[error("Resource limit exceeded")]
+    ResourceLimitExceeded,
+
     #[error("Unknown error: {0}")]
     Other(String),
 }
@@ -64,6 +71,8 @@ impl AnalysisError {
             AnalysisError::RegexError(_) => "regex",
             AnalysisError::UnsupportedLanguage(_) => "unsupported",
             AnalysisError::Timeout => "timeout",
+            AnalysisError::InferenceError(_) => "inference",
+            AnalysisError::ResourceLimitExceeded => "resource",
             AnalysisError::Other(_) => "other",
         }
     }
@@ -71,6 +80,31 @@ impl AnalysisError {
 
 /// Result alias for analysis operations
 pub type AnalysisResult<T> = std::result::Result<T, AnalysisError>;
+
+/// Convert IdeError to AnalysisError for compatibility
+impl From<IdeError> for AnalysisError {
+    fn from(error: IdeError) -> Self {
+        match error {
+            IdeError::Validation { field, reason } =>
+                AnalysisError::Other(format!("Validation error in field '{}': {}", field, reason)),
+            _ => AnalysisError::Other(format!("Common error: {}", error)),
+        }
+    }
+}
+
+/// Convert tree_sitter::Error to AnalysisError
+impl From<tree_sitter::LanguageError> for AnalysisError {
+    fn from(error: tree_sitter::LanguageError) -> Self {
+        AnalysisError::ParseError(format!("Tree-sitter language error: {}", error))
+    }
+}
+
+/// Convert InferenceError to AnalysisError
+impl From<rust_ai_ide_ai_inference::InferenceError> for AnalysisError {
+    fn from(error: rust_ai_ide_ai_inference::InferenceError) -> Self {
+        AnalysisError::InferenceError(format!("AI inference error: {}", error))
+    }
+}
 
 /// Error recovery strategies
 #[derive(Debug, Clone, Copy)]

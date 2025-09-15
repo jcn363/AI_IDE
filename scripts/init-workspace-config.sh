@@ -179,7 +179,6 @@ governor = { version = "0.10.1" }
 lazy_static = "^1.5.0"
 log = "^0.4.28"
 lru = "0.16.0"
-md5 = "^0.8.0"
 once_cell = "^1.21.3"
 petgraph = "^0.8.2"
 semver = { version = "^1.0.26", default-features = false, features = ["serde"] }

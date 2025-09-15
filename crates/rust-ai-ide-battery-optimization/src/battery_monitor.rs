@@ -14,15 +14,15 @@ use crate::{BatteryConfig, BatteryState};
 
 /// Battery monitoring service
 pub struct BatteryMonitor {
-    state:   Arc<RwLock<InternalBatteryState>>,
+    state: Arc<RwLock<InternalBatteryState>>,
     history: Arc<RwLock<VecDeque<BatteryReading>>>,
-    config:  BatteryConfig,
+    config: BatteryConfig,
 }
 
 #[derive(Debug, Clone)]
 struct InternalBatteryState {
-    current_state:    BatteryState,
-    last_updated:     DateTime<Utc>,
+    current_state: BatteryState,
+    last_updated: DateTime<Utc>,
     platform_monitor: Option<Box<dyn PlatformBatteryMonitor>>,
 }
 
@@ -36,19 +36,19 @@ pub trait PlatformBatteryMonitor: Send + Sync {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatteryReading {
-    pub timestamp:                DateTime<Utc>,
-    pub state:                    BatteryState,
-    pub power_consumption_mah:    Option<f32>,
+    pub timestamp: DateTime<Utc>,
+    pub state: BatteryState,
+    pub power_consumption_mah: Option<f32>,
     pub estimated_time_remaining: Option<u32>,
 }
 
 /// Battery consumption pattern analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsumptionPattern {
-    pub time_window_minutes:          u32,
+    pub time_window_minutes: u32,
     pub average_consumption_per_hour: f32,
-    pub peak_consumption_rate:        f32,
-    pub predicted_drain_rate:         f32,
+    pub peak_consumption_rate: f32,
+    pub predicted_drain_rate: f32,
 }
 
 /// Health assessment for battery
@@ -56,10 +56,10 @@ pub struct ConsumptionPattern {
 pub struct BatteryHealth {
     pub design_capacity_mah: Option<f32>,
     pub actual_capacity_mah: Option<f32>,
-    pub health_percentage:   Option<f32>,
-    pub cycle_count:         Option<u32>,
-    pub max_voltage:         Option<f32>,
-    pub min_voltage:         Option<f32>,
+    pub health_percentage: Option<f32>,
+    pub cycle_count: Option<u32>,
+    pub max_voltage: Option<f32>,
+    pub min_voltage: Option<f32>,
 }
 
 impl BatteryMonitor {
@@ -68,15 +68,15 @@ impl BatteryMonitor {
 
         Self {
             state: Arc::new(RwLock::new(InternalBatteryState {
-                current_state:    BatteryState {
-                    level:                  1.0, // Assume full battery initially
-                    voltage:                None,
-                    temperature:            None,
-                    is_charging:            false,
-                    health_percentage:      None,
+                current_state: BatteryState {
+                    level: 1.0, // Assume full battery initially
+                    voltage: None,
+                    temperature: None,
+                    is_charging: false,
+                    health_percentage: None,
                     time_remaining_minutes: None,
                 },
-                last_updated:     Utc::now(),
+                last_updated: Utc::now(),
                 platform_monitor: None,
             })),
             history: Arc::new(RwLock::new(VecDeque::with_capacity(1000))), // Keep last 1000 readings
@@ -103,7 +103,8 @@ impl BatteryMonitor {
         #[cfg(not(any(target_os = "android", target_os = "ios")))]
         {
             // Use mock monitor for desktop development/testing
-            state.platform_monitor = Some(Box::new(crate::platform::mock::MockBatteryMonitor::new()));
+            state.platform_monitor =
+                Some(Box::new(crate::platform::mock::MockBatteryMonitor::new()));
         }
 
         if let Some(monitor) = &mut state.platform_monitor {
@@ -140,16 +141,19 @@ impl BatteryMonitor {
         }
     }
 
-    pub async fn get_consumption_pattern(&self, window_minutes: u32) -> anyhow::Result<ConsumptionPattern> {
+    pub async fn get_consumption_pattern(
+        &self,
+        window_minutes: u32,
+    ) -> anyhow::Result<ConsumptionPattern> {
         let history = self.history.read().await;
         let mut readings = history.iter().collect::<Vec<_>>();
 
         if readings.len() < 2 {
             return Ok(ConsumptionPattern {
-                time_window_minutes:          window_minutes,
+                time_window_minutes: window_minutes,
                 average_consumption_per_hour: 0.0,
-                peak_consumption_rate:        0.0,
-                predicted_drain_rate:         0.0,
+                peak_consumption_rate: 0.0,
+                predicted_drain_rate: 0.0,
             });
         }
 
@@ -159,10 +163,10 @@ impl BatteryMonitor {
 
         if readings.len() < 2 {
             return Ok(ConsumptionPattern {
-                time_window_minutes:          window_minutes,
+                time_window_minutes: window_minutes,
                 average_consumption_per_hour: 0.0,
-                peak_consumption_rate:        0.0,
-                predicted_drain_rate:         0.0,
+                peak_consumption_rate: 0.0,
+                predicted_drain_rate: 0.0,
             });
         }
 
@@ -172,7 +176,8 @@ impl BatteryMonitor {
 
         for window in readings.windows(2) {
             if let [prev, curr] = window {
-                let time_diff_hours = (curr.timestamp - prev.timestamp).num_seconds() as f32 / 3600.0;
+                let time_diff_hours =
+                    (curr.timestamp - prev.timestamp).num_seconds() as f32 / 3600.0;
                 if time_diff_hours > 0.0 {
                     let level_diff = prev.state.level - curr.state.level;
                     if level_diff > 0.0 {
@@ -184,7 +189,8 @@ impl BatteryMonitor {
             }
         }
 
-        let average_consumption_per_hour = total_consumption / (readings.len() as f32 - 1.0).max(1.0);
+        let average_consumption_per_hour =
+            total_consumption / (readings.len() as f32 - 1.0).max(1.0);
 
         Ok(ConsumptionPattern {
             time_window_minutes: window_minutes,
@@ -200,10 +206,10 @@ impl BatteryMonitor {
         Ok(BatteryHealth {
             design_capacity_mah: None, // Platform-specific implementation needed
             actual_capacity_mah: None, // Platform-specific implementation needed
-            health_percentage:   current_state.health_percentage,
-            cycle_count:         None,
-            max_voltage:         None,
-            min_voltage:         None,
+            health_percentage: current_state.health_percentage,
+            cycle_count: None,
+            max_voltage: None,
+            min_voltage: None,
         })
     }
 
@@ -222,9 +228,9 @@ impl BatteryMonitor {
                     if let Ok(current_state) = monitor.get_battery_state().await {
                         // Record reading
                         let reading = BatteryReading {
-                            timestamp:                Utc::now(),
-                            state:                    current_state.clone(),
-                            power_consumption_mah:    None,
+                            timestamp: Utc::now(),
+                            state: current_state.clone(),
+                            power_consumption_mah: None,
                             estimated_time_remaining: current_state.time_remaining_minutes,
                         };
 

@@ -1,5 +1,5 @@
 [package]
-name = "app"
+name = "rust-ai-ide-src-tauri"
 readme = { workspace = true }
 version = "0.1.0"
 description = "A Tauri App"
@@ -61,6 +61,8 @@ rust-ai-ide-webhooks = { path = "../crates/rust-ai-ide-webhooks" }
 rust-ai-ide-connectors = { path = "../crates/rust-ai-ide-connectors" }
 # AI commands delegation dependency
 rust-ai-ide-commands-ai = { path = "../crates/rust-ai-ide-commands-ai" }
+# AI analysis crate for advanced code analysis
+rust-ai-ide-ai-analysis = { path = "../crates/rust-ai-ide-ai-analysis" }
 # rust-ai-ide-protocol removed: crate directory exists but missing Cargo.toml
 
 # Observability and monitoring
@@ -75,6 +77,12 @@ lazy_static = { workspace = true }
 
 # Security components
 rust-ai-ide-security = { path = "../crates/rust-ai-ide-security" }
+
+# Configuration management for terminal validation
+rust-ai-ide-config = { path = "../crates/rust-ai-ide-config" }
+
+# External dependencies for terminal program validation
+which = { workspace = true }
 
 # Production-ready debugging components
 rust-ai-ide-debugger = { path = "../crates/rust-ai-ide-debugger" }

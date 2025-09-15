@@ -24,7 +24,10 @@ impl ArchitecturalValidator {
     }
 
     /// Validate architectural context
-    pub async fn validate_context(&self, context: &ArchitecturalContext) -> AdvisorResult<Vec<ValidationIssue>> {
+    pub async fn validate_context(
+        &self,
+        context: &ArchitecturalContext,
+    ) -> AdvisorResult<Vec<ValidationIssue>> {
         let mut issues = Vec::new();
 
         // Check project type compatibility
@@ -46,7 +49,10 @@ impl ArchitecturalValidator {
     }
 
     /// Validate analysis results for consistency
-    pub async fn validate_analysis(&self, analysis: &PatternAnalysis) -> AdvisorResult<Vec<ValidationIssue>> {
+    pub async fn validate_analysis(
+        &self,
+        analysis: &PatternAnalysis,
+    ) -> AdvisorResult<Vec<ValidationIssue>> {
         let mut issues = Vec::new();
 
         // Check for conflicting patterns
@@ -136,18 +142,20 @@ impl ArchitecturalValidator {
         let mut issues = Vec::new();
 
         match context.project_type {
-            ProjectType::Embedded =>
+            ProjectType::Embedded => {
                 if context.team_size.is_some_and(|size| size > 50) {
                     issues.push(ValidationIssue {
-                        issue_type:  ValidationIssueType::Info,
-                        severity:    IssueSeverity::Medium,
+                        issue_type: ValidationIssueType::Info,
+                        severity: IssueSeverity::Medium,
                         description: "Large team for embedded project".to_string(),
-                        location:    None,
-                        suggestion:  Some(
-                            "Embedded projects usually work best with smaller, focused teams".to_string(),
+                        location: None,
+                        suggestion: Some(
+                            "Embedded projects usually work best with smaller, focused teams"
+                                .to_string(),
                         ),
                     });
-                },
+                }
+            }
             ProjectType::WebService => {
                 if context
                     .expected_lifecycle
@@ -155,11 +163,13 @@ impl ArchitecturalValidator {
                     .is_some_and(|lifecycle| lifecycle.contains("prototype"))
                 {
                     issues.push(ValidationIssue {
-                        issue_type:  ValidationIssueType::Warning,
-                        severity:    IssueSeverity::Low,
+                        issue_type: ValidationIssueType::Warning,
+                        severity: IssueSeverity::Low,
                         description: "Web service marked as prototype".to_string(),
-                        location:    None,
-                        suggestion:  Some("Consider basic architectural patterns even for prototypes".to_string()),
+                        location: None,
+                        suggestion: Some(
+                            "Consider basic architectural patterns even for prototypes".to_string(),
+                        ),
                     });
                 }
             }
@@ -187,11 +197,14 @@ impl ArchitecturalValidator {
             && context.constraints.contains(&"low-cost".to_string())
         {
             issues.push(ValidationIssue {
-                issue_type:  ValidationIssueType::Info,
-                severity:    IssueSeverity::Medium,
-                description: "Potential conflict between high-performance and low-cost constraints".to_string(),
-                location:    None,
-                suggestion:  Some("These constraints may require trade-offs or compromise".to_string()),
+                issue_type: ValidationIssueType::Info,
+                severity: IssueSeverity::Medium,
+                description: "Potential conflict between high-performance and low-cost constraints"
+                    .to_string(),
+                location: None,
+                suggestion: Some(
+                    "These constraints may require trade-offs or compromise".to_string(),
+                ),
             });
         }
 
@@ -203,22 +216,29 @@ impl ArchitecturalValidator {
     }
 
     /// Validate team size appropriateness
-    async fn validate_team_size(&self, context: &ArchitecturalContext) -> AdvisorResult<Option<Vec<ValidationIssue>>> {
+    async fn validate_team_size(
+        &self,
+        context: &ArchitecturalContext,
+    ) -> AdvisorResult<Option<Vec<ValidationIssue>>> {
         if let Some(team_size) = context.team_size {
             let issues = match context.project_type {
-                ProjectType::Library =>
+                ProjectType::Library => {
                     if team_size > 20 {
                         vec![ValidationIssue {
-                            issue_type:  ValidationIssueType::Info,
-                            severity:    IssueSeverity::Low,
+                            issue_type: ValidationIssueType::Info,
+                            severity: IssueSeverity::Low,
                             description: "Large team for library development".to_string(),
-                            location:    None,
-                            suggestion:  Some("Libraries typically benefit from smaller, focused teams".to_string()),
+                            location: None,
+                            suggestion: Some(
+                                "Libraries typically benefit from smaller, focused teams"
+                                    .to_string(),
+                            ),
                         }]
                     } else {
                         vec![]
-                    },
-                ProjectType::Application =>
+                    }
+                }
+                ProjectType::Application => {
                     if team_size < 3 {
                         vec![ValidationIssue {
                             issue_type:  ValidationIssueType::Warning,
@@ -231,7 +251,8 @@ impl ArchitecturalValidator {
                         }]
                     } else {
                         vec![]
-                    },
+                    }
+                }
                 _ => vec![],
             };
 
@@ -260,11 +281,14 @@ impl ArchitecturalValidator {
 
         if has_layered && has_monolithic {
             issues.push(ValidationIssue {
-                issue_type:  ValidationIssueType::Error,
-                severity:    IssueSeverity::High,
-                description: "Detected both layered and monolithic patterns simultaneously".to_string(),
-                location:    None,
-                suggestion:  Some("Analyze codebase to determine true architectural pattern".to_string()),
+                issue_type: ValidationIssueType::Error,
+                severity: IssueSeverity::High,
+                description: "Detected both layered and monolithic patterns simultaneously"
+                    .to_string(),
+                location: None,
+                suggestion: Some(
+                    "Analyze codebase to determine true architectural pattern".to_string(),
+                ),
             });
         }
 
@@ -276,34 +300,37 @@ impl ArchitecturalValidator {
     }
 
     /// Validate quality metrics for reasonableness
-    async fn validate_quality_metrics(&self, metrics: &QualityMetrics) -> AdvisorResult<Option<Vec<ValidationIssue>>> {
+    async fn validate_quality_metrics(
+        &self,
+        metrics: &QualityMetrics,
+    ) -> AdvisorResult<Option<Vec<ValidationIssue>>> {
         let mut issues = Vec::new();
 
         // Check maintainability index bounds (0-171)
         if metrics.maintainability_index < 0.0 || metrics.maintainability_index > 171.0 {
             issues.push(ValidationIssue {
-                issue_type:  ValidationIssueType::Error,
-                severity:    IssueSeverity::Critical,
+                issue_type: ValidationIssueType::Error,
+                severity: IssueSeverity::Critical,
                 description: format!(
                     "Maintainability index {} is out of valid range (0-171)",
                     metrics.maintainability_index
                 ),
-                location:    None,
-                suggestion:  Some("Re-run maintainability analysis".to_string()),
+                location: None,
+                suggestion: Some("Re-run maintainability analysis".to_string()),
             });
         }
 
         // Check for unreasonable complexity values
         if metrics.cyclomatic_complexity > 100.0 {
             issues.push(ValidationIssue {
-                issue_type:  ValidationIssueType::Warning,
-                severity:    IssueSeverity::High,
+                issue_type: ValidationIssueType::Warning,
+                severity: IssueSeverity::High,
                 description: format!(
                     "Very high cyclomatic complexity: {}",
                     metrics.cyclomatic_complexity
                 ),
-                location:    None,
-                suggestion:  Some("Consider decomposing complex functions".to_string()),
+                location: None,
+                suggestion: Some("Consider decomposing complex functions".to_string()),
             });
         }
 
@@ -311,11 +338,14 @@ impl ArchitecturalValidator {
         if let Some(coverage) = metrics.test_coverage {
             if !(0.0..=1.0).contains(&coverage) {
                 issues.push(ValidationIssue {
-                    issue_type:  ValidationIssueType::Error,
-                    severity:    IssueSeverity::Medium,
-                    description: format!("Test coverage {} is out of valid range (0.0-1.0)", coverage),
-                    location:    None,
-                    suggestion:  Some("Verify test coverage calculation method".to_string()),
+                    issue_type: ValidationIssueType::Error,
+                    severity: IssueSeverity::Medium,
+                    description: format!(
+                        "Test coverage {} is out of valid range (0.0-1.0)",
+                        coverage
+                    ),
+                    location: None,
+                    suggestion: Some("Verify test coverage calculation method".to_string()),
                 });
             }
         }
@@ -338,14 +368,14 @@ impl ArchitecturalValidator {
         for hotspot in &assessment.hotspot_complexity {
             if hotspot.complexity_score <= 0.0 {
                 issues.push(ValidationIssue {
-                    issue_type:  ValidationIssueType::Warning,
-                    severity:    IssueSeverity::Medium,
+                    issue_type: ValidationIssueType::Warning,
+                    severity: IssueSeverity::Medium,
                     description: format!(
                         "Invalid complexity score for {}: {}",
                         hotspot.file, hotspot.complexity_score
                     ),
-                    location:    Some(hotspot.file.clone()),
-                    suggestion:  Some("Re-run complexity analysis for this file".to_string()),
+                    location: Some(hotspot.file.clone()),
+                    suggestion: Some("Re-run complexity analysis for this file".to_string()),
                 });
             }
         }
@@ -360,10 +390,10 @@ impl ArchitecturalValidator {
     /// Initialize validation rules
     fn initialize_validation_rules() -> Vec<ValidationRule> {
         vec![ValidationRule {
-            name:      "Team Size Adequacy".to_string(),
+            name: "Team Size Adequacy".to_string(),
             rule_type: RuleType::ContextValidation,
             condition: Box::new(|ctx| ctx.team_size.unwrap_or(0) < 2),
-            action:    ValidationAction::Warning(
+            action: ValidationAction::Warning(
                 "Very small team may struggle with complex architectural decisions".to_string(),
             ),
         }]
@@ -372,10 +402,10 @@ impl ArchitecturalValidator {
 
 /// Validation rule definition
 pub struct ValidationRule {
-    pub name:      String,
+    pub name: String,
     pub rule_type: RuleType,
     pub condition: Box<dyn Fn(&ArchitecturalContext) -> bool + Send + Sync>,
-    pub action:    ValidationAction,
+    pub action: ValidationAction,
 }
 
 impl std::fmt::Debug for ValidationRule {
@@ -407,11 +437,11 @@ pub enum ValidationAction {
 /// Validation issue representation
 #[derive(Debug, Clone)]
 pub struct ValidationIssue {
-    pub issue_type:  ValidationIssueType,
-    pub severity:    IssueSeverity,
+    pub issue_type: ValidationIssueType,
+    pub severity: IssueSeverity,
     pub description: String,
-    pub location:    Option<String>,
-    pub suggestion:  Option<String>,
+    pub location: Option<String>,
+    pub suggestion: Option<String>,
 }
 
 /// Types of validation issues
@@ -516,11 +546,11 @@ pub mod validation_utils {
 /// Validation summary
 #[derive(Debug)]
 pub struct ValidationSummary {
-    pub total_issues:    usize,
-    pub errors:          usize,
-    pub warnings:        usize,
+    pub total_issues: usize,
+    pub errors: usize,
+    pub warnings: usize,
     pub critical_issues: usize,
-    pub is_valid:        bool,
+    pub is_valid: bool,
 }
 
 #[cfg(test)]
@@ -537,18 +567,18 @@ mod tests {
     fn test_validation_summary_creation() {
         let issues = vec![
             ValidationIssue {
-                issue_type:  ValidationIssueType::Error,
-                severity:    IssueSeverity::Critical,
+                issue_type: ValidationIssueType::Error,
+                severity: IssueSeverity::Critical,
                 description: "Critical error".to_string(),
-                location:    None,
-                suggestion:  None,
+                location: None,
+                suggestion: None,
             },
             ValidationIssue {
-                issue_type:  ValidationIssueType::Warning,
-                severity:    IssueSeverity::Medium,
+                issue_type: ValidationIssueType::Warning,
+                severity: IssueSeverity::Medium,
                 description: "Warning".to_string(),
-                location:    None,
-                suggestion:  None,
+                location: None,
+                suggestion: None,
             },
         ];
 
@@ -564,13 +594,13 @@ mod tests {
     async fn test_context_validation() {
         let validator = ArchitecturalValidator::new();
         let context = ArchitecturalContext {
-            codebase_path:        "src/".to_string(),
-            project_type:         ProjectType::Embedded,
+            codebase_path: "src/".to_string(),
+            project_type: ProjectType::Embedded,
             current_architecture: None,
-            constraints:          vec![],
-            goals:                vec![],
-            team_size:            Some(2), // Very small team for embedded
-            expected_lifecycle:   Some("5 years".to_string()),
+            constraints: vec![],
+            goals: vec![],
+            team_size: Some(2), // Very small team for embedded
+            expected_lifecycle: Some("5 years".to_string()),
         };
 
         let issues = validator.validate_context(&context).await.unwrap();

@@ -56,7 +56,10 @@ impl Tracer {
         };
 
         tracing::subscriber::set_global_default(subscriber).map_err(|e| {
-            crate::errors::ObservabilityError::tracing(format!("Failed to set global subscriber: {}", e))
+            crate::errors::ObservabilityError::tracing(format!(
+                "Failed to set global subscriber: {}",
+                e
+            ))
         })?;
 
         tracing::info!(
@@ -93,7 +96,10 @@ impl Tracer {
                 .with_trace_config(trace::config().with_resource(resource))
                 .install_batch(opentelemetry::runtime::Tokio)
                 .map_err(|e| {
-                    crate::errors::ObservabilityError::tracing(format!("Failed to create OTLP tracer: {}", e))
+                    crate::errors::ObservabilityError::tracing(format!(
+                        "Failed to create OTLP tracer: {}",
+                        e
+                    ))
                 })?;
 
             Ok(tracer)

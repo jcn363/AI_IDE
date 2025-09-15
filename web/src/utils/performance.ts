@@ -1,5 +1,6 @@
 // Performance monitoring utilities
 // Track loading times, bundle sizes, and user experience metrics
+import React from 'react';
 
 export interface PerformanceMetrics {
   loadTime: number;
@@ -177,6 +178,3 @@ export const lazyWithPerformance = (importFunc: () => Promise<any>, componentNam
     });
   });
 };
-
-// Import React for the lazy wrapper
-import React from 'react';

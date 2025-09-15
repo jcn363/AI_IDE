@@ -188,6 +188,26 @@ impl Default for TargetLanguage {
     }
 }
 
+impl std::fmt::Display for TargetLanguage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TargetLanguage::Rust => write!(f, "Rust"),
+            TargetLanguage::Python => write!(f, "Python"),
+            TargetLanguage::TypeScript => write!(f, "TypeScript"),
+            TargetLanguage::JavaScript => write!(f, "JavaScript"),
+            TargetLanguage::Go => write!(f, "Go"),
+            TargetLanguage::Java => write!(f, "Java"),
+            TargetLanguage::Cpp => write!(f, "C++"),
+            TargetLanguage::CSharp => write!(f, "C#"),
+            TargetLanguage::SQL => write!(f, "SQL"),
+            TargetLanguage::HTML => write!(f, "HTML"),
+            TargetLanguage::CSS => write!(f, "CSS"),
+            TargetLanguage::Shell => write!(f, "Shell"),
+            TargetLanguage::Other(name) => write!(f, "{}", name),
+        }
+    }
+}
+
 /// Generation scope - what type of code to generate
 #[derive(Debug, Clone, Default)]
 pub enum GenerationScope {

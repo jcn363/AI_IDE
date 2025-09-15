@@ -46,6 +46,7 @@ pub mod lsp_integration;
 pub mod performance_gates;
 pub mod performance_regression;
 pub mod quality_gates;
+pub mod tauri_command_integration;
 pub mod ui_test_scenarios;
 pub mod ui_testing;
 

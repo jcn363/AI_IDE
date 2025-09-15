@@ -12,10 +12,10 @@ use crate::error::TestError;
 
 /// CI/CD environment detector
 pub struct CIEnvironment {
-    pub provider:        CIProvider,
-    pub branch:          String,
-    pub commit:          String,
-    pub build_number:    Option<String>,
+    pub provider: CIProvider,
+    pub branch: String,
+    pub commit: String,
+    pub build_number: Option<String>,
     pub is_pull_request: bool,
 }
 
@@ -81,7 +81,9 @@ impl CIEnvironment {
             CIProvider::GitLabCI => env_vars
                 .get("CI_MERGE_REQUEST_TARGET_BRANCH_NAME")
                 .is_some(),
-            _ => env_vars.get("CI_PULL_REQUEST").is_some() || env_vars.get("PULL_REQUEST").is_some(),
+            _ => {
+                env_vars.get("CI_PULL_REQUEST").is_some() || env_vars.get("PULL_REQUEST").is_some()
+            }
         };
 
         Self {
@@ -105,23 +107,23 @@ impl CIEnvironment {
 /// Test coverage analyzer
 pub struct CoverageAnalyzer {
     coverage_data: HashMap<String, FileCoverage>,
-    threshold:     f64,
+    threshold: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct FileCoverage {
-    pub file_path:       String,
-    pub line_coverage:   HashMap<usize, bool>,
+    pub file_path: String,
+    pub line_coverage: HashMap<usize, bool>,
     pub branch_coverage: HashMap<String, bool>,
-    pub total_lines:     usize,
-    pub covered_lines:   usize,
+    pub total_lines: usize,
+    pub covered_lines: usize,
 }
 
 impl CoverageAnalyzer {
     pub fn new() -> Self {
         Self {
             coverage_data: HashMap::new(),
-            threshold:     80.0,
+            threshold: 80.0,
         }
     }
 
@@ -131,7 +133,11 @@ impl CoverageAnalyzer {
     }
 
     /// Add coverage data from a file
-    pub fn add_file_coverage(&mut self, file_path: &str, lines: &[(usize, bool)]) -> Result<(), TestError> {
+    pub fn add_file_coverage(
+        &mut self,
+        file_path: &str,
+        lines: &[(usize, bool)],
+    ) -> Result<(), TestError> {
         let mut covered_lines = 0;
         let mut line_coverage = HashMap::new();
 
@@ -180,10 +186,10 @@ impl CoverageAnalyzer {
             .coverage_data
             .values()
             .map(|file| FileCoverageReport {
-                file_path:           file.file_path.clone(),
+                file_path: file.file_path.clone(),
                 coverage_percentage: (file.covered_lines as f64 / file.total_lines as f64) * 100.0,
-                covered_lines:       file.covered_lines,
-                total_lines:         file.total_lines,
+                covered_lines: file.covered_lines,
+                total_lines: file.total_lines,
             })
             .collect();
 
@@ -206,43 +212,43 @@ impl Default for CoverageAnalyzer {
 #[derive(Debug)]
 pub struct CoverageReport {
     pub overall_coverage: f64,
-    pub file_count:       usize,
-    pub files:            Vec<FileCoverageReport>,
-    pub threshold:        f64,
+    pub file_count: usize,
+    pub files: Vec<FileCoverageReport>,
+    pub threshold: f64,
     pub passes_threshold: bool,
 }
 
 #[derive(Debug)]
 pub struct FileCoverageReport {
-    pub file_path:           String,
+    pub file_path: String,
     pub coverage_percentage: f64,
-    pub covered_lines:       usize,
-    pub total_lines:         usize,
+    pub covered_lines: usize,
+    pub total_lines: usize,
 }
 
 /// Benchmarking utilities for performance testing
 pub struct BenchmarkRunner {
-    iterations:        usize,
+    iterations: usize,
     warmup_iterations: usize,
-    results:           Vec<BenchmarkResult>,
+    results: Vec<BenchmarkResult>,
 }
 
 #[derive(Debug, Clone)]
 pub struct BenchmarkResult {
-    pub name:         String,
+    pub name: String,
     pub average_time: Duration,
-    pub min_time:     Duration,
-    pub max_time:     Duration,
-    pub iterations:   usize,
-    pub throughput:   f64, // operations per second
+    pub min_time: Duration,
+    pub max_time: Duration,
+    pub iterations: usize,
+    pub throughput: f64, // operations per second
 }
 
 impl BenchmarkRunner {
     pub fn new() -> Self {
         Self {
-            iterations:        1000,
+            iterations: 1000,
             warmup_iterations: 100,
-            results:           Vec::new(),
+            results: Vec::new(),
         }
     }
 
@@ -257,7 +263,11 @@ impl BenchmarkRunner {
     }
 
     /// Run benchmark for a synchronous function
-    pub fn benchmark_sync<F>(&mut self, name: &str, mut function: F) -> Result<BenchmarkResult, TestError>
+    pub fn benchmark_sync<F>(
+        &mut self,
+        name: &str,
+        mut function: F,
+    ) -> Result<BenchmarkResult, TestError>
     where
         F: FnMut(),
     {
@@ -302,7 +312,11 @@ impl BenchmarkRunner {
     }
 
     /// Run benchmark for an async function
-    pub async fn benchmark_async<F, Fut>(&mut self, name: &str, function: F) -> Result<BenchmarkResult, TestError>
+    pub async fn benchmark_async<F, Fut>(
+        &mut self,
+        name: &str,
+        function: F,
+    ) -> Result<BenchmarkResult, TestError>
     where
         F: Fn() -> Fut,
         Fut: std::future::Future<Output = ()>,
@@ -356,7 +370,7 @@ impl BenchmarkRunner {
     pub fn generate_report(&self) -> BenchmarkReport {
         BenchmarkReport {
             total_benchmarks: self.results.len(),
-            results:          self.results.clone(),
+            results: self.results.clone(),
         }
     }
 }
@@ -370,7 +384,7 @@ impl Default for BenchmarkRunner {
 #[derive(Debug)]
 pub struct BenchmarkReport {
     pub total_benchmarks: usize,
-    pub results:          Vec<BenchmarkResult>,
+    pub results: Vec<BenchmarkResult>,
 }
 
 /// Test reporting utilities
@@ -380,19 +394,19 @@ pub struct TestReporter {
 
 #[derive(Debug, Clone)]
 pub struct TestSuiteReport {
-    pub name:     String,
-    pub tests:    Vec<TestCaseReport>,
+    pub name: String,
+    pub tests: Vec<TestCaseReport>,
     pub duration: Duration,
-    pub passed:   usize,
-    pub failed:   usize,
-    pub skipped:  usize,
+    pub passed: usize,
+    pub failed: usize,
+    pub skipped: usize,
 }
 
 #[derive(Debug, Clone)]
 pub struct TestCaseReport {
-    pub name:          String,
-    pub status:        TestStatus,
-    pub duration:      Duration,
+    pub name: String,
+    pub status: TestStatus,
+    pub duration: Duration,
     pub error_message: Option<String>,
 }
 
@@ -567,14 +581,14 @@ impl Default for TestReporter {
 
 #[derive(Debug, Clone)]
 pub struct TestReport {
-    pub total_suites:        usize,
-    pub total_tests:         usize,
-    pub total_passed:        usize,
-    pub total_failed:        usize,
-    pub total_skipped:       usize,
-    pub total_duration:      Duration,
+    pub total_suites: usize,
+    pub total_tests: usize,
+    pub total_passed: usize,
+    pub total_failed: usize,
+    pub total_skipped: usize,
+    pub total_duration: Duration,
     pub coverage_percentage: Option<f64>,
-    pub suites:              Vec<TestSuiteReport>,
+    pub suites: Vec<TestSuiteReport>,
 }
 
 #[derive(Debug)]
@@ -639,7 +653,8 @@ impl CIPipeline {
 
         for result in &report.results {
             if let Some(baseline_result) = baseline.results.iter().find(|r| r.name == result.name) {
-                let ratio = result.average_time.as_secs_f64() / baseline_result.average_time.as_secs_f64();
+                let ratio =
+                    result.average_time.as_secs_f64() / baseline_result.average_time.as_secs_f64();
 
                 if ratio > regression_threshold {
                     return Err(TestError::Validation(
@@ -667,14 +682,14 @@ impl Default for CIPipeline {
 /// Cross-platform command execution for CI
 pub struct CICommandRunner {
     working_dir: PathBuf,
-    env_vars:    HashMap<String, String>,
+    env_vars: HashMap<String, String>,
 }
 
 impl CICommandRunner {
     pub fn new() -> Self {
         Self {
             working_dir: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
-            env_vars:    HashMap::new(),
+            env_vars: HashMap::new(),
         }
     }
 
@@ -714,13 +729,16 @@ impl CICommandRunner {
     pub fn run_cargo_test_with_coverage(&self, output_path: &PathBuf) -> Result<(), TestError> {
         if cfg!(feature = "ci") {
             // Assume cargo-tarpaulin is available
-            self.run("cargo", &[
-                "tarpaulin",
-                "--out",
-                "Xml",
-                "--output-dir",
-                &output_path.to_string_lossy(),
-            ])?;
+            self.run(
+                "cargo",
+                &[
+                    "tarpaulin",
+                    "--out",
+                    "Xml",
+                    "--output-dir",
+                    &output_path.to_string_lossy(),
+                ],
+            )?;
         } else {
             // Fallback to regular cargo test
             self.run("cargo", &["test"])?;
@@ -776,15 +794,15 @@ mod tests {
 
         let test_cases = vec![
             TestCaseReport {
-                name:          "test_pass".to_string(),
-                status:        TestStatus::Passed,
-                duration:      Duration::from_millis(10),
+                name: "test_pass".to_string(),
+                status: TestStatus::Passed,
+                duration: Duration::from_millis(10),
                 error_message: None,
             },
             TestCaseReport {
-                name:          "test_fail".to_string(),
-                status:        TestStatus::Failed,
-                duration:      Duration::from_millis(5),
+                name: "test_fail".to_string(),
+                status: TestStatus::Failed,
+                duration: Duration::from_millis(5),
                 error_message: Some("assertion failed".to_string()),
             },
         ];

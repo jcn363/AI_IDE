@@ -8,9 +8,9 @@
 //! - filesystem: File system operations and utilities
 //! - shared: Shared types and utilities
 
-pub mod core;
-pub mod cargo;
 pub mod ai;
-pub mod terminal;
+pub mod cargo;
+pub mod core;
 pub mod filesystem;
 pub mod shared;
+pub mod terminal;

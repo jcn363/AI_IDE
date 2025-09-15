@@ -3,14 +3,15 @@
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
 
 use crate::{LazyLoadingError, LazyResult, Poolable};
 
 /// Object pool for managing frequently allocated objects
 pub struct ObjectPool<T: Poolable + Default> {
-    available:     VecDeque<Arc<Mutex<T>>>,
-    max_size:      usize,
+    available: VecDeque<Arc<Mutex<T>>>,
+    max_size: usize,
     created_count: usize,
 }
 
@@ -44,8 +45,10 @@ impl<T: Poolable + Default> ObjectPool<T> {
 
     /// Release an object back to the pool
     pub async fn release(&mut self, obj: Arc<Mutex<T>>) -> LazyResult<()> {
-        let mut guard = obj.lock().await;
-        guard.reset();
+        {
+            let mut guard = obj.lock().await;
+            guard.reset();
+        } // guard dropped here
 
         // Only add back to pool if we haven't exceeded max size
         if self.available.len() + self.created_count <= self.max_size {
@@ -75,9 +78,9 @@ impl<T: Poolable + Default> ObjectPool<T> {
 /// Memory pool manager for coordinating multiple object pools
 pub struct MemoryPoolManager {
     analysis_result_pool: Arc<RwLock<ObjectPool<AnalysisResult>>>,
-    model_state_pool:     Arc<RwLock<ObjectPool<ModelState>>>,
-    total_memory_usage:   Arc<RwLock<usize>>,
-    max_memory_limit:     usize,
+    model_state_pool: Arc<RwLock<ObjectPool<ModelState>>>,
+    total_memory_usage: Arc<RwLock<usize>>,
+    max_memory_limit: usize,
 }
 
 impl MemoryPoolManager {
@@ -85,9 +88,9 @@ impl MemoryPoolManager {
     pub fn new(analysis_pool_size: usize, model_pool_size: usize, max_memory: usize) -> Self {
         Self {
             analysis_result_pool: Arc::new(RwLock::new(ObjectPool::new(analysis_pool_size))),
-            model_state_pool:     Arc::new(RwLock::new(ObjectPool::new(model_pool_size))),
-            total_memory_usage:   Arc::new(RwLock::new(0)),
-            max_memory_limit:     max_memory,
+            model_state_pool: Arc::new(RwLock::new(ObjectPool::new(model_pool_size))),
+            total_memory_usage: Arc::new(RwLock::new(0)),
+            max_memory_limit: max_memory,
         }
     }
 
@@ -99,8 +102,12 @@ impl MemoryPoolManager {
         let mut pool = self.analysis_result_pool.write().await;
         let result = pool.acquire().await?;
 
-        self.update_memory_usage(std::mem::size_of::<AnalysisResult>())
-            .await;
+        self.update_memory_usage(
+            (std::mem::size_of::<AnalysisResult>() as i64)
+                .try_into()
+                .unwrap_or(isize::MAX),
+        )
+        .await;
 
         Ok(result)
     }
@@ -110,8 +117,12 @@ impl MemoryPoolManager {
         let mut pool = self.analysis_result_pool.write().await;
         pool.release(obj).await?;
 
-        self.update_memory_usage(-(std::mem::size_of::<AnalysisResult>() as isize))
-            .await;
+        self.update_memory_usage(
+            -((std::mem::size_of::<AnalysisResult>() as i64)
+                .try_into()
+                .unwrap_or(isize::MAX)),
+        )
+        .await;
 
         Ok(())
     }
@@ -124,8 +135,12 @@ impl MemoryPoolManager {
         let mut pool = self.model_state_pool.write().await;
         let result = pool.acquire().await?;
 
-        self.update_memory_usage(std::mem::size_of::<ModelState>())
-            .await;
+        self.update_memory_usage(
+            (std::mem::size_of::<ModelState>() as i64)
+                .try_into()
+                .unwrap_or(isize::MAX),
+        )
+        .await;
 
         Ok(result)
     }
@@ -135,8 +150,12 @@ impl MemoryPoolManager {
         let mut pool = self.model_state_pool.write().await;
         pool.release(obj).await?;
 
-        self.update_memory_usage(-(std::mem::size_of::<ModelState>() as isize))
-            .await;
+        self.update_memory_usage(
+            -((std::mem::size_of::<ModelState>() as i64)
+                .try_into()
+                .unwrap_or(isize::MAX)),
+        )
+        .await;
 
         Ok(())
     }
@@ -153,12 +172,12 @@ impl MemoryPoolManager {
         let memory_usage = self.get_memory_usage().await;
 
         PoolStats {
-            analysis_pool_size:    analysis_pool.size(),
+            analysis_pool_size: analysis_pool.size(),
             analysis_pool_created: analysis_pool.created_count(),
-            model_pool_size:       model_pool.size(),
-            model_pool_created:    model_pool.created_count(),
-            total_memory_usage:    memory_usage,
-            memory_limit:          self.max_memory_limit,
+            model_pool_size: model_pool.size(),
+            model_pool_created: model_pool.created_count(),
+            total_memory_usage: memory_usage,
+            memory_limit: self.max_memory_limit,
         }
     }
 
@@ -198,24 +217,24 @@ impl MemoryPoolManager {
 }
 
 /// Pool statistics
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PoolStats {
-    pub analysis_pool_size:    usize,
+    pub analysis_pool_size: usize,
     pub analysis_pool_created: usize,
-    pub model_pool_size:       usize,
-    pub model_pool_created:    usize,
-    pub total_memory_usage:    usize,
-    pub memory_limit:          usize,
+    pub model_pool_size: usize,
+    pub model_pool_created: usize,
+    pub total_memory_usage: usize,
+    pub memory_limit: usize,
 }
 
 /// Analysis result object for pooling
 #[derive(Debug, Default, Clone)]
 pub struct AnalysisResult {
-    pub file_path:     String,
+    pub file_path: String,
     pub analysis_type: String,
-    pub issues:        Vec<String>,
-    pub suggestions:   Vec<String>,
-    pub metadata:      std::collections::HashMap<String, String>,
+    pub issues: Vec<String>,
+    pub suggestions: Vec<String>,
+    pub metadata: std::collections::HashMap<String, String>,
 }
 
 impl Poolable for AnalysisResult {
@@ -242,13 +261,25 @@ impl Poolable for AnalysisResult {
 }
 
 /// Model state object for pooling
-#[derive(Debug, Default, Clone)]
+#[derive(Debug)]
 pub struct ModelState {
-    pub model_id:   String,
+    pub model_id: String,
     pub model_type: String,
     pub parameters: Vec<f32>,
-    pub metadata:   std::collections::HashMap<String, String>,
-    pub last_used:  std::time::Instant,
+    pub metadata: std::collections::HashMap<String, String>,
+    pub last_used: std::time::Instant,
+}
+
+impl Default for ModelState {
+    fn default() -> Self {
+        Self {
+            model_id: String::new(),
+            model_type: String::new(),
+            parameters: Vec::new(),
+            metadata: std::collections::HashMap::new(),
+            last_used: std::time::Instant::now(),
+        }
+    }
 }
 
 impl Poolable for ModelState {
@@ -333,11 +364,11 @@ mod tests {
     #[tokio::test]
     async fn test_poolable_reset() {
         let mut result = AnalysisResult {
-            file_path:     "test.rs".to_string(),
+            file_path: "test.rs".to_string(),
             analysis_type: "syntax".to_string(),
-            issues:        vec!["error1".to_string()],
-            suggestions:   vec!["fix1".to_string()],
-            metadata:      [("key".to_string(), "value".to_string())]
+            issues: vec!["error1".to_string()],
+            suggestions: vec!["fix1".to_string()],
+            metadata: [("key".to_string(), "value".to_string())]
                 .into_iter()
                 .collect(),
         };

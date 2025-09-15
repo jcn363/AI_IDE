@@ -32,6 +32,7 @@ tokio = { workspace = true, features = ["full"] }
 
 # Serialization for dependency data
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 serde_yaml = { workspace = true }
 toml = { workspace = true }
 
@@ -59,6 +60,9 @@ moka = { workspace = true }
 
 # HTTP client for external dependency resolution
 reqwest = { workspace = true }
+
+# CPU information for parallel processing
+num_cpus = { version = "1.16" }
 
 # Common utilities
 rust-ai-ide-common = { workspace = true }

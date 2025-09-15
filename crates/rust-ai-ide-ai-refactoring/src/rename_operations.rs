@@ -90,8 +90,7 @@ impl RefactoringOperation for RenameOperation {
             .map_err(|e| format!("Failed to read file {}: {}", context.file_path, e))?;
 
         // Parse the Rust AST
-        let mut syntax_tree: syn::File =
-            syn::parse_file(&content).map_err(|e| format!("Failed to parse Rust file: {}", e))?;
+        let mut syntax_tree: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         // Perform AST-safe rename
         let mut renamer = IdentifierRenamer::new(old_name.clone(), new_name.to_string());

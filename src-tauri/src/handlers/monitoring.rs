@@ -16,73 +16,73 @@ use tokio::time::{interval, Duration, Interval};
 /// Real-time monitoring dashboard state with collaboration support
 pub struct MonitoringDashboard {
     /// System metrics history (last 60 minutes)
-    system_metrics:         Vec<SystemMetricsSnapshot>,
+    system_metrics: Vec<SystemMetricsSnapshot>,
     /// LSP server performance history
-    lsp_metrics:            Vec<LSPMetricsSnapshot>,
+    lsp_metrics: Vec<LSPMetricsSnapshot>,
     /// Memory usage tracking
-    memory_tracking:        Vec<MemorySnapshot>,
+    memory_tracking: Vec<MemorySnapshot>,
     /// Active alerts and notifications
-    alerts:                 Vec<SystemAlert>,
+    alerts: Vec<SystemAlert>,
     /// Performance thresholds
-    thresholds:             MonitoringThresholds,
+    thresholds: MonitoringThresholds,
     /// Dashboard refresh interval
-    refresh_interval:       Duration,
+    refresh_interval: Duration,
     /// Active collaboration sessions
     collaboration_sessions: HashMap<String, CollaborationSession>,
     /// Shared metrics from all users in collaborative sessions
-    shared_metrics:         Vec<SharedMetricSnapshot>,
+    shared_metrics: Vec<SharedMetricSnapshot>,
     /// Collaborative alerts across sessions
-    collaborative_alerts:   Vec<CollaborativeAlert>,
+    collaborative_alerts: Vec<CollaborativeAlert>,
     /// Session-based thresholds for collaboration
-    session_thresholds:     HashMap<String, MonitoringThresholds>,
+    session_thresholds: HashMap<String, MonitoringThresholds>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SystemMetricsSnapshot {
-    pub timestamp:              String,
-    pub cpu_usage_percent:      f64,
-    pub memory_usage_percent:   f64,
-    pub memory_used_mb:         u64,
-    pub disk_usage_percent:     f64,
-    pub network_bytes_sent:     u64,
+    pub timestamp: String,
+    pub cpu_usage_percent: f64,
+    pub memory_usage_percent: f64,
+    pub memory_used_mb: u64,
+    pub disk_usage_percent: f64,
+    pub network_bytes_sent: u64,
     pub network_bytes_received: u64,
-    pub active_processes:       u32,
-    pub system_load:            f64,
-    pub temperature_celsius:    Option<f64>,
+    pub active_processes: u32,
+    pub system_load: f64,
+    pub temperature_celsius: Option<f64>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct LSPMetricsSnapshot {
-    pub timestamp:                String,
-    pub server_name:              String,
-    pub request_count:            u64,
-    pub error_count:              u64,
+    pub timestamp: String,
+    pub server_name: String,
+    pub request_count: u64,
+    pub error_count: u64,
     pub average_response_time_ms: f64,
-    pub active_requests:          u32,
-    pub memory_usage_mb:          u64,
-    pub cpu_usage_percent:        f64,
+    pub active_requests: u32,
+    pub memory_usage_mb: u64,
+    pub cpu_usage_percent: f64,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct MemorySnapshot {
-    pub timestamp:         String,
-    pub heap_usage_mb:     u64,
-    pub stack_usage_mb:    u64,
-    pub gc_collections:    u64,
-    pub major_gc_time_ms:  u64,
-    pub minor_gc_time_ms:  u64,
+    pub timestamp: String,
+    pub heap_usage_mb: u64,
+    pub stack_usage_mb: u64,
+    pub gc_collections: u64,
+    pub major_gc_time_ms: u64,
+    pub minor_gc_time_ms: u64,
     pub allocated_objects: u64,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SystemAlert {
-    pub id:                  String,
-    pub severity:            AlertSeverity,
-    pub title:               String,
-    pub message:             String,
-    pub timestamp:           String,
-    pub source:              String,
-    pub resolved:            bool,
+    pub id: String,
+    pub severity: AlertSeverity,
+    pub title: String,
+    pub message: String,
+    pub timestamp: String,
+    pub source: String,
+    pub resolved: bool,
     pub recommended_actions: Vec<String>,
 }
 
@@ -96,21 +96,21 @@ pub enum AlertSeverity {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct MonitoringThresholds {
-    pub cpu_usage_warning_percent:    f64,
+    pub cpu_usage_warning_percent: f64,
     pub memory_usage_warning_percent: f64,
-    pub disk_usage_warning_percent:   f64,
-    pub max_response_time_ms:         u64,
-    pub max_error_rate_percent:       f64,
+    pub disk_usage_warning_percent: f64,
+    pub max_response_time_ms: u64,
+    pub max_error_rate_percent: f64,
 }
 
 impl Default for MonitoringThresholds {
     fn default() -> Self {
         Self {
-            cpu_usage_warning_percent:    85.0,
+            cpu_usage_warning_percent: 85.0,
             memory_usage_warning_percent: 90.0,
-            disk_usage_warning_percent:   95.0,
-            max_response_time_ms:         1000,
-            max_error_rate_percent:       5.0,
+            disk_usage_warning_percent: 95.0,
+            max_response_time_ms: 1000,
+            max_error_rate_percent: 5.0,
         }
     }
 }
@@ -124,64 +124,64 @@ impl Default for AlertSeverity {
 /// Collaboration session for tracking multi-user performance metrics
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct CollaborationSession {
-    pub session_id:      String,
-    pub session_name:    String,
-    pub created_at:      String,
-    pub created_by:      String,
-    pub participants:    Vec<String>,
-    pub active_users:    u32,
-    pub total_users:     u32,
+    pub session_id: String,
+    pub session_name: String,
+    pub created_at: String,
+    pub created_by: String,
+    pub participants: Vec<String>,
+    pub active_users: u32,
+    pub total_users: u32,
     pub session_metrics: SessionMetrics,
-    pub is_active:       bool,
+    pub is_active: bool,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SessionMetrics {
-    pub cpu_usage_avg:            f64,
-    pub memory_usage_avg:         f64,
-    pub lsp_requests_total:       u64,
+    pub cpu_usage_avg: f64,
+    pub memory_usage_avg: f64,
+    pub lsp_requests_total: u64,
     pub session_duration_seconds: u64,
-    pub peak_users:               u32,
-    pub total_collaborations:     u64,
+    pub peak_users: u32,
+    pub total_collaborations: u64,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SharedMetricSnapshot {
-    pub user_id:     String,
-    pub timestamp:   String,
-    pub session_id:  String,
+    pub user_id: String,
+    pub timestamp: String,
+    pub session_id: String,
     pub metric_type: String,
-    pub value:       f64,
-    pub context:     HashMap<String, serde_json::Value>,
+    pub value: f64,
+    pub context: HashMap<String, serde_json::Value>,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct CollaborativeAlert {
-    pub id:                    String,
-    pub session_id:            String,
-    pub severity:              AlertSeverity,
-    pub title:                 String,
-    pub message:               String,
-    pub timestamp:             String,
-    pub affected_users:        Vec<String>,
-    pub source:                String,
-    pub resolved:              bool,
+    pub id: String,
+    pub session_id: String,
+    pub severity: AlertSeverity,
+    pub title: String,
+    pub message: String,
+    pub timestamp: String,
+    pub affected_users: Vec<String>,
+    pub source: String,
+    pub resolved: bool,
     pub collaborative_actions: Vec<String>,
 }
 
 impl MonitoringDashboard {
     pub fn new() -> Self {
         Self {
-            system_metrics:         Vec::with_capacity(360), // 60 minutes * 6 readings per minute
-            lsp_metrics:            Vec::new(),
-            memory_tracking:        Vec::new(),
-            alerts:                 Vec::new(),
-            thresholds:             MonitoringThresholds::default(),
-            refresh_interval:       Duration::from_secs(10), // 10 second intervals
+            system_metrics: Vec::with_capacity(360), // 60 minutes * 6 readings per minute
+            lsp_metrics: Vec::new(),
+            memory_tracking: Vec::new(),
+            alerts: Vec::new(),
+            thresholds: MonitoringThresholds::default(),
+            refresh_interval: Duration::from_secs(10), // 10 second intervals
             collaboration_sessions: HashMap::new(),
-            shared_metrics:         Vec::new(),
-            collaborative_alerts:   Vec::new(),
-            session_thresholds:     HashMap::new(),
+            shared_metrics: Vec::new(),
+            collaborative_alerts: Vec::new(),
+            session_thresholds: HashMap::new(),
         }
     }
 
@@ -230,13 +230,13 @@ impl MonitoringDashboard {
             // CPU usage alert
             if latest.cpu_usage_percent > self.thresholds.cpu_usage_warning_percent {
                 let alert = SystemAlert {
-                    id:                  format!("cpu-high-{}", latest.timestamp),
-                    severity:            AlertSeverity::Warning,
-                    title:               "High CPU Usage".to_string(),
-                    message:             format!("CPU usage is at {:.1}%", latest.cpu_usage_percent),
-                    timestamp:           latest.timestamp.clone(),
-                    source:              "System Monitor".to_string(),
-                    resolved:            false,
+                    id: format!("cpu-high-{}", latest.timestamp),
+                    severity: AlertSeverity::Warning,
+                    title: "High CPU Usage".to_string(),
+                    message: format!("CPU usage is at {:.1}%", latest.cpu_usage_percent),
+                    timestamp: latest.timestamp.clone(),
+                    source: "System Monitor".to_string(),
+                    resolved: false,
                     recommended_actions: vec![
                         "Close unnecessary applications".to_string(),
                         "Check for background processes".to_string(),
@@ -249,13 +249,13 @@ impl MonitoringDashboard {
             // Memory usage alert
             if latest.memory_usage_percent > self.thresholds.memory_usage_warning_percent {
                 let alert = SystemAlert {
-                    id:                  format!("memory-high-{}", latest.timestamp),
-                    severity:            AlertSeverity::Warning,
-                    title:               "High Memory Usage".to_string(),
-                    message:             format!("Memory usage is at {:.1}%", latest.memory_usage_percent),
-                    timestamp:           latest.timestamp.clone(),
-                    source:              "Memory Monitor".to_string(),
-                    resolved:            false,
+                    id: format!("memory-high-{}", latest.timestamp),
+                    severity: AlertSeverity::Warning,
+                    title: "High Memory Usage".to_string(),
+                    message: format!("Memory usage is at {:.1}%", latest.memory_usage_percent),
+                    timestamp: latest.timestamp.clone(),
+                    source: "Memory Monitor".to_string(),
+                    resolved: false,
                     recommended_actions: vec![
                         "Close unused applications".to_string(),
                         "Clear system caches".to_string(),
@@ -276,19 +276,19 @@ impl MonitoringDashboard {
 
             if error_rate > self.thresholds.max_error_rate_percent {
                 let alert = SystemAlert {
-                    id:                  format!(
+                    id: format!(
                         "lsp-errors-{}-{}",
                         lsp_metric.server_name, lsp_metric.timestamp
                     ),
-                    severity:            AlertSeverity::Error,
-                    title:               format!("High Error Rate in {}", lsp_metric.server_name),
-                    message:             format!(
+                    severity: AlertSeverity::Error,
+                    title: format!("High Error Rate in {}", lsp_metric.server_name),
+                    message: format!(
                         "Error rate is {:.1}% for LSP server {}",
                         error_rate, lsp_metric.server_name
                     ),
-                    timestamp:           lsp_metric.timestamp.clone(),
-                    source:              "LSP Monitor".to_string(),
-                    resolved:            false,
+                    timestamp: lsp_metric.timestamp.clone(),
+                    source: "LSP Monitor".to_string(),
+                    resolved: false,
                     recommended_actions: vec![
                         "Check LSP server logs".to_string(),
                         "Restart LSP server".to_string(),
@@ -300,19 +300,19 @@ impl MonitoringDashboard {
 
             if lsp_metric.average_response_time_ms > self.thresholds.max_response_time_ms as f64 {
                 let alert = SystemAlert {
-                    id:                  format!(
+                    id: format!(
                         "lsp-performance-{}-{}",
                         lsp_metric.server_name, lsp_metric.timestamp
                     ),
-                    severity:            AlertSeverity::Warning,
-                    title:               format!("Slow LSP Response - {}", lsp_metric.server_name),
-                    message:             format!(
+                    severity: AlertSeverity::Warning,
+                    title: format!("Slow LSP Response - {}", lsp_metric.server_name),
+                    message: format!(
                         "Average response time is {:.1}ms",
                         lsp_metric.average_response_time_ms
                     ),
-                    timestamp:           lsp_metric.timestamp.clone(),
-                    source:              "LSP Performance".to_string(),
-                    resolved:            false,
+                    timestamp: lsp_metric.timestamp.clone(),
+                    source: "LSP Performance".to_string(),
+                    resolved: false,
                     recommended_actions: vec![
                         "Check network connectivity".to_string(),
                         "Optimize LSP server configuration".to_string(),
@@ -392,7 +392,11 @@ impl MonitoringDashboard {
     }
 
     /// Create a new collaboration session
-    pub fn create_collaboration_session(&mut self, session_name: String, created_by: String) -> String {
+    pub fn create_collaboration_session(
+        &mut self,
+        session_name: String,
+        created_by: String,
+    ) -> String {
         let session_id = format!(
             "session_{}",
             Utc::now()
@@ -409,12 +413,12 @@ impl MonitoringDashboard {
             active_users: 1,
             total_users: 1,
             session_metrics: SessionMetrics {
-                cpu_usage_avg:            0.0,
-                memory_usage_avg:         0.0,
-                lsp_requests_total:       0,
+                cpu_usage_avg: 0.0,
+                memory_usage_avg: 0.0,
+                lsp_requests_total: 0,
                 session_duration_seconds: 0,
-                peak_users:               1,
-                total_collaborations:     0,
+                peak_users: 1,
+                total_collaborations: 0,
             },
             is_active: true,
         };
@@ -428,7 +432,11 @@ impl MonitoringDashboard {
     }
 
     /// Join an existing collaboration session
-    pub fn join_collaboration_session(&mut self, session_id: &str, user_id: String) -> Result<(), String> {
+    pub fn join_collaboration_session(
+        &mut self,
+        session_id: &str,
+        user_id: String,
+    ) -> Result<(), String> {
         if let Some(session) = self.collaboration_sessions.get_mut(session_id) {
             if !session.participants.contains(&user_id) {
                 session.participants.push(user_id);
@@ -534,18 +542,18 @@ impl MonitoringDashboard {
 
             if avg_cpu > thresholds.cpu_usage_warning_percent {
                 let alert = CollaborativeAlert {
-                    id:                    format!("collab-cpu-high-{}-{}", session_id, Utc::now().timestamp()),
-                    session_id:            session_id.clone(),
-                    severity:              AlertSeverity::Warning,
-                    title:                 format!("High Collaborative CPU Usage in {}", session.session_name),
-                    message:               format!(
+                    id: format!("collab-cpu-high-{}-{}", session_id, Utc::now().timestamp()),
+                    session_id: session_id.clone(),
+                    severity: AlertSeverity::Warning,
+                    title: format!("High Collaborative CPU Usage in {}", session.session_name),
+                    message: format!(
                         "Average CPU usage across {} users: {:.1}%",
                         session.active_users, avg_cpu
                     ),
-                    timestamp:             Utc::now().to_rfc3339(),
-                    affected_users:        session.participants.clone(),
-                    source:                "Collaborative Monitor".to_string(),
-                    resolved:              false,
+                    timestamp: Utc::now().to_rfc3339(),
+                    affected_users: session.participants.clone(),
+                    source: "Collaborative Monitor".to_string(),
+                    resolved: false,
                     collaborative_actions: vec![
                         "Consider load balancing users across sessions".to_string(),
                         "Monitor individual user resource consumption".to_string(),
@@ -557,25 +565,25 @@ impl MonitoringDashboard {
 
             if avg_memory > thresholds.memory_usage_warning_percent {
                 let alert = CollaborativeAlert {
-                    id:                    format!(
+                    id: format!(
                         "collab-memory-high-{}-{}",
                         session_id,
                         Utc::now().timestamp()
                     ),
-                    session_id:            session_id.clone(),
-                    severity:              AlertSeverity::Warning,
-                    title:                 format!(
+                    session_id: session_id.clone(),
+                    severity: AlertSeverity::Warning,
+                    title: format!(
                         "High Collaborative Memory Usage in {}",
                         session.session_name
                     ),
-                    message:               format!(
+                    message: format!(
                         "Average memory usage across {} users: {:.1}%",
                         session.active_users, avg_memory
                     ),
-                    timestamp:             Utc::now().to_rfc3339(),
-                    affected_users:        session.participants.clone(),
-                    source:                "Collaborative Monitor".to_string(),
-                    resolved:              false,
+                    timestamp: Utc::now().to_rfc3339(),
+                    affected_users: session.participants.clone(),
+                    source: "Collaborative Monitor".to_string(),
+                    resolved: false,
                     collaborative_actions: vec![
                         "Implement memory usage limits per user".to_string(),
                         "Consider session memory optimization".to_string(),
@@ -750,7 +758,9 @@ pub async fn get_monitoring_dashboard(
 
 /// Get real-time performance metrics stream
 #[tauri::command]
-pub async fn get_real_time_metrics(duration_seconds: Option<u64>) -> Result<serde_json::Value, String> {
+pub async fn get_real_time_metrics(
+    duration_seconds: Option<u64>,
+) -> Result<serde_json::Value, String> {
     let duration = duration_seconds.unwrap_or(60); // Default 1 minute
 
     log::info!("Getting real-time metrics for {} seconds", duration);
@@ -1033,7 +1043,9 @@ pub async fn update_monitoring_config(config_updates: serde_json::Value) -> Resu
 
 /// Generate performance report
 #[tauri::command]
-pub async fn generate_performance_report(time_range_hours: Option<u64>) -> Result<serde_json::Value, String> {
+pub async fn generate_performance_report(
+    time_range_hours: Option<u64>,
+) -> Result<serde_json::Value, String> {
     let hours = time_range_hours.unwrap_or(24);
 
     log::info!("Generating performance report for {} hours", hours);
@@ -1209,7 +1221,10 @@ pub async fn create_collaboration_session(
 
 /// Join an existing collaboration session
 #[tauri::command]
-pub async fn join_collaboration_session(session_id: String, user_id: String) -> Result<serde_json::Value, String> {
+pub async fn join_collaboration_session(
+    session_id: String,
+    user_id: String,
+) -> Result<serde_json::Value, String> {
     log::info!(
         "User {} joining collaboration session: {}",
         user_id,
@@ -1258,7 +1273,9 @@ pub async fn submit_shared_metrics(
 
 /// Get collaborative performance dashboard for a session
 #[tauri::command]
-pub async fn get_collaborative_dashboard(session_id: Option<String>) -> Result<serde_json::Value, String> {
+pub async fn get_collaborative_dashboard(
+    session_id: Option<String>,
+) -> Result<serde_json::Value, String> {
     let target_session = session_id.unwrap_or("default_session".to_string());
     log::info!(
         "Getting collaborative dashboard for session: {}",
@@ -1392,7 +1409,10 @@ pub async fn get_collaboration_stats() -> Result<serde_json::Value, String> {
 
 /// Leave a collaboration session
 #[tauri::command]
-pub async fn leave_collaboration_session(session_id: String, user_id: String) -> Result<String, String> {
+pub async fn leave_collaboration_session(
+    session_id: String,
+    user_id: String,
+) -> Result<String, String> {
     log::info!(
         "User {} leaving collaboration session: {}",
         user_id,

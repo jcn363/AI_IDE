@@ -20,9 +20,9 @@ impl Recommendor {
         _prioritized_tasks: &PrioritizedTaskList,
     ) -> MaintenanceResult<MaintenanceRecommendations> {
         Ok(MaintenanceRecommendations {
-            recommendations:           vec![],
+            recommendations: vec![],
             automated_implementations: vec![],
-            documentation_updates:     vec![],
+            documentation_updates: vec![],
         })
     }
 }

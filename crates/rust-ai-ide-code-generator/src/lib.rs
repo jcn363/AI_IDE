@@ -19,7 +19,7 @@ use generators::{
     refactoring_generator::create_refactoring_generator
 };
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
@@ -176,7 +176,7 @@ impl CodeGenerator {
         let mut suggestions = Vec::new();
 
         // Parse the code
-        let ast = syn::parse_file(content).map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
+        let ast = syn::parse2(content.parse::<proc_macro2::TokenStream>().unwrap()).map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
 
         // Analyze functions for missing tests
         let mut function_count = 0;
@@ -252,7 +252,7 @@ impl CodeGenerator {
     /// Generate summary of generation results
     fn generate_generation_summary(&self, files: &[GeneratedFile]) -> String {
         let total_lines = files.iter().map(|f| f.content.lines().count()).sum::<usize>();
-        let file_types: std::collections::HashSet<&str> = files.iter()
+        let file_types: HashSet<&str> = files.iter()
             .map(|f| f.file_type.as_str())
             .collect();
 

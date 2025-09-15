@@ -46,11 +46,11 @@ pub enum ArEngineState {
 #[derive(Debug)]
 pub struct ArEngine {
     /// Current engine state
-    state:             Arc<Mutex<ArEngineState>>,
+    state: Arc<Mutex<ArEngineState>>,
     /// Supported camera types
     supported_cameras: Vec<CameraType>,
     /// Current session configuration
-    session_config:    Option<MultiRealityConfig>,
+    session_config: Option<MultiRealityConfig>,
 }
 
 impl ArEngine {
@@ -60,9 +60,9 @@ impl ArEngine {
     /// * `Self` - New AR engine instance
     pub async fn new() -> Self {
         Self {
-            state:             Arc::new(Mutex::new(ArEngineState::Uninitialized)),
+            state: Arc::new(Mutex::new(ArEngineState::Uninitialized)),
             supported_cameras: vec![CameraType::RGB, CameraType::Depth],
-            session_config:    None,
+            session_config: None,
         }
     }
 
@@ -171,7 +171,9 @@ impl ArEngine {
     /// # Returns
     /// * `Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>>` - Detected
     ///   objects or error
-    pub async fn detect_objects(&self) -> Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn detect_objects(
+        &self,
+    ) -> Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>> {
         let state = self.state.lock().await;
 
         if *state != ArEngineState::Active {
@@ -180,17 +182,17 @@ impl ArEngine {
 
         // Placeholder implementation - in real system this would perform actual object detection
         Ok(vec![ArDetectedObject {
-            id:          "obj_1".to_string(),
+            id: "obj_1".to_string(),
             object_type: "code_file".to_string(),
-            position:    SpatialPosition {
-                x:        0.5,
-                y:        0.3,
-                z:        -1.0,
+            position: SpatialPosition {
+                x: 0.5,
+                y: 0.3,
+                z: -1.0,
                 rotation: None,
-                scale:    None,
+                scale: None,
             },
-            confidence:  0.85,
-            properties:  Default::default(),
+            confidence: 0.85,
+            properties: Default::default(),
         }])
     }
 
@@ -255,15 +257,15 @@ impl ArEngine {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArDetectedObject {
     /// Unique object identifier
-    pub id:          String,
+    pub id: String,
     /// Type of detected object
     pub object_type: String,
     /// Position in AR space
-    pub position:    SpatialPosition,
+    pub position: SpatialPosition,
     /// Confidence score (0.0 to 1.0)
-    pub confidence:  f32,
+    pub confidence: f32,
     /// Additional object properties
-    pub properties:  HashMap<String, String>,
+    pub properties: HashMap<String, String>,
 }
 
 /// AR overlay types
@@ -286,13 +288,13 @@ pub enum ArOverlayType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArOverlayContent {
     /// Text content of overlay
-    pub text:             Option<String>,
+    pub text: Option<String>,
     /// Image data (base64 encoded)
-    pub image:            Option<String>,
+    pub image: Option<String>,
     /// 3D model reference
-    pub model_3d:         Option<String>,
+    pub model_3d: Option<String>,
     /// Interactive elements configuration
-    pub interactive:      bool,
+    pub interactive: bool,
     /// Display duration in seconds
     pub duration_seconds: Option<f32>,
 }
@@ -383,11 +385,11 @@ pub enum ArEngineState {
 #[derive(Debug)]
 pub struct ArEngine {
     /// Current engine state
-    state:             Arc<Mutex<ArEngineState>>,
+    state: Arc<Mutex<ArEngineState>>,
     /// Supported camera types
     supported_cameras: Vec<CameraType>,
     /// Current session configuration
-    session_config:    Option<MultiRealityConfig>,
+    session_config: Option<MultiRealityConfig>,
 }
 
 impl ArEngine {
@@ -397,9 +399,9 @@ impl ArEngine {
     /// * `Self` - New AR engine instance
     pub async fn new() -> Self {
         Self {
-            state:             Arc::new(Mutex::new(ArEngineState::Uninitialized)),
+            state: Arc::new(Mutex::new(ArEngineState::Uninitialized)),
             supported_cameras: vec![CameraType::RGB, CameraType::Depth],
-            session_config:    None,
+            session_config: None,
         }
     }
 
@@ -508,7 +510,9 @@ impl ArEngine {
     /// # Returns
     /// * `Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>>` - Detected
     ///   objects or error
-    pub async fn detect_objects(&self) -> Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn detect_objects(
+        &self,
+    ) -> Result<Vec<ArDetectedObject>, Box<dyn std::error::Error + Send + Sync>> {
         let state = self.state.lock().await;
 
         if *state != ArEngineState::Active {
@@ -517,17 +521,17 @@ impl ArEngine {
 
         // Placeholder implementation - in real system this would perform actual object detection
         Ok(vec![ArDetectedObject {
-            id:          "obj_1".to_string(),
+            id: "obj_1".to_string(),
             object_type: "code_file".to_string(),
-            position:    SpatialPosition {
-                x:        0.5,
-                y:        0.3,
-                z:        -1.0,
+            position: SpatialPosition {
+                x: 0.5,
+                y: 0.3,
+                z: -1.0,
                 rotation: None,
-                scale:    None,
+                scale: None,
             },
-            confidence:  0.85,
-            properties:  Default::default(),
+            confidence: 0.85,
+            properties: Default::default(),
         }])
     }
 
@@ -592,15 +596,15 @@ impl ArEngine {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArDetectedObject {
     /// Unique object identifier
-    pub id:          String,
+    pub id: String,
     /// Type of detected object
     pub object_type: String,
     /// Position in AR space
-    pub position:    SpatialPosition,
+    pub position: SpatialPosition,
     /// Confidence score (0.0 to 1.0)
-    pub confidence:  f32,
+    pub confidence: f32,
     /// Additional object properties
-    pub properties:  HashMap<String, String>,
+    pub properties: HashMap<String, String>,
 }
 
 /// AR overlay types
@@ -623,13 +627,13 @@ pub enum ArOverlayType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArOverlayContent {
     /// Text content of overlay
-    pub text:             Option<String>,
+    pub text: Option<String>,
     /// Image data (base64 encoded)
-    pub image:            Option<String>,
+    pub image: Option<String>,
     /// 3D model reference
-    pub model_3d:         Option<String>,
+    pub model_3d: Option<String>,
     /// Interactive elements configuration
-    pub interactive:      bool,
+    pub interactive: bool,
     /// Display duration in seconds
     pub duration_seconds: Option<f32>,
 }

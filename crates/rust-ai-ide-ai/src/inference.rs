@@ -692,8 +692,7 @@ impl LocalInferenceEngine {
 
 /// Simple prompt hashing for cache keys
 fn hash_prompt(prompt: &str) -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
+    use std::hash::{DefaultHasher, Hash, Hasher};
 
     let mut hasher = DefaultHasher::new();
     prompt.hash(&mut hasher);

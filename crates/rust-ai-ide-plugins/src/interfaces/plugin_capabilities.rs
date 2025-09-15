@@ -8,15 +8,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PluginCapabilities {
     /// Set of command names that this plugin can handle
-    pub commands:             HashSet<String>,
+    pub commands: HashSet<String>,
     /// Set of file extensions this plugin can process
     pub supported_file_types: HashSet<String>,
     /// Set of features this plugin provides (e.g., "lsp", "ai-completion", "debugging")
-    pub features:             HashSet<String>,
+    pub features: HashSet<String>,
     /// Whether this plugin provides UI components
-    pub has_ui_components:    bool,
+    pub has_ui_components: bool,
     /// Whether this plugin requires network access
-    pub requires_network:     bool,
+    pub requires_network: bool,
     /// Whether this plugin requires file system access
     pub requires_file_system: bool,
 }

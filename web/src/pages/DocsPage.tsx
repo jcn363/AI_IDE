@@ -4,6 +4,23 @@ import { Box, Button, Stack, TextField, Typography, Paper } from '@mui/material'
 import { invoke } from '@tauri-apps/api/core';
 import DOMPurify from 'dompurify';
 
+DOMPurify.addHook('uponSanitizeAttribute', (currentNode, data) => {
+  if (data.attrName === 'href' || data.attrName === 'src') {
+    const v = String(data.attrValue || '');
+    if (!/^https?:\/\//i.test(v)) {
+      data.attrValue = '';
+    }
+  }
+});
+
+// Alternative: Set ALLOWED_URI_REGEXP to restrict URIs
+// DOMPurify.setConfig({
+//   ALLOWED_URI_REGEXP: /^https?:\/\//
+// });
+
+// Security Note: Implement CSP in the HTML template or Tauri configuration
+// Suggested CSP: default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';
+
 export default function DocsPage() {
   const [projectPath, setProjectPath] = useState<string>('');
   const [indexPath, setIndexPath] = useState<string>('');

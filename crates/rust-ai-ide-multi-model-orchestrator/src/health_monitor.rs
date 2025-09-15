@@ -21,10 +21,10 @@ pub struct ModelHealthMonitor {
 
 #[derive(Debug, Clone)]
 pub struct ModelHealthState {
-    pub status:               ModelStatus,
-    pub last_healthy_check:   std::time::Instant,
+    pub status: ModelStatus,
+    pub last_healthy_check: std::time::Instant,
     pub consecutive_failures: u32,
-    pub metrics:              ModelMetrics,
+    pub metrics: ModelMetrics,
 }
 
 impl ModelHealthMonitor {

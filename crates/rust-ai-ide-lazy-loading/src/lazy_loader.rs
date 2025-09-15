@@ -12,19 +12,20 @@ use crate::{LazyComponent, LazyLoadingConfig, LazyLoadingError, LazyResult};
 
 /// Manager for lazy loading components
 pub struct LazyLoader {
-    registry:          Arc<RwLock<HashMap<String, Box<dyn LazyComponent>>>>,
-    config:            LazyLoadingConfig,
-    semaphore:         Arc<Semaphore>,
+    registry: Arc<RwLock<HashMap<String, Box<dyn LazyComponent>>>>,
+    config: LazyLoadingConfig,
+    semaphore: Arc<Semaphore>,
     loaded_components: Arc<RwLock<HashMap<String, Arc<dyn Any + Send + Sync>>>>,
 }
 
 impl LazyLoader {
     /// Create a new lazy loader with the given configuration
     pub fn new(config: LazyLoadingConfig) -> Self {
+        let config_clone = config.clone();
         Self {
             registry: Arc::new(RwLock::new(HashMap::new())),
             config,
-            semaphore: Arc::new(Semaphore::new(config.max_concurrent_loads)),
+            semaphore: Arc::new(Semaphore::new(config_clone.max_concurrent_loads)),
             loaded_components: Arc::new(RwLock::new(HashMap::new())),
         }
     }
@@ -72,7 +73,9 @@ impl LazyLoader {
             load_future,
         )
         .await
-        .map_err(|_| LazyLoadingError::loading_timeout(name.to_string(), self.config.load_timeout_seconds))?
+        .map_err(|_| {
+            LazyLoadingError::loading_timeout(name.to_string(), self.config.load_timeout_seconds)
+        })?
         .map_err(|e| LazyLoadingError::initialization_failed(name.to_string(), e.to_string()))?;
 
         // Try to downcast to the requested type
@@ -188,46 +191,46 @@ impl LazyLoader {
 impl Clone for LazyLoader {
     fn clone(&self) -> Self {
         Self {
-            registry:          self.registry.clone(),
-            config:            self.config.clone(),
-            semaphore:         self.semaphore.clone(),
+            registry: self.registry.clone(),
+            config: self.config.clone(),
+            semaphore: self.semaphore.clone(),
             loaded_components: self.loaded_components.clone(),
         }
     }
 }
 
-/// Helper trait for cloning boxed components
-trait CloneBox {
-    fn clone_box(&self) -> Box<dyn LazyComponent>;
+/// Lazy-loaded component wrapper for simple types
+pub struct SimpleLazyComponent<T>
+where
+    T: Send + Sync + 'static,
+{
+    name: String,
+    initializer: Arc<dyn Fn() -> LazyResult<T> + Send + Sync>,
+    loaded: Mutex<Option<Arc<T>>>,
 }
 
-impl<T> CloneBox for T
+impl<T> Clone for SimpleLazyComponent<T>
 where
-    T: 'static + LazyComponent + Clone,
+    T: Send + Sync + 'static,
 {
-    fn clone_box(&self) -> Box<dyn LazyComponent> {
-        Box::new(self.clone())
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            initializer: self.initializer.clone(),
+            loaded: Mutex::new(None),
+        }
     }
 }
 
-/// Lazy-loaded component wrapper for simple types
-pub struct SimpleLazyComponent<T, F>
+impl<T> SimpleLazyComponent<T>
 where
     T: Send + Sync + 'static,
-    F: Fn() -> LazyResult<T> + Send + Sync + 'static,
-{
-    name:        String,
-    initializer: F,
-    loaded:      Mutex<Option<Arc<T>>>,
-}
-
-impl<T, F> SimpleLazyComponent<T, F>
-where
-    T: Send + Sync + 'static,
-    F: Fn() -> LazyResult<T> + Send + Sync + 'static,
 {
     /// Create a new simple lazy component
-    pub fn new(name: impl Into<String>, initializer: F) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        initializer: Arc<dyn Fn() -> LazyResult<T> + Send + Sync>,
+    ) -> Self {
         Self {
             name: name.into(),
             initializer,
@@ -237,10 +240,9 @@ where
 }
 
 #[async_trait]
-impl<T, F> LazyComponent for SimpleLazyComponent<T, F>
+impl<T> LazyComponent for SimpleLazyComponent<T>
 where
     T: Send + Sync + 'static,
-    F: Fn() -> LazyResult<T> + Send + Sync + 'static,
 {
     fn name(&self) -> &str {
         &self.name
@@ -253,7 +255,7 @@ where
     async fn load(&mut self) -> LazyResult<()> {
         let mut loaded = self.loaded.lock().await;
         if loaded.is_none() {
-            let component = (self.initializer)()?;
+            let component = (*self.initializer)()?;
             *loaded = Some(Arc::new(component));
         }
         Ok(())
@@ -268,6 +270,10 @@ where
         let mut loaded = self.loaded.lock().await;
         *loaded = None;
         Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn LazyComponent> {
+        Box::new(self.clone())
     }
 }
 
@@ -286,7 +292,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_simple_lazy_component() {
-        let mut component = SimpleLazyComponent::new("test", create_test_component);
+        let mut component = SimpleLazyComponent::new("test", Arc::new(create_test_component));
 
         assert_eq!(component.name(), "test");
         assert!(!component.is_loaded());
@@ -299,7 +305,7 @@ mod tests {
     #[tokio::test]
     async fn test_lazy_loader_registration() {
         let loader = LazyLoader::new(LazyLoadingConfig::default());
-        let component = SimpleLazyComponent::new("test", create_test_component);
+        let component = SimpleLazyComponent::new("test", Arc::new(create_test_component));
 
         loader
             .register_component(Box::new(component))

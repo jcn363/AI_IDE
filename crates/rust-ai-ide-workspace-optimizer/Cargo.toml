@@ -1,0 +1,80 @@
+[package]
+name = "rust-ai-ide-workspace-optimizer"
+readme = { workspace = true }
+version = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+authors = { workspace = true }
+license = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+
+[dependencies]
+# Workspace dependencies
+anyhow = { workspace = true }
+tokio = { workspace = true, optional = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+futures = { workspace = true }
+chrono = { workspace = true, optional = true }
+dashmap = { workspace = true, optional = true }
+moka = { workspace = true, optional = true }
+petgraph = { workspace = true, optional = true }
+cargo_metadata = { workspace = true, optional = true }
+semver = { workspace = true, optional = true }
+regex = { workspace = true, optional = true }
+thiserror = { workspace = true, optional = true }
+rayon = { workspace = true, optional = true }
+
+# Internal workspace crates
+rust-ai-ide-errors = { workspace = true }
+rust-ai-ide-common = { workspace = true }
+rust-ai-ide-security = { workspace = true }
+rust-ai-ide-types = { workspace = true }
+
+[features]
+default = ["analyzer", "build_optimizer", "modular_loader"]
+analyzer = ["dep:cargo_metadata", "dep:petgraph"]
+build_optimizer = ["analyzer"]
+modular_loader = ["dep:tokio", "dep:dashmap"]
+health_monitor = ["dep:moka", "dep:chrono"]
+consolidation_tools = ["analyzer", "dep:regex", "dep:thiserror"]
+performance_metrics = ["health_monitor", "dep:rayon"]
+selective_compilation = ["build_optimizer", "dep:semver"]
+dependency_analysis = ["analyzer", "dep:petgraph"]
+feature_flags = []
+cache_optimization = ["dep:moka"]
+parallel_compilation = ["dep:rayon"]
+
+[lints.rust]
+pointer_structural_match = "warn"
+unused_must_use = "warn"
+nonstandard_style = "warn"
+dead_code = "warn"
+unused_variables = "warn"
+unused_imports = "warn"
+
+[lints.clippy]
+range_plus_one = "warn"
+redundant_clone = "deny"
+type_repetition_in_bounds = "deny"
+struct_excessive_bools = "warn"
+unnested_or_patterns = "warn"
+wildcard_imports = "warn"
+explicit_iter_loop = "warn"
+module_name_repetitions = "warn"
+extra_unused_type_parameters = "warn"
+pub_use = "warn"
+len_without_is_empty = "warn"
+needless_continue = "warn"
+semicolon_if_nothing_returned = "warn"
+items_after_statements = "warn"
+complexity = "warn"
+
+[package.metadata.duplication]
+check_before_commit = true
+similarity_threshold = 0.85
+ignore_patterns = ["test_*.rs", "*_test.rs"]
+skip_checks = []

@@ -48,29 +48,29 @@ pub struct ResolutionConfig {
     /// Maximum number of versions to consider per package
     pub max_versions_per_package: usize,
     /// Timeout for resolution operations
-    pub resolution_timeout:       Duration,
+    pub resolution_timeout: Duration,
     /// Enable parallel processing
-    pub enable_parallel:          bool,
+    pub enable_parallel: bool,
     /// Maximum parallel workers
-    pub max_parallel_workers:     usize,
+    pub max_parallel_workers: usize,
     /// Enable incremental updates
-    pub enable_incremental:       bool,
+    pub enable_incremental: bool,
     /// Security focus level (0.0 = ignore, 1.0 = prefer)
-    pub security_focus:           f64,
+    pub security_focus: f64,
     /// Stability preference (0.0 = latest, 1.0 = most stable)
-    pub stability_bias:           f64,
+    pub stability_bias: f64,
 }
 
 impl Default for ResolutionConfig {
     fn default() -> Self {
         Self {
             max_versions_per_package: 50,
-            resolution_timeout:       Duration::from_secs(30),
-            enable_parallel:          true,
-            max_parallel_workers:     num_cpus::get(),
-            enable_incremental:       true,
-            security_focus:           0.5,
-            stability_bias:           0.3,
+            resolution_timeout: Duration::from_secs(30),
+            enable_parallel: true,
+            max_parallel_workers: num_cpus::get(),
+            enable_incremental: true,
+            security_focus: 0.5,
+            stability_bias: 0.3,
         }
     }
 }
@@ -79,21 +79,21 @@ impl Default for ResolutionConfig {
 #[derive(Debug)]
 pub struct ResolutionContext {
     /// Current resolution strategy
-    pub strategy:             ResolutionStrategy,
+    pub strategy: ResolutionStrategy,
     /// Resolution configuration
-    pub config:               ResolutionConfig,
+    pub config: ResolutionConfig,
     /// Resolved versions cache for incremental updates
-    pub resolved_versions:    HashMap<String, String>,
+    pub resolved_versions: HashMap<String, String>,
     /// Package dependency constraints
-    pub constraints:          HashMap<String, Vec<PackageDependencyConstraint>>,
+    pub constraints: HashMap<String, Vec<PackageDependencyConstraint>>,
     /// Version compatibility cache
-    pub compatibility_cache:  HashMap<String, Vec<String>>,
+    pub compatibility_cache: HashMap<String, Vec<String>>,
     /// Package metadata cache
-    pub package_metadata:     HashMap<String, PackageMetadata>,
+    pub package_metadata: HashMap<String, PackageMetadata>,
     /// Resolution statistics
-    pub stats:                ResolutionStats,
+    pub stats: ResolutionStats,
     /// Workspace member information
-    pub workspace_members:    HashSet<String>,
+    pub workspace_members: HashSet<String>,
     /// Cross-package analysis data
     pub cross_crate_analysis: CrossCrateAnalysis,
 }
@@ -101,12 +101,12 @@ pub struct ResolutionContext {
 /// Package dependency constraint with enhanced metadata
 #[derive(Debug, Clone)]
 pub struct PackageDependencyConstraint {
-    pub source_package:   String,
-    pub version_req:      VersionReq,
+    pub source_package: String,
+    pub version_req: VersionReq,
     pub dependency_depth: usize,
-    pub is_optional:      bool,
-    pub features:         Vec<String>,
-    pub source_type:      ConstraintSource,
+    pub is_optional: bool,
+    pub features: Vec<String>,
+    pub source_type: ConstraintSource,
 }
 
 /// Source of a dependency constraint
@@ -123,20 +123,20 @@ pub enum ConstraintSource {
 /// Enhanced package metadata for resolution decisions
 #[derive(Debug, Clone)]
 pub struct PackageMetadata {
-    pub name:                String,
-    pub available_versions:  Vec<Version>,
+    pub name: String,
+    pub available_versions: Vec<Version>,
     pub security_advisories: Vec<SecurityAdvisory>,
-    pub deprecation_status:  Option<String>,
-    pub maintenance_score:   f64,
-    pub last_updated:        chrono::DateTime<chrono::Utc>,
+    pub deprecation_status: Option<String>,
+    pub maintenance_score: f64,
+    pub last_updated: chrono::DateTime<chrono::Utc>,
 }
 
 /// Security advisory information
 #[derive(Debug, Clone)]
 pub struct SecurityAdvisory {
-    pub severity:          SecuritySeverity,
+    pub severity: SecuritySeverity,
     pub affected_versions: VersionReq,
-    pub advisory_id:       String,
+    pub advisory_id: String,
 }
 
 /// Security severity levels
@@ -151,32 +151,32 @@ pub enum SecuritySeverity {
 /// Cross-crate analysis for workspace optimization
 #[derive(Debug, Default)]
 pub struct CrossCrateAnalysis {
-    pub shared_dependencies:     HashMap<String, Vec<String>>,
-    pub version_conflicts:       HashMap<String, Vec<VersionConflict>>,
+    pub shared_dependencies: HashMap<String, Vec<String>>,
+    pub version_conflicts: HashMap<String, Vec<VersionConflict>>,
     pub optimal_shared_versions: HashMap<String, String>,
-    pub compatibility_matrix:    HashMap<(String, String), Vec<String>>,
+    pub compatibility_matrix: HashMap<(String, String), Vec<String>>,
 }
 
 /// Resolution statistics for analysis and monitoring
 #[derive(Debug, Default)]
 pub struct ResolutionStats {
-    pub start_time:            Option<Instant>,
-    pub packages_resolved:     usize,
+    pub start_time: Option<Instant>,
+    pub packages_resolved: usize,
     pub conflicts_encountered: usize,
-    pub conflicts_resolved:    usize,
+    pub conflicts_resolved: usize,
     pub parallel_workers_used: usize,
-    pub cache_hits:            usize,
-    pub cache_misses:          usize,
-    pub resolution_duration:   Option<Duration>,
+    pub cache_hits: usize,
+    pub cache_misses: usize,
+    pub resolution_duration: Option<Duration>,
 }
 
 /// Advanced dependency resolver with parallel processing and workspace awareness
 pub struct AdvancedDependencyResolver {
-    graph:            Arc<RwLock<SharedDependencyGraph>>,
-    context:          Arc<RwLock<ResolutionContext>>,
-    version_cache:    Cache<String, Vec<Version>>,
+    graph: Arc<RwLock<SharedDependencyGraph>>,
+    context: Arc<RwLock<ResolutionContext>>,
+    version_cache: Cache<String, Vec<Version>>,
     constraint_cache: Cache<String, Vec<PackageDependencyConstraint>>,
-    semaphore:        Arc<Semaphore>,
+    semaphore: Arc<Semaphore>,
 }
 
 impl AdvancedDependencyResolver {
@@ -284,7 +284,8 @@ impl AdvancedDependencyResolver {
             .iter()
             .filter_map(|member| {
                 graph.get_dependencies(member).ok().map(|deps| {
-                    let dep_names: Vec<String> = deps.iter().map(|(name, _)| name.clone()).collect();
+                    let dep_names: Vec<String> =
+                        deps.iter().map(|(name, _)| name.clone()).collect();
                     (member.clone(), dep_names)
                 })
             })
@@ -334,15 +335,17 @@ impl AdvancedDependencyResolver {
 
                                 for (dep_name, dep_edge) in deps {
                                     if let Some(version_req_str) = &dep_edge.version_constraint {
-                                        if let Ok(version_req) = VersionReq::parse(version_req_str) {
+                                        if let Ok(version_req) = VersionReq::parse(version_req_str)
+                                        {
                                             let constraint = PackageDependencyConstraint {
                                                 source_package: node.name.clone(),
                                                 version_req,
                                                 dependency_depth: dep_edge.req_depth,
                                                 is_optional: dep_edge.optional,
                                                 features: dep_edge.features_requested.clone(),
-                                                source_type: self
-                                                    .infer_constraint_source(&node.name, &dep_name, dep_edge),
+                                                source_type: self.infer_constraint_source(
+                                                    &node.name, &dep_name, dep_edge,
+                                                ),
                                             };
                                             package_constraints.push(constraint);
                                         }
@@ -363,7 +366,12 @@ impl AdvancedDependencyResolver {
     }
 
     /// Infer the source type of a constraint
-    fn infer_constraint_source(&self, source: &str, target: &str, edge: &DependencyEdge) -> ConstraintSource {
+    fn infer_constraint_source(
+        &self,
+        source: &str,
+        target: &str,
+        edge: &DependencyEdge,
+    ) -> ConstraintSource {
         match edge.dep_type {
             crate::graph::DependencyType::Dev => ConstraintSource::CargoTomlDevDependency,
             crate::graph::DependencyType::Build => ConstraintSource::CargoTomlBuildDependency,
@@ -421,13 +429,12 @@ impl AdvancedDependencyResolver {
                 let ctx = self.context.clone();
 
                 async move {
-                    let _permit = semaphore
-                        .acquire()
-                        .await
-                        .map_err(|_| DependencyError::ResolutionError {
+                    let _permit = semaphore.acquire().await.map_err(|_| {
+                        DependencyError::ResolutionError {
                             package: package_clone.clone(),
-                            reason:  "Failed to acquire semaphore".to_string(),
-                        })?;
+                            reason: "Failed to acquire semaphore".to_string(),
+                        }
+                    })?;
 
                     Self::select_aggressive_version_advanced_inner(&package_clone, &ctx).await
                 }
@@ -473,7 +480,7 @@ impl AdvancedDependencyResolver {
 
         Err(DependencyError::ResolutionError {
             package: package.to_string(),
-            reason:  "No version satisfies all constraints".to_string(),
+            reason: "No version satisfies all constraints".to_string(),
         })
     }
 
@@ -543,9 +550,12 @@ impl AdvancedDependencyResolver {
                 .await?;
 
             // Select version with best overall score
-            if let Some((best_version, _)) = version_scores
-                .into_iter()
-                .max_by(|(_, score_a), (_, score_b)| score_a.partial_cmp(score_b).unwrap_or(Ordering::Equal))
+            if let Some((best_version, _)) =
+                version_scores
+                    .into_iter()
+                    .max_by(|(_, score_a), (_, score_b)| {
+                        score_a.partial_cmp(score_b).unwrap_or(Ordering::Equal)
+                    })
             {
                 resolved_versions.insert(package, best_version);
             }
@@ -615,7 +625,7 @@ impl AdvancedDependencyResolver {
 
             let version = selected_version.ok_or_else(|| DependencyError::ResolutionError {
                 package: package.clone(),
-                reason:  "No stable version satisfies constraints".to_string(),
+                reason: "No stable version satisfies constraints".to_string(),
             })?;
 
             resolved_versions.insert(package, version);
@@ -649,7 +659,7 @@ impl AdvancedDependencyResolver {
 
             let version = selected_version.ok_or_else(|| DependencyError::ResolutionError {
                 package: package.clone(),
-                reason:  "No security-safe version satisfies constraints".to_string(),
+                reason: "No security-safe version satisfies constraints".to_string(),
             })?;
 
             resolved_versions.insert(package, version);
@@ -679,11 +689,14 @@ impl AdvancedDependencyResolver {
 
                     let compatibility_score = Self::calculate_compatibility_score(&constraints);
 
-                    (package_clone, ConstraintAnalysis {
-                        package: package_clone,
-                        constraints,
-                        compatibility_score,
-                    })
+                    (
+                        package_clone.clone(),
+                        ConstraintAnalysis {
+                            package: package_clone,
+                            constraints,
+                            compatibility_score,
+                        },
+                    )
                 }
             })
             .collect();
@@ -711,11 +724,14 @@ impl AdvancedDependencyResolver {
 
             let compatibility_score = Self::calculate_compatibility_score(&constraints);
 
-            analysis_map.insert(package.clone(), ConstraintAnalysis {
-                package: package.clone(),
-                constraints,
-                compatibility_score,
-            });
+            analysis_map.insert(
+                package.clone(),
+                ConstraintAnalysis {
+                    package: package.clone(),
+                    constraints,
+                    compatibility_score,
+                },
+            );
         }
 
         Ok(analysis_map)
@@ -772,7 +788,9 @@ impl AdvancedDependencyResolver {
 
         let mut packages = Vec::new();
         for (package, _) in &ctx.constraints {
-            if !ctx.resolved_versions.contains_key(package) && !ctx.workspace_members.contains(package) {
+            if !ctx.resolved_versions.contains_key(package)
+                && !ctx.workspace_members.contains(package)
+            {
                 packages.push(package.clone());
             }
         }
@@ -786,7 +804,9 @@ impl AdvancedDependencyResolver {
 
         let mut packages = Vec::new();
         for (package, _) in &ctx.constraints {
-            if !ctx.resolved_versions.contains_key(package) && !ctx.workspace_members.contains(package) {
+            if !ctx.resolved_versions.contains_key(package)
+                && !ctx.workspace_members.contains(package)
+            {
                 packages.push(package.clone());
             }
         }
@@ -795,7 +815,10 @@ impl AdvancedDependencyResolver {
     }
 
     /// Select conservative version using advanced algorithms
-    fn select_conservative_version_advanced(&self, analysis: &ConstraintAnalysis) -> DependencyResult<String> {
+    fn select_conservative_version_advanced(
+        &self,
+        analysis: &ConstraintAnalysis,
+    ) -> DependencyResult<String> {
         // Sort by compatibility score and depth
         let mut candidates = Vec::new();
 
@@ -808,22 +831,22 @@ impl AdvancedDependencyResolver {
                     &candidate,
                     &[constraint.clone()],
                     &crate::graph::DependencyNode {
-                        name:                analysis.package.clone(),
-                        version:             Some(candidate.clone()),
-                        description:         None,
-                        repository:          None,
-                        license:             None,
-                        authors:             Vec::new(),
-                        keywords:            Vec::new(),
-                        categories:          Vec::new(),
-                        homepage:            None,
-                        documentation:       None,
-                        readme:              None,
+                        name: analysis.package.clone(),
+                        version: Some(candidate.clone()),
+                        description: None,
+                        repository: None,
+                        license: None,
+                        authors: Vec::new(),
+                        keywords: Vec::new(),
+                        categories: Vec::new(),
+                        homepage: None,
+                        documentation: None,
+                        readme: None,
                         is_workspace_member: false,
-                        source_url:          None,
-                        checksum:            None,
-                        yanked:              false,
-                        created_at:          None,
+                        source_url: None,
+                        checksum: None,
+                        yanked: false,
+                        created_at: None,
                     },
                 );
 
@@ -832,14 +855,16 @@ impl AdvancedDependencyResolver {
         }
 
         // Select highest scoring candidate
-        candidates.sort_by(|(_, score_a), (_, score_b)| score_b.partial_cmp(score_a).unwrap_or(Ordering::Equal));
+        candidates.sort_by(|(_, score_a), (_, score_b)| {
+            score_b.partial_cmp(score_a).unwrap_or(Ordering::Equal)
+        });
 
         candidates
             .first()
             .map(|(version, _)| version.clone())
             .ok_or_else(|| DependencyError::ResolutionError {
                 package: analysis.package.clone(),
-                reason:  "No suitable version found".to_string(),
+                reason: "No suitable version found".to_string(),
             })
     }
 
@@ -937,8 +962,8 @@ impl AdvancedDependencyResolver {
         constraints: &[PackageDependencyConstraint],
     ) -> DependencyResult<String> {
         let analysis = ConstraintAnalysis {
-            package:             package.to_string(),
-            constraints:         constraints.to_vec(),
+            package: package.to_string(),
+            constraints: constraints.to_vec(),
             compatibility_score: 1.0,
         };
 
@@ -951,7 +976,8 @@ impl AdvancedDependencyResolver {
         package: &str,
         constraints: &[PackageDependencyConstraint],
     ) -> DependencyResult<Vec<(String, f64)>> {
-        let available_versions = Self::get_available_versions_with_cache(package, &*self.context.read().await).await?;
+        let available_versions =
+            Self::get_available_versions_with_cache(package, &*self.context.read().await).await?;
 
         let mut scores = Vec::new();
 
@@ -962,7 +988,11 @@ impl AdvancedDependencyResolver {
                 continue;
             }
 
-            let score = Self::calculate_comprehensive_score(version, constraints, &*self.context.read().await);
+            let score = Self::calculate_comprehensive_score(
+                version,
+                constraints,
+                &*self.context.read().await,
+            );
 
             scores.push((version_str, score));
         }
@@ -1058,7 +1088,8 @@ impl AdvancedDependencyResolver {
 
     /// Get stable versions (exclude pre-releases, betas, etc.)
     async fn get_stable_versions(&self, package: &str) -> DependencyResult<Vec<Version>> {
-        let all_versions = Self::get_available_versions_with_cache(package, &*self.context.read().await).await?;
+        let all_versions =
+            Self::get_available_versions_with_cache(package, &*self.context.read().await).await?;
 
         let stable_versions: Vec<_> = all_versions
             .into_iter()
@@ -1070,7 +1101,8 @@ impl AdvancedDependencyResolver {
 
     /// Get security-safe versions (no known vulnerabilities)
     async fn get_security_safe_versions(&self, package: &str) -> DependencyResult<Vec<Version>> {
-        let all_versions = Self::get_available_versions_with_cache(package, &*self.context.read().await).await?;
+        let all_versions =
+            Self::get_available_versions_with_cache(package, &*self.context.read().await).await?;
 
         // Mock security filtering - would check against vulnerability database
         // For now, just return all versions (simulating no known vulnerabilities)
@@ -1103,19 +1135,19 @@ impl AdvancedDependencyResolver {
 /// Analysis of constraints for a package
 #[derive(Debug, Clone)]
 pub struct ConstraintAnalysis {
-    pub package:             String,
-    pub constraints:         Vec<PackageDependencyConstraint>,
+    pub package: String,
+    pub constraints: Vec<PackageDependencyConstraint>,
     pub compatibility_score: f64,
 }
 
 /// Version conflict with enhanced resolution information
 #[derive(Debug, Clone)]
 pub struct EnhancedVersionConflict {
-    pub package:                 String,
+    pub package: String,
     pub conflicting_constraints: Vec<PackageDependencyConstraint>,
-    pub available_versions:      Vec<String>,
-    pub suggested_resolution:    Option<String>,
-    pub conflict_severity:       ConflictSeverity,
+    pub available_versions: Vec<String>,
+    pub suggested_resolution: Option<String>,
+    pub conflict_severity: ConflictSeverity,
 }
 
 /// Severity levels for version conflicts
@@ -1138,7 +1170,10 @@ impl ResolutionWorker {
     }
 
     /// Process a batch of packages in parallel
-    pub async fn process_batch(&self, packages: Vec<String>) -> DependencyResult<Vec<(String, String)>> {
+    pub async fn process_batch(
+        &self,
+        packages: Vec<String>,
+    ) -> DependencyResult<Vec<(String, String)>> {
         let futures: Vec<_> = packages
             .into_iter()
             .map(|package| {
@@ -1189,7 +1224,7 @@ impl AdvancedDependencyResolver {
                     .last()
                     .ok_or_else(|| DependencyError::ResolutionError {
                         package: package.to_string(),
-                        reason:  "No versions available".to_string(),
+                        reason: "No versions available".to_string(),
                     })?;
                 Ok(latest.to_string())
             }
@@ -1219,7 +1254,8 @@ mod tests {
         let graph = Arc::new(RwLock::new(crate::graph::SharedDependencyGraph::new()));
         let config = ResolutionConfig::default();
 
-        let resolver = AdvancedDependencyResolver::new(graph, ResolutionStrategy::Conservative, config);
+        let resolver =
+            AdvancedDependencyResolver::new(graph, ResolutionStrategy::Conservative, config);
 
         assert_eq!(
             resolver.context.read().await.strategy,
@@ -1230,12 +1266,12 @@ mod tests {
     #[tokio::test]
     async fn test_constraint_analysis() {
         let constraints = vec![PackageDependencyConstraint {
-            source_package:   "test-pkg".to_string(),
-            version_req:      VersionReq::parse(">=1.0.0").unwrap(),
+            source_package: "test-pkg".to_string(),
+            version_req: VersionReq::parse(">=1.0.0").unwrap(),
             dependency_depth: 1,
-            is_optional:      false,
-            features:         Vec::new(),
-            source_type:      ConstraintSource::CargoTomlDependency,
+            is_optional: false,
+            features: Vec::new(),
+            source_type: ConstraintSource::CargoTomlDependency,
         }];
 
         let score = AdvancedDependencyResolver::calculate_compatibility_score(&constraints);

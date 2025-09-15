@@ -8,7 +8,10 @@ use std::collections::HashMap;
 use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::{Aes256Gcm, Key, Nonce};
 use chrono::{DateTime, Utc};
+use rand::rngs::OsRng;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use tokio::sync::RwLock;
 
 /// Encrypted audit trail for configuration changes
@@ -177,11 +180,7 @@ impl AuditTrail {
         // Generate encryption key from system entropy
         // In production, this would use a proper KMS or key derivation
         let mut key_bytes = [0u8; 32];
-        ring::rand::SecureRandom::fill(&ring::rand::SystemRandom::new(), &mut key_bytes).map_err(|_| {
-            crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
-                "Failed to generate encryption key",
-            ))
-        })?;
+        rand::thread_rng().fill_bytes(&mut key_bytes);
         let encryption_key = Key::<Aes256Gcm>::from_slice(&key_bytes);
 
         let trail = Self {
@@ -304,11 +303,7 @@ impl AuditTrail {
 
         // Generate nonce
         let mut nonce_bytes = [0u8; 12];
-        ring::rand::SecureRandom::fill(&ring::rand::SystemRandom::new(), &mut nonce_bytes).map_err(|_| {
-            crate::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
-                "Failed to generate nonce",
-            ))
-        })?;
+        rand::thread_rng().fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         // Encrypt data
@@ -478,11 +473,10 @@ impl AuditTrail {
         combined.extend_from_slice(nonce);
         combined.extend_from_slice(prev_hash.as_bytes());
 
-        ring::digest::digest(&ring::digest::SHA256, &combined)
-            .as_ref()
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect()
+        let mut hasher = Sha256::new();
+        hasher.update(&combined);
+        let result = hasher.finalize();
+        result.iter().map(|b| format!("{:02x}", b)).collect()
     }
 }
 

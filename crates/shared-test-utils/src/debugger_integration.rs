@@ -13,25 +13,25 @@ pub mod debugger_harness {
     /// Context for debugger-integrated tests
     #[derive(Clone, Debug, Default)]
     pub struct DebuggerTestContext {
-        pub session_active:  bool,
-        pub breakpoints:     Vec<DebuggerBreakpoint>,
-        pub current_state:   String,
+        pub session_active: bool,
+        pub breakpoints: Vec<DebuggerBreakpoint>,
+        pub current_state: String,
         pub events_received: Vec<String>,
     }
 
     #[derive(Clone, Debug)]
     pub struct DebuggerBreakpoint {
-        pub file:    String,
-        pub line:    u32,
+        pub file: String,
+        pub line: u32,
         pub enabled: bool,
     }
 
     /// Test harness that integrates with debugger event loop patterns
     pub struct DebuggerIntegratedHarness {
-        command_sender:   Option<mpsc::UnboundedSender<DebuggerCommand>>,
+        command_sender: Option<mpsc::UnboundedSender<DebuggerCommand>>,
         command_receiver: Option<mpsc::UnboundedReceiver<DebuggerCommand>>,
-        event_receiver:   Option<mpsc::UnboundedReceiver<DebuggerEvent>>,
-        context:          DebuggerTestContext,
+        event_receiver: Option<mpsc::UnboundedReceiver<DebuggerEvent>>,
+        context: DebuggerTestContext,
     }
 
     /// Commands that can be sent to the debugger (mirroring debugger crate)
@@ -64,13 +64,13 @@ pub mod debugger_harness {
             let (_evt_tx, evt_rx) = mpsc::unbounded_channel();
 
             Self {
-                command_sender:   Some(cmd_tx),
+                command_sender: Some(cmd_tx),
                 command_receiver: Some(cmd_rx),
-                event_receiver:   Some(evt_rx),
-                context:          DebuggerTestContext {
-                    session_active:  false,
-                    breakpoints:     Vec::new(),
-                    current_state:   "stopped".to_string(),
+                event_receiver: Some(evt_rx),
+                context: DebuggerTestContext {
+                    session_active: false,
+                    breakpoints: Vec::new(),
+                    current_state: "stopped".to_string(),
                     events_received: Vec::new(),
                 },
             }
@@ -97,7 +97,10 @@ pub mod debugger_harness {
         }
 
         /// Wait for debugger event with timeout
-        pub async fn wait_for_event(&mut self, event_timeout: Duration) -> Result<DebuggerEvent, TestError> {
+        pub async fn wait_for_event(
+            &mut self,
+            event_timeout: Duration,
+        ) -> Result<DebuggerEvent, TestError> {
             use tokio::time::timeout;
 
             if let Some(receiver) = &mut self.event_receiver {
@@ -117,7 +120,10 @@ pub mod debugger_harness {
         }
 
         /// Collect events for a given duration
-        pub async fn collect_events(&mut self, duration: Duration) -> Result<Vec<DebuggerEvent>, TestError> {
+        pub async fn collect_events(
+            &mut self,
+            duration: Duration,
+        ) -> Result<Vec<DebuggerEvent>, TestError> {
             use tokio::time::timeout;
 
             let mut events = Vec::new();
@@ -167,7 +173,11 @@ pub mod debugger_harness {
             Ok(events)
         }
 
-        async fn validate(&self, context: Self::Context, output: Self::Output) -> Result<TestResult, TestError> {
+        async fn validate(
+            &self,
+            context: Self::Context,
+            output: Self::Output,
+        ) -> Result<TestResult, TestError> {
             // Basic validation - can be extended with specific test logic
             let passed = output.len() > 0 && context.session_active;
 
@@ -179,12 +189,15 @@ pub mod debugger_harness {
                     "Debugger integration test failed".to_string()
                 },
                 details: Some(crate::harness::TestDetails {
-                    assertions_made:    vec!["session_active".to_string(), "events_received".to_string()],
+                    assertions_made: vec![
+                        "session_active".to_string(),
+                        "events_received".to_string(),
+                    ],
                     expected_vs_actual: Some((
                         "events > 0".to_string(),
                         format!("events = {}", output.len()),
                     )),
-                    additional_data:    std::collections::HashMap::new(),
+                    additional_data: std::collections::HashMap::new(),
                 }),
                 duration: Duration::from_millis(100),
             })

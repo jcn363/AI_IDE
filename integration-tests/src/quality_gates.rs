@@ -20,42 +20,42 @@ use crate::{GlobalTestConfig, IntegrationTestResult};
 /// Main quality gate orchestrator
 #[derive(Debug)]
 pub struct QualityGateOrchestrator {
-    ui_framework:        UITestFramework,
-    e2e_runner:          E2EWorkflowRunner,
+    ui_framework: UITestFramework,
+    e2e_runner: E2EWorkflowRunner,
     performance_checker: PerformanceGateChecker,
-    coverage_analyzer:   CoverageAnalyzer,
-    gate_config:         QualityGateConfig,
-    execution_history:   Vec<GateExecution>,
-    current_execution:   Option<GateExecution>,
+    coverage_analyzer: CoverageAnalyzer,
+    gate_config: QualityGateConfig,
+    execution_history: Vec<GateExecution>,
+    current_execution: Option<GateExecution>,
 }
 
 #[derive(Debug, Clone)]
 pub struct QualityGateConfig {
-    pub enable_all_gates:         bool,
+    pub enable_all_gates: bool,
     pub enable_performance_gates: bool,
-    pub enable_coverage_gates:    bool,
-    pub enable_ui_gates:          bool,
-    pub enable_e2e_gates:         bool,
-    pub strict_mode:              bool,
-    pub fail_fast:                bool,
-    pub max_execution_time:       Duration,
-    pub gate_thresholds:          GateThresholds,
-    pub notification_settings:    NotificationSettings,
+    pub enable_coverage_gates: bool,
+    pub enable_ui_gates: bool,
+    pub enable_e2e_gates: bool,
+    pub strict_mode: bool,
+    pub fail_fast: bool,
+    pub max_execution_time: Duration,
+    pub gate_thresholds: GateThresholds,
+    pub notification_settings: NotificationSettings,
 }
 
 #[derive(Debug, Clone)]
 pub struct GateThresholds {
-    pub min_coverage_percentage:            f64,
+    pub min_coverage_percentage: f64,
     pub max_performance_regression_percent: f64,
-    pub max_ui_test_failures:               u32,
-    pub max_e2e_test_failures:              u32,
-    pub max_execution_time_percent:         f64,
+    pub max_ui_test_failures: u32,
+    pub max_e2e_test_failures: u32,
+    pub max_execution_time_percent: f64,
 }
 
 #[derive(Debug, Clone)]
 pub struct NotificationSettings {
-    pub slack_webhook:       Option<String>,
-    pub email_recipients:    Vec<String>,
+    pub slack_webhook: Option<String>,
+    pub email_recipients: Vec<String>,
     pub notification_levels: Vec<NotificationLevel>,
 }
 
@@ -69,13 +69,13 @@ pub enum NotificationLevel {
 
 #[derive(Debug, Clone)]
 pub struct GateExecution {
-    pub id:         String,
+    pub id: String,
     pub start_time: DateTime<Utc>,
-    pub end_time:   Option<DateTime<Utc>>,
-    pub status:     ExecutionStatus,
-    pub results:    HashMap<String, QualityGateResult>,
-    pub summary:    Option<GateExecutionSummary>,
-    pub metadata:   HashMap<String, String>,
+    pub end_time: Option<DateTime<Utc>>,
+    pub status: ExecutionStatus,
+    pub results: HashMap<String, QualityGateResult>,
+    pub summary: Option<GateExecutionSummary>,
+    pub metadata: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,12 +88,12 @@ pub enum ExecutionStatus {
 
 #[derive(Debug, Clone)]
 pub struct QualityGateResult {
-    pub gate_name:      String,
-    pub gate_type:      GateType,
-    pub status:         GateStatus,
-    pub score:          f64, // 0.0 to 1.0
-    pub key_metrics:    Vec<GateMetric>,
-    pub violations:     Vec<GateViolation>,
+    pub gate_name: String,
+    pub gate_type: GateType,
+    pub status: GateStatus,
+    pub score: f64, // 0.0 to 1.0
+    pub key_metrics: Vec<GateMetric>,
+    pub violations: Vec<GateViolation>,
     pub execution_time: Duration,
 }
 
@@ -117,11 +117,11 @@ pub enum GateStatus {
 
 #[derive(Debug, Clone)]
 pub struct GateMetric {
-    pub name:      String,
-    pub value:     f64,
-    pub unit:      String,
+    pub name: String,
+    pub value: f64,
+    pub unit: String,
     pub threshold: Option<f64>,
-    pub status:    MetricStatus,
+    pub status: MetricStatus,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -134,10 +134,10 @@ pub enum MetricStatus {
 
 #[derive(Debug, Clone)]
 pub struct GateViolation {
-    pub rule_name:       String,
-    pub description:     String,
-    pub severity:        ViolationSeverity,
-    pub impact:          f64,
+    pub rule_name: String,
+    pub description: String,
+    pub severity: ViolationSeverity,
+    pub impact: f64,
     pub recommendations: Vec<String>,
 }
 
@@ -151,34 +151,34 @@ pub enum ViolationSeverity {
 
 #[derive(Debug, Clone)]
 pub struct GateExecutionSummary {
-    pub total_gates:          usize,
-    pub passed_gates:         usize,
-    pub warning_gates:        usize,
-    pub failed_gates:         usize,
-    pub skipped_gates:        usize,
-    pub overall_score:        f64,
+    pub total_gates: usize,
+    pub passed_gates: usize,
+    pub warning_gates: usize,
+    pub failed_gates: usize,
+    pub skipped_gates: usize,
+    pub overall_score: f64,
     pub total_execution_time: Duration,
-    pub breaches:             Vec<String>,
-    pub recommendations:      Vec<String>,
+    pub breaches: Vec<String>,
+    pub recommendations: Vec<String>,
 }
 
 /// Integration with CI/CD systems
 #[derive(Debug, Clone)]
 pub struct CICDIntegration {
-    pub git_ref:            String,
-    pub branch:             String,
-    pub commit_hash:        String,
-    pub build_number:       Option<String>,
-    pub pull_request:       Option<PullRequestInfo>,
-    pub test_environment:   TestEnvironment,
+    pub git_ref: String,
+    pub branch: String,
+    pub commit_hash: String,
+    pub build_number: Option<String>,
+    pub pull_request: Option<PullRequestInfo>,
+    pub test_environment: TestEnvironment,
     pub should_block_merge: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct PullRequestInfo {
-    pub number:        u32,
-    pub author:        String,
-    pub reviewers:     Vec<String>,
+    pub number: u32,
+    pub author: String,
+    pub reviewers: Vec<String>,
     pub target_branch: String,
 }
 
@@ -193,16 +193,16 @@ pub enum TestEnvironment {
 impl Default for QualityGateConfig {
     fn default() -> Self {
         Self {
-            enable_all_gates:         true,
+            enable_all_gates: true,
             enable_performance_gates: true,
-            enable_coverage_gates:    true,
-            enable_ui_gates:          true,
-            enable_e2e_gates:         true,
-            strict_mode:              false,
-            fail_fast:                false,
-            max_execution_time:       Duration::from_secs(1800), // 30 minutes
-            gate_thresholds:          GateThresholds::default(),
-            notification_settings:    NotificationSettings::default(),
+            enable_coverage_gates: true,
+            enable_ui_gates: true,
+            enable_e2e_gates: true,
+            strict_mode: false,
+            fail_fast: false,
+            max_execution_time: Duration::from_secs(1800), // 30 minutes
+            gate_thresholds: GateThresholds::default(),
+            notification_settings: NotificationSettings::default(),
         }
     }
 }
@@ -210,11 +210,11 @@ impl Default for QualityGateConfig {
 impl Default for GateThresholds {
     fn default() -> Self {
         Self {
-            min_coverage_percentage:            80.0,
+            min_coverage_percentage: 80.0,
             max_performance_regression_percent: 5.0,
-            max_ui_test_failures:               3,
-            max_e2e_test_failures:              1,
-            max_execution_time_percent:         150.0, // 150% of baseline
+            max_ui_test_failures: 3,
+            max_e2e_test_failures: 1,
+            max_execution_time_percent: 150.0, // 150% of baseline
         }
     }
 }
@@ -222,8 +222,8 @@ impl Default for GateThresholds {
 impl Default for NotificationSettings {
     fn default() -> Self {
         Self {
-            slack_webhook:       None,
-            email_recipients:    vec![],
+            slack_webhook: None,
+            email_recipients: vec![],
             notification_levels: vec![NotificationLevel::Error, NotificationLevel::Critical],
         }
     }
@@ -232,13 +232,13 @@ impl Default for NotificationSettings {
 impl QualityGateOrchestrator {
     pub fn new() -> Self {
         Self {
-            ui_framework:        UITestFramework::new(),
-            e2e_runner:          E2EWorkflowRunner::new(),
+            ui_framework: UITestFramework::new(),
+            e2e_runner: E2EWorkflowRunner::new(),
             performance_checker: PerformanceGateChecker::new(),
-            coverage_analyzer:   CoverageAnalyzer::new(),
-            gate_config:         QualityGateConfig::default(),
-            execution_history:   vec![],
-            current_execution:   None,
+            coverage_analyzer: CoverageAnalyzer::new(),
+            gate_config: QualityGateConfig::default(),
+            execution_history: vec![],
+            current_execution: None,
         }
     }
 
@@ -326,7 +326,9 @@ impl QualityGateOrchestrator {
     }
 
     /// Execute performance gates
-    async fn execute_performance_gates(&mut self) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
+    async fn execute_performance_gates(
+        &mut self,
+    ) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
         let mut results = HashMap::new();
         let gate_results = self.performance_checker.execute_gates().await?;
 
@@ -346,11 +348,11 @@ impl QualityGateOrchestrator {
             };
 
             let key_metrics = vec![GateMetric {
-                name:      "violation_count".to_string(),
-                value:     gate_result.violations.len() as f64,
-                unit:      "count".to_string(),
+                name: "violation_count".to_string(),
+                value: gate_result.violations.len() as f64,
+                unit: "count".to_string(),
                 threshold: Some(0.0),
-                status:    if gate_result.violations.is_empty() {
+                status: if gate_result.violations.is_empty() {
                     MetricStatus::Good
                 } else {
                     MetricStatus::Critical
@@ -361,10 +363,10 @@ impl QualityGateOrchestrator {
                 .violations
                 .into_iter()
                 .map(|v| GateViolation {
-                    rule_name:       format!("{}", v.metric_name),
-                    description:     v.description,
-                    severity:        Self::convert_performance_severity(&v.severity),
-                    impact:          Self::calculate_violation_impact(&v.severity),
+                    rule_name: format!("{}", v.metric_name),
+                    description: v.description,
+                    severity: Self::convert_performance_severity(&v.severity),
+                    impact: Self::calculate_violation_impact(&v.severity),
                     recommendations: vec![format!(
                         "Address {}.{} performance issue",
                         v.metric_name, v.violation_type
@@ -373,22 +375,27 @@ impl QualityGateOrchestrator {
                 .collect();
 
             let gate_name = format!("performance_{}", gate_result.gate);
-            results.insert(gate_name.clone(), QualityGateResult {
-                gate_name,
-                gate_type: GateType::Performance,
-                status,
-                score,
-                key_metrics,
-                violations,
-                execution_time: Duration::from_millis(100), // Placeholder
-            });
+            results.insert(
+                gate_name.clone(),
+                QualityGateResult {
+                    gate_name,
+                    gate_type: GateType::Performance,
+                    status,
+                    score,
+                    key_metrics,
+                    violations,
+                    execution_time: Duration::from_millis(100), // Placeholder
+                },
+            );
         }
 
         Ok(results)
     }
 
     /// Execute coverage gates
-    async fn execute_coverage_gates(&mut self) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
+    async fn execute_coverage_gates(
+        &mut self,
+    ) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
         let mut results = HashMap::new();
 
         let coverage_report = self
@@ -410,11 +417,11 @@ impl QualityGateOrchestrator {
         };
 
         let key_metrics = vec![GateMetric {
-            name:      "overall_coverage".to_string(),
-            value:     coverage_report.snapshot.coverage_data.overall_percentage,
-            unit:      "%".to_string(),
+            name: "overall_coverage".to_string(),
+            value: coverage_report.snapshot.coverage_data.overall_percentage,
+            unit: "%".to_string(),
             threshold: Some(self.gate_config.gate_thresholds.min_coverage_percentage),
-            status:    if coverage_report.snapshot.coverage_data.overall_percentage >= 80.0 {
+            status: if coverage_report.snapshot.coverage_data.overall_percentage >= 80.0 {
                 MetricStatus::Good
             } else if coverage_report.snapshot.coverage_data.overall_percentage >= 60.0 {
                 MetricStatus::Warning
@@ -428,29 +435,34 @@ impl QualityGateOrchestrator {
             .iter()
             .filter(|r| matches!(r.priority, Priority::High))
             .map(|r| GateViolation {
-                rule_name:       "coverage_gap".to_string(),
-                description:     r.description.clone(),
-                severity:        Self::convert_priority_severity(&r.priority),
-                impact:          r.estimated_impact,
+                rule_name: "coverage_gap".to_string(),
+                description: r.description.clone(),
+                severity: Self::convert_priority_severity(&r.priority),
+                impact: r.estimated_impact,
                 recommendations: vec![r.description.clone()],
             })
             .collect();
 
-        results.insert("coverage_gate".to_string(), QualityGateResult {
-            gate_name: "coverage_gate".to_string(),
-            gate_type: GateType::Coverage,
-            status,
-            score,
-            key_metrics,
-            violations,
-            execution_time: Duration::from_millis(100),
-        });
+        results.insert(
+            "coverage_gate".to_string(),
+            QualityGateResult {
+                gate_name: "coverage_gate".to_string(),
+                gate_type: GateType::Coverage,
+                status,
+                score,
+                key_metrics,
+                violations,
+                execution_time: Duration::from_millis(100),
+            },
+        );
 
         Ok(results)
     }
 
     /// Execute UI gates
-    async fn execute_ui_gates(&mut self) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
+    async fn execute_ui_gates(
+        &mut self,
+    ) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
         let mut results = HashMap::new();
 
         // Add some predefined scenarios
@@ -473,11 +485,11 @@ impl QualityGateOrchestrator {
         let score = 1.0 - (failed_tests as f64 / ui_reports.len() as f64);
 
         let key_metrics = vec![GateMetric {
-            name:      "ui_test_pass_rate".to_string(),
-            value:     score * 100.0,
-            unit:      "%".to_string(),
+            name: "ui_test_pass_rate".to_string(),
+            value: score * 100.0,
+            unit: "%".to_string(),
             threshold: Some(90.0),
-            status:    if score >= 0.95 {
+            status: if score >= 0.95 {
                 MetricStatus::Good
             } else if score >= 0.85 {
                 MetricStatus::Warning
@@ -490,10 +502,10 @@ impl QualityGateOrchestrator {
             .iter()
             .filter(|r| !r.success)
             .map(|r| GateViolation {
-                rule_name:       format!("ui_test_{}", r.scenario_name),
-                description:     format!("UI test '{}' failed", r.scenario_name),
-                severity:        ViolationSeverity::Medium,
-                impact:          0.8,
+                rule_name: format!("ui_test_{}", r.scenario_name),
+                description: format!("UI test '{}' failed", r.scenario_name),
+                severity: ViolationSeverity::Medium,
+                impact: 0.8,
                 recommendations: vec![
                     "Review UI test failures".to_string(),
                     "Check browser automation setup".to_string(),
@@ -501,21 +513,26 @@ impl QualityGateOrchestrator {
             })
             .collect();
 
-        results.insert("ui_gate".to_string(), QualityGateResult {
-            gate_name: "ui_gate".to_string(),
-            gate_type: GateType::UI,
-            status,
-            score,
-            key_metrics,
-            violations,
-            execution_time: Duration::from_millis(100),
-        });
+        results.insert(
+            "ui_gate".to_string(),
+            QualityGateResult {
+                gate_name: "ui_gate".to_string(),
+                gate_type: GateType::UI,
+                status,
+                score,
+                key_metrics,
+                violations,
+                execution_time: Duration::from_millis(100),
+            },
+        );
 
         Ok(results)
     }
 
     /// Execute E2E gates
-    async fn execute_e2e_gates(&mut self) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
+    async fn execute_e2e_gates(
+        &mut self,
+    ) -> Result<HashMap<String, QualityGateResult>, RustAIError> {
         let mut results = HashMap::new();
 
         // Test basic personas
@@ -528,7 +545,9 @@ impl QualityGateOrchestrator {
 
         let status = if failed_workflows == 0 {
             GateStatus::Passed
-        } else if failed_workflows <= self.gate_config.gate_thresholds.max_e2e_test_failures as usize {
+        } else if failed_workflows
+            <= self.gate_config.gate_thresholds.max_e2e_test_failures as usize
+        {
             GateStatus::Warning
         } else {
             GateStatus::Failed
@@ -537,11 +556,11 @@ impl QualityGateOrchestrator {
         let score = if workflow_results.success { 1.0 } else { 0.4 };
 
         let key_metrics = vec![GateMetric {
-            name:      "e2e_success_rate".to_string(),
-            value:     score * 100.0,
-            unit:      "%".to_string(),
+            name: "e2e_success_rate".to_string(),
+            value: score * 100.0,
+            unit: "%".to_string(),
             threshold: Some(95.0),
-            status:    if score >= 0.95 {
+            status: if score >= 0.95 {
                 MetricStatus::Good
             } else if score >= 0.80 {
                 MetricStatus::Warning
@@ -552,31 +571,37 @@ impl QualityGateOrchestrator {
 
         let violations = if !workflow_results.success {
             vec![GateViolation {
-                rule_name:       "e2e_workflow_failure".to_string(),
-                description:     "E2E workflow execution failed".to_string(),
-                severity:        ViolationSeverity::High,
-                impact:          0.9,
+                rule_name: "e2e_workflow_failure".to_string(),
+                description: "E2E workflow execution failed".to_string(),
+                severity: ViolationSeverity::High,
+                impact: 0.9,
                 recommendations: workflow_results.errors,
             }]
         } else {
             vec![]
         };
 
-        results.insert("e2e_gate".to_string(), QualityGateResult {
-            gate_name: "e2e_gate".to_string(),
-            gate_type: GateType::E2E,
-            status,
-            score,
-            key_metrics,
-            violations,
-            execution_time: workflow_results.duration,
-        });
+        results.insert(
+            "e2e_gate".to_string(),
+            QualityGateResult {
+                gate_name: "e2e_gate".to_string(),
+                gate_type: GateType::E2E,
+                status,
+                score,
+                key_metrics,
+                violations,
+                execution_time: workflow_results.duration,
+            },
+        );
 
         Ok(results)
     }
 
     /// Create execution summary
-    fn create_execution_summary(&self, results: &HashMap<String, QualityGateResult>) -> GateExecutionSummary {
+    fn create_execution_summary(
+        &self,
+        results: &HashMap<String, QualityGateResult>,
+    ) -> GateExecutionSummary {
         let total_gates = results.len();
         let passed_gates = results
             .values()
@@ -689,31 +714,37 @@ mod tests {
 
         let mut results = HashMap::new();
 
-        results.insert("test_gate_1".to_string(), QualityGateResult {
-            gate_name:      "test_gate_1".to_string(),
-            gate_type:      GateType::Performance,
-            status:         GateStatus::Passed,
-            score:          1.0,
-            key_metrics:    vec![],
-            violations:     vec![],
-            execution_time: Duration::from_secs(1),
-        });
+        results.insert(
+            "test_gate_1".to_string(),
+            QualityGateResult {
+                gate_name: "test_gate_1".to_string(),
+                gate_type: GateType::Performance,
+                status: GateStatus::Passed,
+                score: 1.0,
+                key_metrics: vec![],
+                violations: vec![],
+                execution_time: Duration::from_secs(1),
+            },
+        );
 
-        results.insert("test_gate_2".to_string(), QualityGateResult {
-            gate_name:      "test_gate_2".to_string(),
-            gate_type:      GateType::Coverage,
-            status:         GateStatus::Failed,
-            score:          0.3,
-            key_metrics:    vec![],
-            violations:     vec![GateViolation {
-                rule_name:       "test_violation".to_string(),
-                description:     "Test violation".to_string(),
-                severity:        ViolationSeverity::High,
-                impact:          0.8,
-                recommendations: vec!["Fix test".to_string()],
-            }],
-            execution_time: Duration::from_secs(2),
-        });
+        results.insert(
+            "test_gate_2".to_string(),
+            QualityGateResult {
+                gate_name: "test_gate_2".to_string(),
+                gate_type: GateType::Coverage,
+                status: GateStatus::Failed,
+                score: 0.3,
+                key_metrics: vec![],
+                violations: vec![GateViolation {
+                    rule_name: "test_violation".to_string(),
+                    description: "Test violation".to_string(),
+                    severity: ViolationSeverity::High,
+                    impact: 0.8,
+                    recommendations: vec!["Fix test".to_string()],
+                }],
+                execution_time: Duration::from_secs(2),
+            },
+        );
 
         let summary = orchestrator.create_execution_summary(&results);
 
@@ -727,12 +758,12 @@ mod tests {
     #[test]
     fn test_cicd_integration_creation() {
         let cicd = CICDIntegration {
-            git_ref:            "refs/heads/main".to_string(),
-            branch:             "main".to_string(),
-            commit_hash:        "abc123".to_string(),
-            build_number:       Some("123".to_string()),
-            pull_request:       None,
-            test_environment:   TestEnvironment::CI,
+            git_ref: "refs/heads/main".to_string(),
+            branch: "main".to_string(),
+            commit_hash: "abc123".to_string(),
+            build_number: Some("123".to_string()),
+            pull_request: None,
+            test_environment: TestEnvironment::CI,
             should_block_merge: true,
         };
 
@@ -844,7 +875,10 @@ pub mod cicd_integration {
         }
 
         /// Publish test results in JUnit format
-        pub fn publish_junit_results(results: &HashMap<String, QualityGateResult>, timestamp: DateTime<Utc>) -> String {
+        pub fn publish_junit_results(
+            results: &HashMap<String, QualityGateResult>,
+            timestamp: DateTime<Utc>,
+        ) -> String {
             let mut xml = format!(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites timestamp=\"{}\">\n",
                 timestamp.to_rfc3339()

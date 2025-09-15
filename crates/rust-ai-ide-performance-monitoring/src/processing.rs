@@ -16,37 +16,37 @@ pub struct WorkStealingScheduler<T> {
     /// Worker threads
     workers: ThreadPool,
     /// Task queues for each worker
-    queues:  Vec<Arc<Mutex<VecDeque<T>>>>,
+    queues: Vec<Arc<Mutex<VecDeque<T>>>>,
     /// Statistics
-    stats:   Arc<Mutex<SchedulerStats>>,
+    stats: Arc<Mutex<SchedulerStats>>,
 }
 
 /// Task statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SchedulerStats {
-    pub tasks_completed:      u64,
-    pub tasks_stolen:         u64,
+    pub tasks_completed: u64,
+    pub tasks_stolen: u64,
     pub average_queue_length: f64,
-    pub worker_utilization:   Vec<f64>,
+    pub worker_utilization: Vec<f64>,
 }
 
 /// Parallel processing result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParallelResult<T> {
-    pub result:            T,
-    pub worker_id:         usize,
+    pub result: T,
+    pub worker_id: usize,
     pub execution_time_ns: u64,
-    pub memory_used:       Option<u64>,
+    pub memory_used: Option<u64>,
 }
 
 /// Resource pool configuration
 #[derive(Debug, Clone)]
 pub struct ResourcePoolConfig {
-    pub cpu_threads:          usize,
-    pub gpu_devices:          Vec<String>,
-    pub max_memory_mb:        usize,
+    pub cpu_threads: usize,
+    pub gpu_devices: Vec<String>,
+    pub max_memory_mb: usize,
     pub enable_work_stealing: bool,
-    pub task_timeout_secs:    Option<u64>,
+    pub task_timeout_secs: Option<u64>,
 }
 
 impl<T> WorkStealingScheduler<T>
@@ -77,7 +77,11 @@ where
     }
 
     /// Submit a task to the scheduler
-    pub async fn submit_task<F, R>(&self, task: T, processor: F) -> Result<ParallelResult<R>, String>
+    pub async fn submit_task<F, R>(
+        &self,
+        task: T,
+        processor: F,
+    ) -> Result<ParallelResult<R>, String>
     where
         F: Fn(T) -> R + Send + Sync + Clone + 'static,
         R: Send + 'static,
@@ -111,7 +115,11 @@ where
     }
 
     /// Process tasks in parallel with work stealing
-    pub async fn process_parallel<F, R>(&self, tasks: Vec<T>, processor: F) -> Result<Vec<ParallelResult<R>>, String>
+    pub async fn process_parallel<F, R>(
+        &self,
+        tasks: Vec<T>,
+        processor: F,
+    ) -> Result<Vec<ParallelResult<R>>, String>
     where
         F: Fn(T) -> R + Send + Sync + Clone + 'static,
         R: Send + 'static,
@@ -174,7 +182,7 @@ where
 /// Resource pooling for CPU/GPU management
 #[derive(Debug)]
 pub struct ResourcePool {
-    config:       ResourcePoolConfig,
+    config: ResourcePoolConfig,
     active_tasks: Arc<Mutex<Vec<String>>>,
     memory_usage: Arc<Mutex<HashMap<String, usize>>>,
 }

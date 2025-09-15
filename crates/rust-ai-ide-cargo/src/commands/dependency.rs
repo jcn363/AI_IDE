@@ -24,24 +24,26 @@ impl DependencyState {
 /// Parameters for adding a dependency
 #[derive(Debug, Deserialize)]
 pub struct AddDependencyParams {
-    pub name:             String,
-    pub version:          String,
-    pub features:         Option<Vec<String>>,
-    pub optional:         Option<bool>,
+    pub name: String,
+    pub version: String,
+    pub features: Option<Vec<String>>,
+    pub optional: Option<bool>,
     pub default_features: Option<bool>,
-    pub kind:             Option<String>,
+    pub kind: Option<String>,
 }
 
 /// Parameters for updating a dependency
 #[derive(Debug, Deserialize)]
 pub struct UpdateDependencyParams {
-    pub name:    String,
+    pub name: String,
     pub version: String,
 }
 
 /// Loads all dependencies for the project
 #[tauri::command]
-pub async fn load_dependencies(state: State<'_, DependencyState>) -> Result<Vec<DependencyInfo>, String> {
+pub async fn load_dependencies(
+    state: State<'_, DependencyState>,
+) -> Result<Vec<DependencyInfo>, String> {
     state
         .manager
         .load_dependencies()
@@ -58,13 +60,19 @@ pub async fn load_dependencies(state: State<'_, DependencyState>) -> Result<Vec<
 
 /// Gets a specific dependency by name
 #[tauri::command]
-pub async fn get_dependency(name: String, state: State<'_, DependencyState>) -> Result<Option<DependencyInfo>, String> {
+pub async fn get_dependency(
+    name: String,
+    state: State<'_, DependencyState>,
+) -> Result<Option<DependencyInfo>, String> {
     Ok(state.manager.get_dependency(&name).await)
 }
 
 /// Adds a new dependency
 #[tauri::command]
-pub async fn add_dependency(params: AddDependencyParams, state: State<'_, DependencyState>) -> Result<(), String> {
+pub async fn add_dependency(
+    params: AddDependencyParams,
+    state: State<'_, DependencyState>,
+) -> Result<(), String> {
     let kind = match params.kind.as_deref() {
         Some("dev") => crate::dependency::DependencyKind::Development,
         Some("build") => crate::dependency::DependencyKind::Build,
@@ -105,7 +113,10 @@ pub async fn update_dependency(
 
 /// Removes a dependency
 #[tauri::command]
-pub async fn remove_dependency(name: String, state: State<'_, DependencyState>) -> Result<(), String> {
+pub async fn remove_dependency(
+    name: String,
+    state: State<'_, DependencyState>,
+) -> Result<(), String> {
     state
         .manager
         .remove_dependency(&name)

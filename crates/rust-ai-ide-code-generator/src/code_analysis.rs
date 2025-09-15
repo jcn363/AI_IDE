@@ -34,7 +34,8 @@ pub struct CodeComplexityAnalyzer;
 #[async_trait::async_trait]
 impl CodeAnalyzer for CodeComplexityAnalyzer {
     async fn analyze(&self, code: &str) -> Result<CodeAnalysisResult, CodeGenerationError> {
-        let ast = syn::parse_file(code).map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
+        let ast = syn::parse2(code.parse::<proc_macro2::TokenStream>().unwrap())
+            .map_err(|e| CodeGenerationError::ParseError(e.to_string()))?;
 
         let patterns = self.analyze_patterns(&ast);
         let complexity = self.analyze_complexity(&ast);

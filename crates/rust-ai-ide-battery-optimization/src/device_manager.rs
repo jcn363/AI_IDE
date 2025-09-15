@@ -11,14 +11,18 @@ impl DeviceManager {
         Self {}
     }
 
-    pub async fn apply_mdm_policy(&self, device_id: &str, policy: &DevicePolicy) -> anyhow::Result<()> {
+    pub async fn apply_mdm_policy(
+        &self,
+        device_id: &str,
+        policy: &DevicePolicy,
+    ) -> anyhow::Result<()> {
         Ok(())
     }
 }
 
 pub struct DevicePolicy {
-    pub device_id:          String,
-    pub power_policy:       PowerMode,
+    pub device_id: String,
+    pub power_policy: PowerMode,
     pub monitoring_enabled: bool,
 }
 

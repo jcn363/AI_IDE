@@ -21,65 +21,65 @@ pub enum ComplianceFramework {
 /// Configuration for AI compliance
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIComplianceConfig {
-    framework:               ComplianceFramework,
-    strict_mode:             bool,
-    automatic_audits:        bool,
-    consent_management:      bool,
-    data_minimisation:       bool,
+    framework: ComplianceFramework,
+    strict_mode: bool,
+    automatic_audits: bool,
+    consent_management: bool,
+    data_minimisation: bool,
     explainability_required: bool,
-    retention_policy:        u32, // days
+    retention_policy: u32, // days
 }
 
 impl AIComplianceConfig {
     /// GDPR-compliant configuration
     pub fn gdpr_compliant() -> Self {
         Self {
-            framework:               ComplianceFramework::GDPR,
-            strict_mode:             true,
-            automatic_audits:        true,
-            consent_management:      true,
-            data_minimisation:       true,
+            framework: ComplianceFramework::GDPR,
+            strict_mode: true,
+            automatic_audits: true,
+            consent_management: true,
+            data_minimisation: true,
             explainability_required: true,
-            retention_policy:        2555, // 7 years
+            retention_policy: 2555, // 7 years
         }
     }
 
     /// CCPA-compliant configuration
     pub fn ccpa_compliant() -> Self {
         Self {
-            framework:               ComplianceFramework::CCPA,
-            strict_mode:             true,
-            automatic_audits:        true,
-            consent_management:      true,
-            data_minimisation:       true,
+            framework: ComplianceFramework::CCPA,
+            strict_mode: true,
+            automatic_audits: true,
+            consent_management: true,
+            data_minimisation: true,
             explainability_required: true,
-            retention_policy:        365 * 2, // 2 years
+            retention_policy: 365 * 2, // 2 years
         }
     }
 
     /// HIPAA-compliant configuration for healthcare
     pub fn hipaa_compliant() -> Self {
         Self {
-            framework:               ComplianceFramework::HIPAA,
-            strict_mode:             true,
-            automatic_audits:        true,
-            consent_management:      true,
-            data_minimisation:       true,
+            framework: ComplianceFramework::HIPAA,
+            strict_mode: true,
+            automatic_audits: true,
+            consent_management: true,
+            data_minimisation: true,
             explainability_required: true,
-            retention_policy:        2555, // 7 years
+            retention_policy: 2555, // 7 years
         }
     }
 
     /// SOC2 Type II compliance
     pub fn soc2_compliant() -> Self {
         Self {
-            framework:               ComplianceFramework::SOC2,
-            strict_mode:             true,
-            automatic_audits:        true,
-            consent_management:      false,
-            data_minimisation:       true,
+            framework: ComplianceFramework::SOC2,
+            strict_mode: true,
+            automatic_audits: true,
+            consent_management: false,
+            data_minimisation: true,
             explainability_required: false,
-            retention_policy:        365 * 7,
+            retention_policy: 365 * 7,
         }
     }
 }
@@ -87,34 +87,37 @@ impl AIComplianceConfig {
 /// Compliance audit result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceAuditResult {
-    pub framework:       ComplianceFramework,
-    pub compliant:       bool,
-    pub violations:      Vec<String>,
+    pub framework: ComplianceFramework,
+    pub compliant: bool,
+    pub violations: Vec<String>,
     pub recommendations: Vec<String>,
-    pub score:           f32, // 0.0 to 1.0
+    pub score: f32, // 0.0 to 1.0
     pub audit_timestamp: chrono::DateTime<chrono::Utc>,
 }
 
 /// Main AI compliance engine
 #[derive(Debug)]
 pub struct AIComplianceEngine {
-    config:          AIComplianceConfig,
+    config: AIComplianceConfig,
     consent_manager: ConsentManager,
-    audit_log:       Mutex<Vec<ComplianceAuditResult>>,
+    audit_log: Mutex<Vec<ComplianceAuditResult>>,
 }
 
 impl AIComplianceEngine {
     /// Initialize compliance engine
     pub fn new(config: AIComplianceConfig) -> Self {
         Self {
-            config:          config.clone(),
+            config: config.clone(),
             consent_manager: ConsentManager::new(config),
-            audit_log:       Mutex::new(vec![]),
+            audit_log: Mutex::new(vec![]),
         }
     }
 
     /// Perform compliance audit on AI operation
-    pub async fn audit_compliance(&self, operation_data: &ComplianceOperationData) -> Result<ComplianceAuditResult> {
+    pub async fn audit_compliance(
+        &self,
+        operation_data: &ComplianceOperationData,
+    ) -> Result<ComplianceAuditResult> {
         let mut violations = vec![];
         let mut recommendations = vec![];
         let mut _score = 1.0;
@@ -226,14 +229,14 @@ impl AIComplianceEngine {
 #[derive(Debug)]
 pub struct ConsentManager {
     consents: Mutex<HashMap<String, Vec<ConsentRecord>>>,
-    config:   AIComplianceConfig,
+    config: AIComplianceConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConsentRecord {
-    pub user_id:   String,
-    pub purpose:   String,
-    pub granted:   bool,
+    pub user_id: String,
+    pub purpose: String,
+    pub granted: bool,
     pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
@@ -266,9 +269,9 @@ impl ConsentManager {
             .any(|c| c.purpose == purpose && c.granted)
         {
             let consent = ConsentRecord {
-                user_id:   user_id.to_string(),
-                purpose:   purpose.to_string(),
-                granted:   true, // In real implementation, this would be from user input
+                user_id: user_id.to_string(),
+                purpose: purpose.to_string(),
+                granted: true, // In real implementation, this would be from user input
                 timestamp: chrono::Utc::now(),
             };
             user_consents.push(consent);
@@ -281,21 +284,21 @@ impl ConsentManager {
 /// Data for compliance operation check
 #[derive(Debug, Clone)]
 pub struct ComplianceOperationData {
-    pub user_id:            String,
-    pub data_age:           u32, // days
+    pub user_id: String,
+    pub data_age: u32, // days
     pub privacy_guarantees: Option<Vec<String>>,
-    pub explanation:        Option<String>,
+    pub explanation: Option<String>,
 }
 
 /// Compliance report summary
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplianceReport {
-    pub framework:        ComplianceFramework,
-    pub total_audits:     usize,
+    pub framework: ComplianceFramework,
+    pub total_audits: usize,
     pub compliant_audits: usize,
-    pub compliance_rate:  f32,
-    pub generated_at:     chrono::DateTime<chrono::Utc>,
-    pub recommendations:  Vec<String>,
+    pub compliance_rate: f32,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
+    pub recommendations: Vec<String>,
 }
 
 /// Compliance rule engine
@@ -305,9 +308,9 @@ pub struct ComplianceRuleEngine {
 
 #[derive(Debug, Clone)]
 pub struct ComplianceRule {
-    pub name:      String,
+    pub name: String,
     pub rule_type: String,
-    pub check:     fn(&ComplianceOperationData) -> bool,
+    pub check: fn(&ComplianceOperationData) -> bool,
 }
 
 /// Error types for compliance operations

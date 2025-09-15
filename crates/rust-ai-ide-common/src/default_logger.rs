@@ -18,7 +18,8 @@ pub struct DefaultLogger {
 impl Default for DefaultLogger {
     fn default() -> Self {
         let _manager = LoggingManager::new();
-        let logger = UnifiedLogger::new("default").with_context(crate::logging::LogContext::new("init", "default"));
+        let logger = UnifiedLogger::new("default")
+            .with_context(crate::logging::LogContext::new("init", "default"));
 
         Self {
             logger: Arc::new(logger),

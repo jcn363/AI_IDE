@@ -23,17 +23,17 @@ pub enum TaskStatus {
 /// Information about a running or completed task
 #[derive(Debug, Clone)]
 pub struct TaskInfo {
-    pub id:       String,
-    pub task:     CargoTask,
-    pub status:   TaskStatus,
+    pub id: String,
+    pub task: CargoTask,
+    pub status: TaskStatus,
     pub progress: Option<f32>,
-    pub result:   Option<CommandResult>,
+    pub result: Option<CommandResult>,
 }
 
 /// Manages background tasks and provides status updates
 // Prepared for future task monitoring functionality integration
 pub struct TaskMonitor {
-    tasks:        Arc<RwLock<HashMap<String, TaskInfo>>>,
+    tasks: Arc<RwLock<HashMap<String, TaskInfo>>>,
     task_counter: AtomicU64,
 }
 
@@ -47,7 +47,7 @@ impl TaskMonitor {
     /// Create a new task monitor
     pub fn new() -> Self {
         Self {
-            tasks:        Arc::new(RwLock::new(HashMap::new())),
+            tasks: Arc::new(RwLock::new(HashMap::new())),
             task_counter: AtomicU64::new(0),
         }
     }
@@ -56,11 +56,11 @@ impl TaskMonitor {
     pub async fn start_task(&self, task: CargoTask) -> String {
         let task_id = Uuid::new_v4().to_string();
         let task_info = TaskInfo {
-            id:       task_id.clone(),
-            task:     task.clone(),
-            status:   TaskStatus::Pending,
+            id: task_id.clone(),
+            task: task.clone(),
+            status: TaskStatus::Pending,
             progress: Some(0.0),
-            result:   None,
+            result: None,
         };
 
         // Add to task list
@@ -172,11 +172,11 @@ mod tests {
 
     fn create_test_task() -> CargoTask {
         CargoTask {
-            command:     "version".to_string(),
-            args:        vec![],
+            command: "version".to_string(),
+            args: vec![],
             working_dir: std::env::current_dir().unwrap(),
-            release:     false,
-            env:         vec![],
+            release: false,
+            env: vec![],
         }
     }
 

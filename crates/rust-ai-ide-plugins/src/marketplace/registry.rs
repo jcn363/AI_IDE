@@ -19,10 +19,19 @@ pub type VerificationResult = Result<(), PluginError>;
 #[async_trait::async_trait]
 pub trait PluginRegistry: Send + Sync {
     /// Verify signature for plugin authenticity
-    async fn verify_signature(&self, plugin_id: PluginId, signature: &str, bytes: &[u8]) -> VerificationResult;
+    async fn verify_signature(
+        &self,
+        plugin_id: PluginId,
+        signature: &str,
+        bytes: &[u8],
+    ) -> VerificationResult;
 
     /// Add a public key for a plugin publisher
-    async fn add_publisher_key(&self, plugin_id: PluginId, public_key: &str) -> Result<(), PluginError>;
+    async fn add_publisher_key(
+        &self,
+        plugin_id: PluginId,
+        public_key: &str,
+    ) -> Result<(), PluginError>;
 
     /// Remove a publisher key for a plugin
     async fn remove_publisher_key(&self, plugin_id: PluginId) -> Result<(), PluginError>;
@@ -58,12 +67,16 @@ impl PluginRegistryImpl {
 
 #[async_trait::async_trait]
 impl PluginRegistry for PluginRegistryImpl {
-    async fn verify_signature(&self, plugin_id: PluginId, signature: &str, bytes: &[u8]) -> VerificationResult {
+    async fn verify_signature(
+        &self,
+        plugin_id: PluginId,
+        signature: &str,
+        bytes: &[u8],
+    ) -> VerificationResult {
         // Get the public key for this plugin
-        let public_key = self
-            .publisher_keys
-            .get(&plugin_id)
-            .ok_or_else(|| PluginError::Other(format!("No public key found for plugin {}", plugin_id)))?;
+        let public_key = self.publisher_keys.get(&plugin_id).ok_or_else(|| {
+            PluginError::Other(format!("No public key found for plugin {}", plugin_id))
+        })?;
 
         // Verify the signature - this is a simplified implementation
         // In a real implementation, this would use proper cryptographic verification
@@ -80,7 +93,11 @@ impl PluginRegistry for PluginRegistryImpl {
         }
     }
 
-    async fn add_publisher_key(&self, plugin_id: PluginId, public_key: &str) -> Result<(), PluginError> {
+    async fn add_publisher_key(
+        &self,
+        plugin_id: PluginId,
+        public_key: &str,
+    ) -> Result<(), PluginError> {
         // This implementation doesn't modify the registry as it's read-only for verification
         // In practice, this would interact with a persistent store
         Err(PluginError::Other(
@@ -114,7 +131,11 @@ impl Default for PluginRegistryImpl {
 /// Simplified signature verification function
 /// In a real implementation, this would use proper cryptographic libraries
 /// like ring or rust-crypto for proper signature verification
-fn verify_signature_with_key(_public_key: &str, _signature: &str, _bytes: &[u8]) -> Result<bool, PluginError> {
+fn verify_signature_with_key(
+    _public_key: &str,
+    _signature: &str,
+    _bytes: &[u8],
+) -> Result<bool, PluginError> {
     // This is a placeholder implementation
     // Real implementation would use cryptographic verification
     //

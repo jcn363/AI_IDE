@@ -16,30 +16,30 @@ use crate::*;
 /// Enhanced collaboration service with comprehensive session management
 pub struct EnhancedCollaborationService {
     pub collaboration_service: CollaborationService,
-    pub session_manager:       SessionManager,
-    pub permission_manager:    PermissionManager,
-    pub activity_tracker:      ActivityTracker,
+    pub session_manager: SessionManager,
+    pub permission_manager: PermissionManager,
+    pub activity_tracker: ActivityTracker,
 }
 
 /// Session manager for user authentication and session lifecycle
 pub struct SessionManager {
     active_sessions: Arc<RwLock<HashMap<String, UserSession>>>,
-    session_tokens:  Arc<RwLock<HashMap<String, String>>>, // token -> session_id
+    session_tokens: Arc<RwLock<HashMap<String, String>>>, // token -> session_id
 }
 
 /// User session with enhanced tracking
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserSession {
-    pub session_id:    String,
-    pub user_id:       String,
-    pub username:      String,
-    pub role:          UserRole,
-    pub permissions:   Vec<Permission>,
-    pub created_at:    std::time::SystemTime,
+    pub session_id: String,
+    pub user_id: String,
+    pub username: String,
+    pub role: UserRole,
+    pub permissions: Vec<Permission>,
+    pub created_at: std::time::SystemTime,
     pub last_activity: std::time::SystemTime,
-    pub ip_address:    Option<String>,
-    pub user_agent:    Option<String>,
-    pub is_active:     bool,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
+    pub is_active: bool,
 }
 
 /// User roles in the collaboration system
@@ -74,7 +74,7 @@ pub struct PermissionManager {
 
 /// Activity tracker for session analytics
 pub struct ActivityTracker {
-    user_activities:    Arc<RwLock<HashMap<String, Vec<UserActivity>>>>,
+    user_activities: Arc<RwLock<HashMap<String, Vec<UserActivity>>>>,
     session_activities: Arc<RwLock<HashMap<String, Vec<SessionActivity>>>>,
 }
 
@@ -82,19 +82,19 @@ pub struct ActivityTracker {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserActivity {
     pub activity_type: ActivityType,
-    pub timestamp:     std::time::SystemTime,
-    pub details:       String,
-    pub metadata:      HashMap<String, String>,
+    pub timestamp: std::time::SystemTime,
+    pub details: String,
+    pub metadata: HashMap<String, String>,
 }
 
 /// Session activity record
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SessionActivity {
-    pub user_id:       String,
+    pub user_id: String,
     pub activity_type: ActivityType,
-    pub timestamp:     std::time::SystemTime,
-    pub document_id:   Option<String>,
-    pub details:       String,
+    pub timestamp: std::time::SystemTime,
+    pub document_id: Option<String>,
+    pub details: String,
 }
 
 /// Activity types for tracking
@@ -115,9 +115,9 @@ impl EnhancedCollaborationService {
     pub fn new() -> Self {
         Self {
             collaboration_service: CollaborationService::new(),
-            session_manager:       SessionManager::new(),
-            permission_manager:    PermissionManager::new(),
-            activity_tracker:      ActivityTracker::new(),
+            session_manager: SessionManager::new(),
+            permission_manager: PermissionManager::new(),
+            activity_tracker: ActivityTracker::new(),
         }
     }
 
@@ -138,16 +138,16 @@ impl EnhancedCollaborationService {
         // Create session
         let session_id = format!("session_{}", uuid::Uuid::new_v4());
         let session = UserSession {
-            session_id:    session_id.clone(),
-            user_id:       user_id.clone(),
-            username:      username.clone(),
-            role:          user_role,
-            permissions:   permissions.clone(),
-            created_at:    std::time::SystemTime::now(),
+            session_id: session_id.clone(),
+            user_id: user_id.clone(),
+            username: username.clone(),
+            role: user_role,
+            permissions: permissions.clone(),
+            created_at: std::time::SystemTime::now(),
             last_activity: std::time::SystemTime::now(),
-            ip_address:    None,
-            user_agent:    None,
-            is_active:     true,
+            ip_address: None,
+            user_agent: None,
+            is_active: true,
         };
 
         // Store session
@@ -261,22 +261,31 @@ impl SessionManager {
     pub fn new() -> Self {
         Self {
             active_sessions: Arc::new(RwLock::new(HashMap::new())),
-            session_tokens:  Arc::new(RwLock::new(HashMap::new())),
+            session_tokens: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
-    pub async fn store_session(&self, session: UserSession) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn store_session(
+        &self,
+        session: UserSession,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut sessions = self.active_sessions.write().await;
         sessions.insert(session.session_id.clone(), session);
         Ok(())
     }
 
-    pub async fn get_session(&self, session_id: &str) -> Result<Option<UserSession>, Box<dyn std::error::Error>> {
+    pub async fn get_session(
+        &self,
+        session_id: &str,
+    ) -> Result<Option<UserSession>, Box<dyn std::error::Error>> {
         let sessions = self.active_sessions.read().await;
         Ok(sessions.get(session_id).cloned())
     }
 
-    pub async fn update_activity(&self, session_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn update_activity(
+        &self,
+        session_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut sessions = self.active_sessions.write().await;
         if let Some(session) = sessions.get_mut(session_id) {
             session.last_activity = std::time::SystemTime::now();
@@ -284,7 +293,10 @@ impl SessionManager {
         Ok(())
     }
 
-    pub async fn deactivate_session(&self, session_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn deactivate_session(
+        &self,
+        session_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let mut sessions = self.active_sessions.write().await;
         if let Some(session) = sessions.get_mut(session_id) {
             session.is_active = false;
@@ -292,7 +304,9 @@ impl SessionManager {
         Ok(())
     }
 
-    pub async fn get_active_sessions(&self) -> Result<Vec<UserSession>, Box<dyn std::error::Error>> {
+    pub async fn get_active_sessions(
+        &self,
+    ) -> Result<Vec<UserSession>, Box<dyn std::error::Error>> {
         let sessions = self.active_sessions.read().await;
         Ok(sessions.values().filter(|s| s.is_active).cloned().collect())
     }
@@ -303,42 +317,51 @@ impl PermissionManager {
         let mut role_permissions = HashMap::new();
 
         // Define permissions for each role
-        role_permissions.insert(UserRole::Owner, vec![
-            Permission::ReadDocument,
-            Permission::EditDocument,
-            Permission::DeleteDocument,
-            Permission::InviteUsers,
-            Permission::ManagePermissions,
-            Permission::ViewAnalytics,
-            Permission::ExportData,
-            Permission::CreateSession,
-            Permission::EndSession,
-            Permission::ManageTeam,
-        ]);
+        role_permissions.insert(
+            UserRole::Owner,
+            vec![
+                Permission::ReadDocument,
+                Permission::EditDocument,
+                Permission::DeleteDocument,
+                Permission::InviteUsers,
+                Permission::ManagePermissions,
+                Permission::ViewAnalytics,
+                Permission::ExportData,
+                Permission::CreateSession,
+                Permission::EndSession,
+                Permission::ManageTeam,
+            ],
+        );
 
-        role_permissions.insert(UserRole::Admin, vec![
-            Permission::ReadDocument,
-            Permission::EditDocument,
-            Permission::DeleteDocument,
-            Permission::InviteUsers,
-            Permission::ManagePermissions,
-            Permission::ViewAnalytics,
-            Permission::CreateSession,
-            Permission::EndSession,
-            Permission::ManageTeam,
-        ]);
+        role_permissions.insert(
+            UserRole::Admin,
+            vec![
+                Permission::ReadDocument,
+                Permission::EditDocument,
+                Permission::DeleteDocument,
+                Permission::InviteUsers,
+                Permission::ManagePermissions,
+                Permission::ViewAnalytics,
+                Permission::CreateSession,
+                Permission::EndSession,
+                Permission::ManageTeam,
+            ],
+        );
 
-        role_permissions.insert(UserRole::Editor, vec![
-            Permission::ReadDocument,
-            Permission::EditDocument,
-            Permission::CreateSession,
-            Permission::EndSession,
-        ]);
+        role_permissions.insert(
+            UserRole::Editor,
+            vec![
+                Permission::ReadDocument,
+                Permission::EditDocument,
+                Permission::CreateSession,
+                Permission::EndSession,
+            ],
+        );
 
-        role_permissions.insert(UserRole::Viewer, vec![
-            Permission::ReadDocument,
-            Permission::ViewAnalytics,
-        ]);
+        role_permissions.insert(
+            UserRole::Viewer,
+            vec![Permission::ReadDocument, Permission::ViewAnalytics],
+        );
 
         role_permissions.insert(UserRole::Guest, vec![Permission::ReadDocument]);
 
@@ -360,7 +383,7 @@ impl PermissionManager {
 impl ActivityTracker {
     pub fn new() -> Self {
         Self {
-            user_activities:    Arc::new(RwLock::new(HashMap::new())),
+            user_activities: Arc::new(RwLock::new(HashMap::new())),
             session_activities: Arc::new(RwLock::new(HashMap::new())),
         }
     }

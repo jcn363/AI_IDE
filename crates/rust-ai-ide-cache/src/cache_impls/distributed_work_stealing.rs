@@ -19,30 +19,30 @@ use crate::{Cache, CacheEntry, CacheStats, IDEResult};
 /// Worker node in the distributed cache system
 #[derive(Debug, Clone)]
 struct WorkerNode {
-    id:             String,
-    local_cache:    HashMap<String, CacheEntry<String>>,
-    load_factor:    f64,
-    is_active:      bool,
+    id: String,
+    local_cache: HashMap<String, CacheEntry<String>>,
+    load_factor: f64,
+    is_active: bool,
     last_heartbeat: chrono::DateTime<chrono::Utc>,
 }
 
 /// Work-stealing algorithm configuration
 #[derive(Debug, Clone)]
 pub struct WorkStealingConfig {
-    pub max_steal_attempts:     usize,
-    pub steal_batch_size:       usize,
+    pub max_steal_attempts: usize,
+    pub steal_batch_size: usize,
     pub load_balance_threshold: f64,
-    pub adaptive_partitioning:  bool,
-    pub predictive_placement:   bool,
+    pub adaptive_partitioning: bool,
+    pub predictive_placement: bool,
 }
 
 /// Distributed cache with work-stealing
 pub struct DistributedWorkStealingCache {
-    workers:     Arc<RwLock<HashMap<String, WorkerNode>>>,
-    config:      WorkStealingConfig,
+    workers: Arc<RwLock<HashMap<String, WorkerNode>>>,
+    config: WorkStealingConfig,
     partitioner: Arc<Mutex<Box<dyn Partitioner + Send + Sync>>>,
-    predictor:   Option<Box<dyn PredictivePredictor + Send + Sync>>,
-    stats:       Arc<RwLock<CacheStats>>,
+    predictor: Option<Box<dyn PredictivePredictor + Send + Sync>>,
+    stats: Arc<RwLock<CacheStats>>,
 }
 
 impl DistributedWorkStealingCache {
@@ -68,7 +68,10 @@ impl DistributedWorkStealingCache {
         cache
     }
 
-    pub fn with_predictor<P: PredictivePredictor + 'static + Send + Sync>(mut self, predictor: P) -> Self {
+    pub fn with_predictor<P: PredictivePredictor + 'static + Send + Sync>(
+        mut self,
+        predictor: P,
+    ) -> Self {
         self.predictor = Some(Box::new(predictor));
         self
     }
@@ -77,10 +80,10 @@ impl DistributedWorkStealingCache {
     pub async fn register_worker(&self, worker_id: String) -> IDEResult<()> {
         let mut workers = self.workers.write().await;
         let worker = WorkerNode {
-            id:             worker_id.clone(),
-            local_cache:    HashMap::new(),
-            load_factor:    0.0,
-            is_active:      true,
+            id: worker_id.clone(),
+            local_cache: HashMap::new(),
+            load_factor: 0.0,
+            is_active: true,
             last_heartbeat: chrono::Utc::now(),
         };
         workers.insert(worker_id, worker);
@@ -221,7 +224,11 @@ impl Partitioner for HashPartitioner {
 /// Predictive cache placement predictor
 #[async_trait]
 pub trait PredictivePredictor {
-    async fn predict_placement(&self, key: &str, access_history: Vec<chrono::DateTime<chrono::Utc>>) -> Vec<String>;
+    async fn predict_placement(
+        &self,
+        key: &str,
+        access_history: Vec<chrono::DateTime<chrono::Utc>>,
+    ) -> Vec<String>;
 }
 
 #[async_trait]
@@ -269,7 +276,12 @@ impl Cache<String, String> for DistributedWorkStealingCache {
         Ok(None)
     }
 
-    async fn insert(&self, key: String, value: String, ttl: Option<std::time::Duration>) -> IDEResult<()> {
+    async fn insert(
+        &self,
+        key: String,
+        value: String,
+        ttl: Option<std::time::Duration>,
+    ) -> IDEResult<()> {
         let entry = CacheEntry::new_with_ttl(value, ttl, chrono::Utc::now());
 
         // Determine optimal placement

@@ -26,42 +26,52 @@ use crate::IntegrationTestResult;
 /// AI/ML Integration Test Suite Runner
 #[derive(Clone)]
 pub struct AIMLIntegrationTestRunner {
-    context:            Option<ExtendedIntegrationContext>,
-    analysis_engine:    Option<Arc<AnalysisEngine>>,
-    inference_engine:   Option<Arc<InferenceEngine>>,
-    learning_system:    Option<Arc<LearningSystem>>,
-    code_generator:     Option<Arc<CodeGenerator>>,
-    refactoring_engine: Option<Arc<RefactoringEngine>>,
-    results:            Vec<IntegrationTestResult>,
+    context: Option<ExtendedIntegrationContext>,
+    analysis_engine: Option<Arc<Mutex<AnalysisEngine>>>,
+    inference_engine: Option<Arc<Mutex<InferenceEngine>>>,
+    learning_system: Option<Arc<Mutex<LearningSystem>>>,
+    code_generator: Option<Arc<Mutex<CodeGenerator>>>,
+    refactoring_engine: Option<Arc<Mutex<RefactoringEngine>>>,
+    results: Vec<IntegrationTestResult>,
 }
 
 impl AIMLIntegrationTestRunner {
     pub fn new() -> Self {
         Self {
-            context:            None,
-            analysis_engine:    None,
-            inference_engine:   None,
-            learning_system:    None,
-            code_generator:     None,
+            context: None,
+            analysis_engine: None,
+            inference_engine: None,
+            learning_system: None,
+            code_generator: None,
             refactoring_engine: None,
-            results:            Vec::new(),
+            results: Vec::new(),
         }
     }
 
     /// Setup AI/ML test environment with engines and models
-    pub async fn setup_test_environment(&mut self, context: ExtendedIntegrationContext) -> Result<(), RustAIError> {
+    pub async fn setup_test_environment(
+        &mut self,
+        context: ExtendedIntegrationContext,
+    ) -> Result<(), RustAIError> {
         self.context = Some(context);
 
-        // Initialize AI engines
-        let analysis_engine = Arc::new(AnalysisEngine::new().await?);
-        let inference_engine = Arc::new(InferenceEngine::new().await?);
-        let learning_system = Arc::new(LearningSystem::new().await?);
-        let code_generator = Arc::new(CodeGenerator::new().await?);
-        let refactoring_engine = Arc::new(RefactoringEngine::new().await?);
+        // Initialize AI engines with proper state management
+        let analysis_engine = Arc::new(Mutex::new(AnalysisEngine::new().await?));
+        let inference_engine = Arc::new(Mutex::new(InferenceEngine::new().await?));
+        let learning_system = Arc::new(Mutex::new(LearningSystem::new().await?));
+        let code_generator = Arc::new(Mutex::new(CodeGenerator::new().await?));
+        let refactoring_engine = Arc::new(Mutex::new(RefactoringEngine::new().await?));
 
-        // Setup test models and data
-        self.setup_ai_models(&inference_engine).await?;
-        self.setup_learning_data(&learning_system).await?;
+        // Setup test models and data with proper async patterns
+        {
+            let inference_guard = inference_engine.lock().await;
+            self.setup_ai_models(&inference_guard).await?;
+        }
+
+        {
+            let learning_guard = learning_system.lock().await;
+            self.setup_learning_data(&learning_guard).await?;
+        }
 
         self.analysis_engine = Some(analysis_engine);
         self.inference_engine = Some(inference_engine);
@@ -97,9 +107,9 @@ impl AIMLIntegrationTestRunner {
         let bug_detection_data = TrainingData::new()
             .with_category("bug_detection")
             .with_samples(vec![
-                ("fn test() { let x = 5; }", true),             // contains unused variable bug
+                ("fn test() { let x = 5; }", true), // contains unused variable bug
                 ("fn test() { println!(\"{}\", 42); }", false), // no bugs
-                ("fn test(x: i32) { let y = x + 1; }", true),   // unused variable bug
+                ("fn test(x: i32) { let y = x + 1; }", true), // unused variable bug
             ])
             .build()?;
 
@@ -160,10 +170,13 @@ impl AIMLIntegrationTestRunner {
             let test_file = context.test_workspace.join("analysis_test/src/lib.rs");
             std::fs::write(&test_file, test_code)?;
 
-            // Run full analysis pipeline
-            let analysis_results = analysis_engine
-                .analyze_file(test_file.to_str().unwrap())
-                .await?;
+            // Run full analysis pipeline with proper Mutex handling
+            let analysis_results = {
+                let engine_guard = analysis_engine.lock().await;
+                engine_guard
+                    .analyze_file(test_file.to_str().unwrap())
+                    .await?
+            };
 
             // Validate analysis quality
             assert!(
@@ -221,9 +234,12 @@ impl AIMLIntegrationTestRunner {
 
     async fn perform_ml_inference_test(&self) -> Result<(), RustAIError> {
         if let Some(inference_engine) = &self.inference_engine {
-            // Test code analysis model
+            // Test code analysis model with proper Mutex handling
             let code_sample = "fn analyze_this() { let unused_var = 42; if true {} }";
-            let analysis_result = inference_engine.analyze_code(code_sample).await?;
+            let analysis_result = {
+                let engine_guard = inference_engine.lock().await;
+                engine_guard.analyze_code(code_sample).await?
+            };
 
             // Validate inference results
             assert!(
@@ -237,7 +253,10 @@ impl AIMLIntegrationTestRunner {
 
             // Test bug detection model
             let buggy_code = "fn main() { let x = 5; /* x never used */ }";
-            let bug_result = inference_engine.detect_bugs(buggy_code).await?;
+            let bug_result = {
+                let engine_guard = inference_engine.lock().await;
+                engine_guard.detect_bugs(buggy_code).await?
+            };
 
             assert!(
                 bug_result
@@ -407,7 +426,8 @@ impl AIMLIntegrationTestRunner {
     }
 
     async fn perform_refactoring_test(&self) -> Result<(), RustAIError> {
-        if let (Some(refactoring_engine), Some(context)) = (&self.refactoring_engine, &self.context) {
+        if let (Some(refactoring_engine), Some(context)) = (&self.refactoring_engine, &self.context)
+        {
             // Test code that can be refactored
             let messy_code = r#"fn process_data() {
     let mut result = Vec::new();
@@ -649,8 +669,8 @@ mod tests {
 
         let context = ExtendedIntegrationContext::new(shared_test_utils::IntegrationContext {
             test_dir: workspace_path,
-            config:   shared_test_utils::IntegrationConfig::default(),
-            state:    std::collections::HashMap::new(),
+            config: shared_test_utils::IntegrationConfig::default(),
+            state: std::collections::HashMap::new(),
         });
 
         let scenario = AIScenarioBuilder::new("code_quality")

@@ -30,7 +30,9 @@ pub trait BaseSecurityVisitor<'ast> {
     fn is_library_code(&self) -> bool {
         let file_path = self.get_file_path();
         file_path.contains("/src/lib.rs")
-            || file_path.contains("/src/") && !file_path.contains("/examples/") && !file_path.contains("/tests/")
+            || file_path.contains("/src/")
+                && !file_path.contains("/examples/")
+                && !file_path.contains("/tests/")
     }
 
     /// Check if this visitor is analyzing test code

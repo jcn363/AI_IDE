@@ -26,6 +26,8 @@ dirs-next = { workspace = true }
 dirs = { version = "^5.0.0" }
 rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
 rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
 
 [dev-dependencies]
 tempfile = { workspace = true }

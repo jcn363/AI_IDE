@@ -344,62 +344,202 @@ security:update:dependencies:
 
 # Build and test stage - Optimized CI/CD with parallel compilation
 build:rust:
+    stage: deploy
+    image: rust:latest
+    dependencies:
+      - setup:environment
+    variables:
+      # Optimize for CI environment
+      CARGO_BUILD_JOBS: "4"
+      NUM_JOBS: "4"
+    before_script:
+      - source $HOME/.cargo/env
+      - rustup target add x86_64-unknown-linux-gnu
+      - sccache --start-server
+      - cargo install cargo-audit --locked 2>/dev/null || echo "cargo-audit already installed"
+    script:
+      - echo "Running security audit..."
+      - cargo audit --deny warnings || (echo "❌ Security audit failed" && exit 1)
+      - echo "Running code formatting check..."
+      - cargo +nightly fmt --check
+      - echo "Running linting..."
+      - cargo +nightly clippy --workspace --profile ci -- -D warnings
+      - echo "Building Rust AI IDE with all features enabled..."
+      - time cargo build --workspace --all-features --profile ci --jobs ${CARGO_BUILD_JOBS}
+      - echo "Running tests with all features enabled..."
+      - time cargo test --workspace --all-features --profile ci --jobs ${CARGO_BUILD_JOBS} -- --nocapture
+      - echo "Integration build and test completed successfully"
+    after_script:
+      - sccache --show-stats
+      - echo "Cache statistics:"
+      - sccache --show-stats | grep -E "(compile_requests|cache_hits|cache_misses)"
+    artifacts:
+      paths:
+        - target/ci/
+      expire_in: 1 week
+    only:
+      - merge_requests
+      - main
+      - develop
+
+build:web:
+   stage: deploy
+   image: node:latest
+   dependencies:
+     - setup:environment
+   before_script:
+     - cd web && npm ci
+   script:
+     - echo "Building web frontend..."
+     - cd web && npm run build
+     - cd web && npm run type-check
+     - cd web && npm test
+   artifacts:
+     paths:
+       - web/dist/
+     expire_in: 1 week
+   only:
+     - merge_requests
+     - main
+     - develop
+
+# Build individual crates
+build:crates:
    stage: deploy
    image: rust:latest
    dependencies:
      - setup:environment
    variables:
-     # Optimize for CI environment
      CARGO_BUILD_JOBS: "4"
      NUM_JOBS: "4"
    before_script:
      - source $HOME/.cargo/env
      - rustup target add x86_64-unknown-linux-gnu
      - sccache --start-server
-     - cargo install cargo-audit --locked 2>/dev/null || echo "cargo-audit already installed"
    script:
-     - echo "Running security audit..."
-     - cargo audit --deny warnings || (echo "❌ Security audit failed" && exit 1)
-     - echo "Running code formatting check..."
-     - cargo +nightly fmt --check
-     - echo "Running linting..."
-     - cargo +nightly clippy --workspace --profile ci -- -D warnings
-     - echo "Building Rust AI IDE with optimized settings..."
-     - time cargo build --workspace --profile ci --jobs ${CARGO_BUILD_JOBS}
-     - echo "Running tests with optimized settings..."
-     - time cargo test --workspace --profile ci --jobs ${CARGO_BUILD_JOBS} -- --nocapture
-     - echo "Build and test completed successfully"
+     - echo "Building and testing crate: $CRATE"
+     - cargo build -p $CRATE --profile ci --jobs ${CARGO_BUILD_JOBS}
+     - cargo test -p $CRATE --profile ci --jobs ${CARGO_BUILD_JOBS} -- --nocapture
+   parallel:
+     matrix:
+       - CRATE: [
+           "rust-ai-ide-advanced-memory",
+           "rust-ai-ide-advanced-refactoring",
+           "rust-ai-ide-ai",
+           "rust-ai-ide-ai-analysis",
+           "rust-ai-ide-ai-codegen",
+           "rust-ai-ide-ai-distributed-coordinator",
+           "rust-ai-ide-ai-inference",
+           "rust-ai-ide-ai-integration",
+           "rust-ai-ide-ai-learning",
+           "rust-ai-ide-ai-multimodal",
+           "rust-ai-ide-ai-orchestration-core",
+           "rust-ai-ide-ai-predictive",
+           "rust-ai-ide-ai-quantization",
+           "rust-ai-ide-ai-refactoring",
+           "rust-ai-ide-ai-security",
+           "rust-ai-ide-ai-specgen",
+           "rust-ai-ide-ai-sql-lsp",
+           "rust-ai-ide-ai1-architecture",
+           "rust-ai-ide-ai1-reviews",
+           "rust-ai-ide-ai1-security",
+           "rust-ai-ide-ai1-semantic",
+           "rust-ai-ide-ai2-cloud-native",
+           "rust-ai-ide-ai2-ml-management",
+           "rust-ai-ide-ai2-predictive",
+           "rust-ai-ide-ai3-nlg",
+           "rust-ai-ide-ai3-nlp",
+           "rust-ai-ide-ai3-quantum",
+           "rust-ai-ide-ai4-consciousness",
+           "rust-ai-ide-ai5-consciousness-paradigm",
+           "rust-ai-ide-ai5-consciousness-synth",
+           "rust-ai-ide-ai5-infinite-intelligence",
+           "rust-ai-ide-ai5-infinite-scalability",
+           "rust-ai-ide-ai5-meta-consciousness",
+           "rust-ai-ide-ai5-meta-universe",
+           "rust-ai-ide-ai5-multi-reality",
+           "rust-ai-ide-ai5-quantum-ethics",
+           "rust-ai-ide-ai5-quantum-reality-bridges",
+           "rust-ai-ide-ai5-quantum-reality-interface",
+           "rust-ai-ide-ai5-reality-collaboration",
+           "rust-ai-ide-ai5-thought-compile",
+           "rust-ai-ide-battery-optimization",
+           "rust-ai-ide-cache",
+           "rust-ai-ide-cargo",
+           "rust-ai-ide-cloud-feature-flags",
+           "rust-ai-ide-cloud-integrations",
+           "rust-ai-ide-code-generator",
+           "rust-ai-ide-code-style",
+           "rust-ai-ide-collaboration",
+           "rust-ai-ide-commands-ai",
+           "rust-ai-ide-commands-registry",
+           "rust-ai-ide-common",
+           "rust-ai-ide-compliance",
+           "rust-ai-ide-config",
+           "rust-ai-ide-connectors",
+           "rust-ai-ide-core",
+           "rust-ai-ide-core-ai",
+           "rust-ai-ide-core-file",
+           "rust-ai-ide-core-fundamentals",
+           "rust-ai-ide-core-metrics",
+           "rust-ai-ide-core-shell",
+           "rust-ai-ide-debugger",
+           "rust-ai-ide-dependency-graph",
+           "rust-ai-ide-derive-utils",
+           "rust-ai-ide-dsl-codegen",
+           "rust-ai-ide-errors",
+           "rust-ai-ide-incremental-parsing",
+           "rust-ai-ide-lazy-loading",
+           "rust-ai-ide-lsp",
+           "rust-ai-ide-memory-optimization",
+           "rust-ai-ide-model-versioning",
+           "rust-ai-ide-monitoring",
+           "rust-ai-ide-multi-model-orchestrator",
+           "rust-ai-ide-multi-reality",
+           "rust-ai-ide-observability",
+           "rust-ai-ide-onnx-runtime",
+           "rust-ai-ide-orchestration",
+           "rust-ai-ide-parallel-processing",
+           "rust-ai-ide-perfdevel-tools",
+           "rust-ai-ide-performance",
+           "rust-ai-ide-performance-monitoring",
+           "rust-ai-ide-plugins",
+           "rust-ai-ide-predictive-completion",
+           "rust-ai-ide-predictive-maintenance",
+           "rust-ai-ide-predictive-quality",
+           "rust-ai-ide-quality-dashboard",
+           "rust-ai-ide-real-time-analysis",
+           "rust-ai-ide-security",
+           "rust-ai-ide-security-monitoring",
+           "rust-ai-ide-semantic-search",
+           "rust-ai-ide-shared-codegen",
+           "rust-ai-ide-shared-services",
+           "rust-ai-ide-shared-types",
+           "rust-ai-ide-shared-utils",
+           "rust-ai-ide-simd",
+           "rust-ai-ide-supervisor",
+           "rust-ai-ide-types",
+           "rust-ai-ide-ui",
+           "rust-ai-ide-vector-database",
+           "rust-ai-ide-wasm-components",
+           "rust-ai-ide-webhooks",
+           "rust-ai-ide-work-stealing-scheduler",
+           "shared-test-utils",
+           "src-tauri",
+           "test-performance-analyzer",
+           "test-performance-project",
+           "workspace-hack"
+         ]
    after_script:
      - sccache --show-stats
-     - echo "Cache statistics:"
-     - sccache --show-stats | grep -E "(compile_requests|cache_hits|cache_misses)"
    artifacts:
      paths:
        - target/ci/
      expire_in: 1 week
    only:
+     - merge_requests
      - main
      - develop
-
-build:web:
-  stage: deploy
-  image: node:latest
-  dependencies:
-    - setup:environment
-  before_script:
-    - cd web && npm ci
-  script:
-    - echo "Building web frontend..."
-    - cd web && npm run build
-    - cd web && npm run type-check
-    - cd web && npm test
-  artifacts:
-    paths:
-      - web/dist/
-    expire_in: 1 week
-  only:
-    - main
-    - develop
 
 # Dependency maintenance system jobs
 dependency:audit:daily:

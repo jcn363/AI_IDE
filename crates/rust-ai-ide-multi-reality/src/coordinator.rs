@@ -29,50 +29,50 @@ use crate::vr_engine::{VrEngine, VrEngineState};
 #[derive(Debug)]
 pub struct MultiRealityCoordinator {
     /// Current configuration
-    config:                MultiRealityConfig,
+    config: MultiRealityConfig,
     /// Current reality mode
-    current_mode:          RealityMode,
+    current_mode: RealityMode,
     /// Coordinator status
-    coordinator_state:     CoordinatorState,
+    coordinator_state: CoordinatorState,
     /// Spatial objects registry with locations
-    spatial_objects:       Arc<RwLock<HashMap<String, SpatialEntity>>>,
+    spatial_objects: Arc<RwLock<HashMap<String, SpatialEntity>>>,
     /// Active immersive sessions
-    active_sessions:       Arc<RwLock<HashMap<String, ImmersiveSession>>>,
+    active_sessions: Arc<RwLock<HashMap<String, ImmersiveSession>>>,
     /// AR engine instance
-    ar_engine:             Arc<Mutex<Option<ArEngine>>>,
+    ar_engine: Arc<Mutex<Option<ArEngine>>>,
     /// VR engine instance
-    vr_engine:             Arc<Mutex<Option<VrEngine>>>,
+    vr_engine: Arc<Mutex<Option<VrEngine>>>,
     /// Collaboration manager
     collaboration_manager: Arc<Mutex<Option<CollaborationManager>>>,
     /// Device orchestrator
-    device_orchestrator:   Arc<Mutex<Option<DeviceOrchestrator>>>,
+    device_orchestrator: Arc<Mutex<Option<DeviceOrchestrator>>>,
     /// Immersive UI controller
-    ui_controller:         Arc<Mutex<Option<ImmersiveUIController>>>,
+    ui_controller: Arc<Mutex<Option<ImmersiveUIController>>>,
     /// AI integration bridge
-    ai_bridge:             Arc<Mutex<Option<AiIntegrationBridge>>>,
+    ai_bridge: Arc<Mutex<Option<AiIntegrationBridge>>>,
     /// Security sanitizer for inputs
-    sanitizer:             Arc<RwLock<Box<dyn Sanitizer + Send + Sync>>>,
+    sanitizer: Arc<RwLock<Box<dyn Sanitizer + Send + Sync>>>,
     /// Performance monitor for optimization
-    performance_monitor:   Arc<RwLock<PerformanceMonitor>>,
+    performance_monitor: Arc<RwLock<PerformanceMonitor>>,
     /// Event channel sender for system-wide events
-    event_sender:          tokio::sync::broadcast::Sender<ImmeriveEvent>,
+    event_sender: tokio::sync::broadcast::Sender<ImmeriveEvent>,
 }
 
 /// Performance monitoring data
 #[derive(Debug, Clone)]
 struct PerformanceMonitor {
     /// CPU usage history
-    cpu_history:            Vec<f32>,
+    cpu_history: Vec<f32>,
     /// GPU usage history
-    gpu_history:            Vec<f32>,
+    gpu_history: Vec<f32>,
     /// Memory usage history
-    memory_history:         Vec<f32>,
+    memory_history: Vec<f32>,
     /// Frame rate history
-    fps_history:            Vec<f32>,
+    fps_history: Vec<f32>,
     /// Quality scaling factor (0.0 to 1.0)
     current_quality_factor: f32,
     /// Last performance check timestamp
-    last_check:             SystemTime,
+    last_check: SystemTime,
 }
 
 /// State of the coordinator
@@ -114,12 +114,12 @@ impl MultiRealityCoordinator {
             ai_bridge: Arc::new(Mutex::new(None)),
             sanitizer: Arc::new(RwLock::new(Box::new(DefaultSanitizer))),
             performance_monitor: Arc::new(RwLock::new(PerformanceMonitor {
-                cpu_history:            Vec::new(),
-                gpu_history:            Vec::new(),
-                memory_history:         Vec::new(),
-                fps_history:            Vec::new(),
+                cpu_history: Vec::new(),
+                gpu_history: Vec::new(),
+                memory_history: Vec::new(),
+                fps_history: Vec::new(),
                 current_quality_factor: 1.0,
-                last_check:             SystemTime::now(),
+                last_check: SystemTime::now(),
             })),
             event_sender,
         }
@@ -198,7 +198,9 @@ impl MultiRealityCoordinator {
     /// # Returns
     /// * `Ok(())` if the switch succeeds
     /// * `Err(Box<dyn std::error::Error + Send + Sync>)` if the switch fails
-    pub async fn switch_to_ar_mode(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn switch_to_ar_mode(
+        &mut self,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.switch_reality_mode(RealityMode::AR).await
     }
 
@@ -210,7 +212,9 @@ impl MultiRealityCoordinator {
     /// # Returns
     /// * `Ok(())` if the switch succeeds
     /// * `Err(Box<dyn std::error::Error + Send + Sync>)` if the switch fails
-    pub async fn switch_to_vr_mode(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn switch_to_vr_mode(
+        &mut self,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.switch_reality_mode(RealityMode::VR).await
     }
 
@@ -222,7 +226,9 @@ impl MultiRealityCoordinator {
     /// # Returns
     /// * `Ok(())` if the switch succeeds
     /// * `Err(Box<dyn std::error::Error + Send + Sync>)` if the switch fails
-    pub async fn switch_to_desktop_mode(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn switch_to_desktop_mode(
+        &mut self,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.switch_reality_mode(RealityMode::Desktop).await
     }
 
@@ -241,11 +247,13 @@ impl MultiRealityCoordinator {
                     .device_caps
                     .supported_camera_types
                     .contains(&CameraType::RGB) =>
+            {
                 if let Some(ar_engine) = &*self.ar_engine.lock().await {
                     ar_engine.start_ar_session().await?;
                 } else {
                     return Err("AR engine not initialized".into());
-                },
+                }
+            }
 
             // Switching to VR mode
             (_, RealityMode::VR) if !self.config.device_caps.supported_vr_headsets.is_empty() => {
@@ -257,25 +265,28 @@ impl MultiRealityCoordinator {
             }
 
             // Switching to desktop mode (stop active sessions)
-            (RealityMode::AR, RealityMode::Desktop) =>
+            (RealityMode::AR, RealityMode::Desktop) => {
                 if let Some(ar_engine) = &*self.ar_engine.lock().await {
                     ar_engine.stop_ar_session().await?;
-                },
+                }
+            }
 
-            (RealityMode::VR, RealityMode::Desktop) =>
+            (RealityMode::VR, RealityMode::Desktop) => {
                 if let Some(vr_engine) = &*self.vr_engine.lock().await {
                     vr_engine.stop_vr_session().await?;
-                },
+                }
+            }
 
             // Same mode transition (no-op)
             _ if previous_mode == new_mode => return Ok(()),
 
-            _ =>
+            _ => {
                 return Err(format!(
                     "Unsupported mode transition: {:?} -> {:?}",
                     previous_mode, new_mode
                 )
-                .into()),
+                .into())
+            }
         }
 
         // Update current mode
@@ -318,12 +329,12 @@ impl MultiRealityCoordinator {
         let entity = spatial_objects
             .entry(object_id.to_string())
             .or_insert_with(|| SpatialEntity {
-                id:           object_id.to_string(),
-                entity_type:  SpatialEntityType::Generic,
-                position:     position.clone(),
-                properties:   HashMap::new(),
+                id: object_id.to_string(),
+                entity_type: SpatialEntityType::Generic,
+                position: position.clone(),
+                properties: HashMap::new(),
                 last_updated: SystemTime::now(),
-                visible:      true,
+                visible: true,
             });
 
         entity.position = position.clone();
@@ -333,9 +344,9 @@ impl MultiRealityCoordinator {
 
         // Emit position change event
         let event = ImmeriveEvent::PositionChanged {
-            object_id:    object_id.to_string(),
+            object_id: object_id.to_string(),
             new_position: position,
-            timestamp:    SystemTime::now(),
+            timestamp: SystemTime::now(),
         };
 
         let _ = self.event_sender.send(event);
@@ -392,17 +403,24 @@ impl MultiRealityCoordinator {
 
         // Process based on input type and current reality mode
         match (self.current_mode, &sanitized_input) {
-            (RealityMode::AR, SpatialInput::Gesture(gesture_type)) =>
+            (RealityMode::AR, SpatialInput::Gesture(gesture_type)) => {
                 self.process_ar_gesture(*gesture_type, input.extract_position())
-                    .await,
-            (RealityMode::VR, SpatialInput::Gesture(gesture_type)) =>
+                    .await
+            }
+            (RealityMode::VR, SpatialInput::Gesture(gesture_type)) => {
                 self.process_vr_gesture(*gesture_type, input.extract_position())
-                    .await,
-            (RealityMode::AR, SpatialInput::Voice(command)) => self.process_ar_voice_command(command).await,
-            (RealityMode::VR, SpatialInput::Voice(command)) => self.process_vr_voice_command(command).await,
-            (_, SpatialInput::ControllerInput(controller_input)) =>
+                    .await
+            }
+            (RealityMode::AR, SpatialInput::Voice(command)) => {
+                self.process_ar_voice_command(command).await
+            }
+            (RealityMode::VR, SpatialInput::Voice(command)) => {
+                self.process_vr_voice_command(command).await
+            }
+            (_, SpatialInput::ControllerInput(controller_input)) => {
                 self.process_controller_input(controller_input.clone())
-                    .await,
+                    .await
+            }
             (_, SpatialInput::EyeGaze(eye_gaze)) => self.process_eye_gaze(*eye_gaze).await,
         }
     }
@@ -416,26 +434,30 @@ impl MultiRealityCoordinator {
     /// * `CoordinatorStatus` - Current status of the coordinator and all components
     pub async fn get_status(&self) -> CoordinatorStatus {
         CoordinatorStatus {
-            state:                 self.coordinator_state.clone(),
-            current_mode:          self.current_mode,
+            state: self.coordinator_state.clone(),
+            current_mode: self.current_mode,
             active_sessions_count: self.active_session_count().await,
             spatial_objects_count: self.spatial_object_count().await,
-            ar_engine_status:      self.get_ar_engine_status().await,
-            vr_engine_status:      self.get_vr_engine_status().await,
-            performance_metrics:   self.get_performance_metrics().await,
+            ar_engine_status: self.get_ar_engine_status().await,
+            vr_engine_status: self.get_vr_engine_status().await,
+            performance_metrics: self.get_performance_metrics().await,
         }
     }
 
     // Private implementation methods
 
     /// Initialize AR engine
-    async fn initialize_ar_engine(&self) -> Result<ArEngine, Box<dyn std::error::Error + Send + Sync>> {
+    async fn initialize_ar_engine(
+        &self,
+    ) -> Result<ArEngine, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation - in real system this would initialize with proper config
         Ok(ArEngine::new().await)
     }
 
     /// Initialize VR engine
-    async fn initialize_vr_engine(&self) -> Result<VrEngine, Box<dyn std::error::Error + Send + Sync>> {
+    async fn initialize_vr_engine(
+        &self,
+    ) -> Result<VrEngine, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation - in real system this would initialize with proper config
         Ok(VrEngine::new().await)
     }
@@ -465,7 +487,9 @@ impl MultiRealityCoordinator {
     }
 
     /// Initialize AI bridge
-    async fn initialize_ai_bridge(&self) -> Result<AiIntegrationBridge, Box<dyn std::error::Error + Send + Sync>> {
+    async fn initialize_ai_bridge(
+        &self,
+    ) -> Result<AiIntegrationBridge, Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation
         Ok(AiIntegrationBridge::new().await)
     }
@@ -491,13 +515,19 @@ impl MultiRealityCoordinator {
     }
 
     /// Process AR voice command
-    async fn process_ar_voice_command(&self, command: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn process_ar_voice_command(
+        &self,
+        command: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation
         Ok(())
     }
 
     /// Process VR voice command
-    async fn process_vr_voice_command(&self, command: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn process_vr_voice_command(
+        &self,
+        command: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation
         Ok(())
     }
@@ -512,7 +542,10 @@ impl MultiRealityCoordinator {
     }
 
     /// Process eye gaze input
-    async fn process_eye_gaze(&self, gaze: EyeGazeData) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn process_eye_gaze(
+        &self,
+        gaze: EyeGazeData,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Placeholder implementation
         Ok(())
     }
@@ -550,10 +583,10 @@ impl MultiRealityCoordinator {
         let monitor = self.performance_monitor.read().await;
 
         PerformanceMetrics {
-            cpu_usage:      monitor.cpu_history.last().copied().unwrap_or(0.0),
-            gpu_usage:      monitor.gpu_history.last().copied().unwrap_or(0.0),
-            memory_usage:   monitor.memory_history.last().copied().unwrap_or(0.0),
-            frame_rate:     monitor.fps_history.last().copied().unwrap_or(0.0),
+            cpu_usage: monitor.cpu_history.last().copied().unwrap_or(0.0),
+            gpu_usage: monitor.gpu_history.last().copied().unwrap_or(0.0),
+            memory_usage: monitor.memory_history.last().copied().unwrap_or(0.0),
+            frame_rate: monitor.fps_history.last().copied().unwrap_or(0.0),
             quality_factor: monitor.current_quality_factor,
         }
     }
@@ -563,32 +596,32 @@ impl MultiRealityCoordinator {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CoordinatorStatus {
     /// Current coordinator state
-    pub state:                 CoordinatorState,
+    pub state: CoordinatorState,
     /// Current reality mode
-    pub current_mode:          RealityMode,
+    pub current_mode: RealityMode,
     /// Number of active sessions
     pub active_sessions_count: usize,
     /// Number of spatial objects
     pub spatial_objects_count: usize,
     /// AR engine status
-    pub ar_engine_status:      Option<ArEngineState>,
+    pub ar_engine_status: Option<ArEngineState>,
     /// VR engine status
-    pub vr_engine_status:      Option<VrEngineState>,
+    pub vr_engine_status: Option<VrEngineState>,
     /// Performance metrics
-    pub performance_metrics:   PerformanceMetrics,
+    pub performance_metrics: PerformanceMetrics,
 }
 
 /// Performance metrics summary
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct PerformanceMetrics {
     /// CPU usage percentage (0-100)
-    pub cpu_usage:      f32,
+    pub cpu_usage: f32,
     /// GPU usage percentage (0-100)
-    pub gpu_usage:      f32,
+    pub gpu_usage: f32,
     /// Memory usage percentage (0-100)
-    pub memory_usage:   f32,
+    pub memory_usage: f32,
     /// Frame rate (FPS)
-    pub frame_rate:     f32,
+    pub frame_rate: f32,
     /// Quality scaling factor (0.0-1.0)
     pub quality_factor: f32,
 }
@@ -642,9 +675,9 @@ impl Sanitizer for DefaultSanitizer {
             SpatialInput::Gesture(gesture) => {
                 Ok(SpatialInput::Gesture(*gesture)) // Gestures are typically safe
             }
-            SpatialInput::Voice(command) if command.len() > 1000 => Err(IDEError::InvalidSpatialInput(
-                "Voice command too long".into(),
-            )),
+            SpatialInput::Voice(command) if command.len() > 1000 => Err(
+                IDEError::InvalidSpatialInput("Voice command too long".into()),
+            ),
             SpatialInput::Voice(command) => {
                 // Basic sanitization - remove potential injection characters
                 let sanitized = command
@@ -669,7 +702,10 @@ impl Sanitizer for DefaultSanitizer {
         }
     }
 
-    fn sanitize_session_config(&self, config: &MultiRealityConfig) -> Result<MultiRealityConfig, IDEError> {
+    fn sanitize_session_config(
+        &self,
+        config: &MultiRealityConfig,
+    ) -> Result<MultiRealityConfig, IDEError> {
         // Basic validation - ensure valid ranges
         if config.max_concurrent_sessions > 100 {
             return Err(IDEError::InvalidConfiguration(
@@ -680,7 +716,10 @@ impl Sanitizer for DefaultSanitizer {
         Ok(config.clone())
     }
 
-    fn sanitize_device_registration(&self, registration: &DeviceRegistration) -> Result<DeviceRegistration, IDEError> {
+    fn sanitize_device_registration(
+        &self,
+        registration: &DeviceRegistration,
+    ) -> Result<DeviceRegistration, IDEError> {
         // Basic validation - ensure device ID format
         if registration.device_id.is_empty() || registration.device_id.len() > 100 {
             return Err(IDEError::InvalidDeviceRegistration(
@@ -775,11 +814,11 @@ mod tests {
 
         // Update position
         let position = SpatialPosition {
-            x:        1.0,
-            y:        2.0,
-            z:        3.0,
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
             rotation: None,
-            scale:    None,
+            scale: None,
         };
         let result = coordinator
             .lock()
@@ -814,7 +853,8 @@ mod tests {
         assert!(result.is_err());
 
         // Test voice input with special characters
-        let special_input = SpatialInput::Voice("hello<script>alert('xss')</script>world".to_string());
+        let special_input =
+            SpatialInput::Voice("hello<script>alert('xss')</script>world".to_string());
         let result = sanitizer.sanitize_spatial_input(&special_input);
         if let Ok(SpatialInput::Voice(sanitized)) = result {
             assert!(!sanitized.contains('<') && !sanitized.contains('>'));

@@ -29,8 +29,10 @@ pub struct ONNXConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ExecutionProvider {
     CPU,
+    #[cfg(feature = "cuda")]
     CUDA(u32), // Device ID
-    TensorRT,  // TensorRT execution provider
+    #[cfg(feature = "tensorrt")]
+    TensorRT, // TensorRT execution provider
 }
 
 impl Default for ONNXConfig {
@@ -57,7 +59,6 @@ pub struct ModelSession {
 pub struct ONNXInferenceService {
     config:         ONNXConfig,
     model_cache:    Arc<Mutex<HashMap<String, ModelSession>>>,
-    adaptive_cache: Arc<AdaptiveCache<ModelMetadata>>,
     ab_test_config: Arc<RwLock<HashMap<String, ABTestConfiguration>>>,
 }
 
@@ -80,9 +81,6 @@ impl ONNXInferenceService {
         Self {
             config:         config.clone(),
             model_cache:    Arc::new(Mutex::new(HashMap::new())),
-            adaptive_cache: Arc::new(AdaptiveCache::new(
-                config.model_cache_size_mb as usize * 1024 * 1024,
-            )),
             ab_test_config: Arc::new(RwLock::new(HashMap::new())),
         }
     }

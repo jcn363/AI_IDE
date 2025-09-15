@@ -8,18 +8,18 @@ use tokio::sync::Mutex;
 /// Training request for federated learning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FederatedTrainingRequest {
-    pub model:          String,
-    pub data:           Vec<u8>,
-    pub rounds:         u32,
+    pub model: String,
+    pub data: Vec<u8>,
+    pub rounds: u32,
     pub participant_id: String,
 }
 
 /// Training result from federated learning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FederatedTrainingResult {
-    pub model_updates:     Vec<ModelUpdate>,
-    pub converged:         bool,
-    pub accuracy:          f32,
+    pub model_updates: Vec<ModelUpdate>,
+    pub converged: bool,
+    pub accuracy: f32,
     pub participant_count: usize,
 }
 
@@ -27,17 +27,17 @@ pub struct FederatedTrainingResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelUpdate {
     pub participant: String,
-    pub weights:     Vec<f32>,
-    pub accuracy:    f32,
-    pub signature:   Vec<u8>,
-    pub timestamp:   chrono::DateTime<chrono::Utc>,
+    pub weights: Vec<f32>,
+    pub accuracy: f32,
+    pub signature: Vec<u8>,
+    pub timestamp: chrono::DateTime<chrono::Utc>,
 }
 
 /// Federated learning engine
 #[derive(Debug)]
 pub struct FederatedLearningEngine {
-    participants:    Mutex<Vec<String>>,
-    current_round:   Mutex<u32>,
+    participants: Mutex<Vec<String>>,
+    current_round: Mutex<u32>,
     pending_updates: Mutex<Vec<ModelUpdate>>,
 }
 
@@ -45,8 +45,8 @@ impl FederatedLearningEngine {
     /// Create new federated learning engine
     pub fn new() -> Self {
         Self {
-            participants:    Mutex::new(vec![]),
-            current_round:   Mutex::new(0),
+            participants: Mutex::new(vec![]),
+            current_round: Mutex::new(0),
             pending_updates: Mutex::new(vec![]),
         }
     }
@@ -101,7 +101,7 @@ impl FederatedLearningEngine {
 #[derive(Debug)]
 pub struct SecureAggregation {
     participant_updates: Mutex<Vec<ModelUpdate>>,
-    is_complete:         Mutex<bool>,
+    is_complete: Mutex<bool>,
 }
 
 impl SecureAggregation {
@@ -109,7 +109,7 @@ impl SecureAggregation {
     pub fn new() -> Self {
         Self {
             participant_updates: Mutex::new(vec![]),
-            is_complete:         Mutex::new(false),
+            is_complete: Mutex::new(false),
         }
     }
 

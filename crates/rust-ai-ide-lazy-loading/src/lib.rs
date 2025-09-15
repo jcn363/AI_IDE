@@ -21,9 +21,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
 pub mod error;
 pub mod lazy_loader;
@@ -102,10 +101,13 @@ pub trait LazyComponent: Send + Sync {
 
     /// Unload the component to free memory
     async fn unload(&mut self) -> Result<(), LazyLoadingError>;
+
+    /// Clone the component as a boxed trait object
+    fn clone_box(&self) -> Box<dyn LazyComponent>;
 }
 
 /// Trait for objects that can be pooled
-pub trait Poolable: Send + Sync {
+pub trait Poolable: Send + Sync + Sized {
     /// Get the size of the object in bytes
     fn size_bytes(&self) -> usize;
 

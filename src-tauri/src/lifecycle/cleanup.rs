@@ -17,40 +17,40 @@ use tokio::time::{timeout, Duration};
 use super::{LifecycleEvent, LifecyclePhase};
 
 pub struct CleanupPhase {
-    cleanup_timeout:   Duration,
+    cleanup_timeout: Duration,
     resource_registry: Arc<Mutex<ResourceRegistry>>,
-    event_listeners:   Vec<Box<dyn Fn(LifecycleEvent) + Send + Sync>>,
+    event_listeners: Vec<Box<dyn Fn(LifecycleEvent) + Send + Sync>>,
 }
 
 #[derive(Clone)]
 pub struct CleanupConfig {
-    pub timeout:               Duration,
+    pub timeout: Duration,
     pub force_exit_on_timeout: bool,
-    pub cleanup_order:         Vec<String>, // Services to clean up in order
-    pub retry_attempts:        u32,
+    pub cleanup_order: Vec<String>, // Services to clean up in order
+    pub retry_attempts: u32,
 }
 
 impl Default for CleanupConfig {
     fn default() -> Self {
         Self {
-            timeout:               Duration::from_secs(30), // 30 second timeout
+            timeout: Duration::from_secs(30), // 30 second timeout
             force_exit_on_timeout: false,
-            cleanup_order:         vec![
+            cleanup_order: vec![
                 "ai_services".to_string(),
                 "caches".to_string(),
                 "connections".to_string(),
                 "files".to_string(),
             ],
-            retry_attempts:        3,
+            retry_attempts: 3,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ResourceHandle {
-    pub id:            String,
+    pub id: String,
     pub resource_type: String,
-    pub metadata:      serde_json::Value,
+    pub metadata: serde_json::Value,
 }
 
 #[derive(Debug, Default)]
@@ -65,9 +65,9 @@ impl CleanupPhase {
 
     pub fn with_config(config: CleanupConfig) -> Self {
         Self {
-            cleanup_timeout:   config.timeout,
+            cleanup_timeout: config.timeout,
             resource_registry: Arc::new(Mutex::new(ResourceRegistry::default())),
-            event_listeners:   Vec::new(),
+            event_listeners: Vec::new(),
         }
     }
 

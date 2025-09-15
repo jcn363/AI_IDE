@@ -49,6 +49,7 @@ default = []
 ai = ["rust-ai-ide-ai-analysis", "rust-ai-ide-ai-codegen", "rust-ai-ide-ai-inference"]
 ml_models = ["rust-ai-ide-ai-learning", "rust-ai-ide-ai-specgen"]
 refactoring = ["rust-ai-ide-ai-refactoring"]
+tauri = []
 
 [dev-dependencies]
 tokio-test = "0.4.4"

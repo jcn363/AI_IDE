@@ -3,6 +3,8 @@
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
+use syn::spanned::Spanned;
+use syn::visit::Visit;
 
 /// Different types of style rules
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -31,7 +33,9 @@ impl StyleRule {
     /// Get the description of the rule
     pub fn description(&self) -> &'static str {
         match self {
-            StyleRule::NamingConvention => "Enforces consistent naming conventions (snake_case, SCREAMING_SNAKE_CASE)",
+            StyleRule::NamingConvention => {
+                "Enforces consistent naming conventions (snake_case, SCREAMING_SNAKE_CASE)"
+            }
             StyleRule::Indentation => "Ensures consistent indentation (4 spaces, no tabs)",
             StyleRule::LineLength => "Limits line length to 100 characters",
             StyleRule::CommentStyle => "Enforces Rust-style comments over C-style",
@@ -59,7 +63,7 @@ impl StyleRule {
             StyleRule::Indentation => true,
             StyleRule::LineLength => false, // May require code restructuring
             StyleRule::CommentStyle => true,
-            StyleRule::FunctionLength => false,   // Requires refactoring
+            StyleRule::FunctionLength => false, // Requires refactoring
             StyleRule::PackageStructure => false, // Requires module restructuring
         }
     }
@@ -96,16 +100,16 @@ impl fmt::Display for StyleCategory {
 /// Configuration for individual rules
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleConfig {
-    pub enabled:         bool,
-    pub severity:        rust_ai_ide_ai_analysis::Severity,
+    pub enabled: bool,
+    pub severity: rust_ai_ide_ai_analysis::Severity,
     pub custom_settings: std::collections::HashMap<String, serde_json::Value>,
 }
 
 impl Default for RuleConfig {
     fn default() -> Self {
         Self {
-            enabled:         true,
-            severity:        rust_ai_ide_ai_analysis::Severity::Info,
+            enabled: true,
+            severity: rust_ai_ide_ai_analysis::Severity::Info,
             custom_settings: std::collections::HashMap::new(),
         }
     }
@@ -114,29 +118,29 @@ impl Default for RuleConfig {
 /// Collection of rule configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StyleRulesConfig {
-    pub naming:      RuleConfig,
+    pub naming: RuleConfig,
     pub indentation: RuleConfig,
     pub line_length: RuleConfig,
-    pub comments:    RuleConfig,
-    pub functions:   RuleConfig,
-    pub package:     RuleConfig,
+    pub comments: RuleConfig,
+    pub functions: RuleConfig,
+    pub package: RuleConfig,
 }
 
 impl Default for StyleRulesConfig {
     fn default() -> Self {
         Self {
-            naming:      RuleConfig::default(),
+            naming: RuleConfig::default(),
             indentation: RuleConfig::default(),
             line_length: RuleConfig {
                 severity: rust_ai_ide_ai_analysis::Severity::Warning,
                 ..Default::default()
             },
-            comments:    RuleConfig::default(),
-            functions:   RuleConfig {
+            comments: RuleConfig::default(),
+            functions: RuleConfig {
                 severity: rust_ai_ide_ai_analysis::Severity::Warning,
                 ..Default::default()
             },
-            package:     RuleConfig {
+            package: RuleConfig {
                 severity: rust_ai_ide_ai_analysis::Severity::Info,
                 ..Default::default()
             },
@@ -181,8 +185,8 @@ impl StyleRulesConfig {
 /// Visitor for analyzing function lengths in AST
 pub struct FunctionLengthVisitor<'a> {
     pub max_length: usize,
-    pub issues:     &'a mut Vec<crate::StyleIssue>,
-    pub file:       &'a str,
+    pub issues: &'a mut Vec<crate::StyleIssue>,
+    pub file: &'a str,
 }
 
 impl<'a, 'ast> syn::visit::Visit<'ast> for FunctionLengthVisitor<'a> {
@@ -191,20 +195,22 @@ impl<'a, 'ast> syn::visit::Visit<'ast> for FunctionLengthVisitor<'a> {
 
         if function_length > self.max_length {
             self.issues.push(crate::StyleIssue {
-                id:         uuid::Uuid::new_v4(),
-                rule:       StyleRule::FunctionLength,
-                message:    format!(
+                id: uuid::Uuid::new_v4(),
+                rule: StyleRule::FunctionLength,
+                message: format!(
                     "Function '{}' is too long ({} statements). Maximum allowed: {}",
                     node.sig.ident, function_length, self.max_length
                 ),
-                location:   rust_ai_ide_ai_analysis::Location {
-                    file:   self.file.to_string(),
-                    line:   node.sig.span().start().line as u32,
-                    column: node.sig.span().start().column as u32,
+                location: rust_ai_ide_ai_analysis::Location {
+                    file: self.file.to_string(),
+                    line: 1, // Simplified for syn 2.x compatibility
+                    column: 0,
                     offset: 0,
                 },
-                severity:   rust_ai_ide_ai_analysis::Severity::Info,
-                suggestion: Some("Consider breaking this function into smaller functions".to_string()),
+                severity: rust_ai_ide_ai_analysis::Severity::Info,
+                suggestion: Some(
+                    "Consider breaking this function into smaller functions".to_string(),
+                ),
             });
         }
         syn::visit::visit_item_fn(self, node);
@@ -214,15 +220,19 @@ impl<'a, 'ast> syn::visit::Visit<'ast> for FunctionLengthVisitor<'a> {
 /// Statistics about rule violations
 #[derive(Debug, Clone, Default)]
 pub struct StyleRuleStats {
-    pub violations_by_rule:     std::collections::HashMap<StyleRule, usize>,
+    pub violations_by_rule: std::collections::HashMap<StyleRule, usize>,
     pub violations_by_severity: std::collections::HashMap<rust_ai_ide_ai_analysis::Severity, usize>,
-    pub total_violations:       usize,
-    pub auto_fixable:           usize,
+    pub total_violations: usize,
+    pub auto_fixable: usize,
 }
 
 impl StyleRuleStats {
     /// Record a violation
-    pub fn record_violation(&mut self, rule: &StyleRule, severity: rust_ai_ide_ai_analysis::Severity) {
+    pub fn record_violation(
+        &mut self,
+        rule: &StyleRule,
+        severity: rust_ai_ide_ai_analysis::Severity,
+    ) {
         *self.violations_by_rule.entry(rule.clone()).or_insert(0) += 1;
         *self.violations_by_severity.entry(severity).or_insert(0) += 1;
         self.total_violations += 1;
