@@ -87,6 +87,11 @@ semicolon_if_nothing_returned = "warn"
 items_after_statements = "warn"
 complexity = "warn"
 
+[dev-dependencies]
+# Test dependencies
+tempfile = { workspace = true }
+rand = { workspace = true }
+
 [package.metadata.duplication]
 # Duplication prevention configuration
 check_before_commit = true

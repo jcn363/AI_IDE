@@ -1,48 +1,206 @@
-graph TD
-    subgraph "Rust AI IDE"
-        A[Frontend] --> B[Backend Services]
-        B --> C[Analysis Engine]
-        C --> D[Code Smell Detection]
-        C --> E[Performance Analysis]
-        C --> F[Security Analysis]
-        C --> G[Architecture Analysis]
-        C --> R[Refactoring Engine]
-
-        G --> H[Circular Dependencies]
-        G --> I[Layer Violations]
-        G --> J[Interface Segregation]
-        G --> K[Dependency Inversion]
-
-        R --> L[Symbol Analyzer]
-        R --> M[Pattern Matcher]
-        R --> N[Refactoring Operations]
-        R --> O[Change Validator]
-        R --> P[Code Transformer]
-
-        subgraph Frontend
-            A1[React/TypeScript]
-            A2[Monaco Editor]
-            A3[Redux Store]
-            A4[UI Kit]
-            A5[Refactoring UI]
-            A6[AI Assistant Panel]
-        end
-
-        subgraph "Backend Services"
-            B1[AI Services]
-            B2[LSP Integration]
-            B3[Debug Adapter]
-            B4[Performance Monitor]
-            B5[Refactoring Service]
-            B6[Symbol Analysis Service]
-        end
-
-        subgraph "Core Components"
-            C1[Project Management]
-            C2[Dependency Graph]
-            C3[Build System]
-            C4[Plugin System]
-            C5[Code Model]
-            C6[Refactoring History]
-        end
+graph TB
+    subgraph "Application Layer (12 crates)"
+        A1[Web Frontend - React/TypeScript]
+        A2[Desktop Integration - Tauri]
+        A3[Plugin Marketplace]
+        A4[Enterprise Management]
+        A5[User Interface Components]
+        A6[Extension Host]
     end
+
+    subgraph "Advanced Services Layer (8 crates)"
+        S1[Performance Engine]
+        S2[Enterprise Security]
+        S3[Scalability Services]
+        S4[Monitoring & Alerting]
+        S5[Compliance Automation]
+        S6[Advanced Analytics]
+        S7[Distributed Processing]
+        S8[Load Balancing]
+    end
+
+    subgraph "System Integration Layer (15 crates)"
+        I1[LSP Server - Cross-Language]
+        I2[Debug Adapter Protocol]
+        I3[Cargo Integration]
+        I4[Platform APIs - Windows/macOS/Linux]
+        I5[External Service Connectors]
+        I6[Webhook System - Port 3000]
+        I7[File System Abstraction]
+        I8[Network Services]
+        I9[Database Abstraction]
+        I10[Cache Management]
+        I11[Event Bus System]
+        I12[Rate Limiting]
+        I13[Connection Pooling]
+        I14[Async Task Management]
+        I15[IPC Communication]
+    end
+
+    subgraph "AI/ML Layer (17 crates)"
+        M1[Model Orchestrator]
+        M2[Local AI Models - Quantized 4-bit]
+        M3[Inference Engine]
+        M4[Training Pipeline]
+        M5[Hyperparameter Tuning]
+        M6[Model Management]
+        M7[Offline Capabilities]
+        M8[Cross-Language Analysis]
+        M9[Code Completion Engine]
+        M10[Refactoring Assistant]
+        M11[Performance Analyzer]
+        M12[Security Scanner]
+        M13[Code Smell Detection]
+        M14[Natural Language Processing]
+        M15[Machine Learning Pipeline]
+        M16[Model Validation]
+        M17[Feature Engineering]
+    end
+
+    subgraph "Foundation Layer (15 crates)"
+        F1[Core Types & Traits]
+        F2[Memory Pooling System]
+        F3[Virtual Memory Manager]
+        F4[Async Runtime - Tokio]
+        F5[Serialization Framework]
+        F6[Error Handling - IDEError]
+        F7[Cryptography Services]
+        F8[Logging & Auditing]
+        F9[Configuration Management]
+        F10[Validation Framework]
+        F11[Cross-Platform Compatibility]
+        F12[Resource Management]
+        F13[Dependency Injection]
+        F14[Plugin Architecture]
+        F15[Security Framework]
+    end
+
+    A1 --> S1
+    A1 --> S2
+    A2 --> I1
+    A2 --> I2
+    A3 --> I6
+    A4 --> S3
+    A5 --> F11
+    A6 --> F14
+
+    S1 --> M1
+    S2 --> F7
+    S3 --> I12
+    S4 --> I8
+    S5 --> F8
+    S6 --> M11
+    S7 --> I13
+    S8 --> I4
+
+    I1 --> M9
+    I2 --> F1
+    I3 --> F2
+    I4 --> F11
+    I5 --> F15
+    I6 --> F5
+    I7 --> F12
+    I8 --> F6
+    I9 --> F3
+    I10 --> F2
+    I11 --> F4
+    I12 --> F13
+    I13 --> F4
+    I14 --> F6
+    I15 --> F5
+
+    M1 --> F4
+    M2 --> F3
+    M3 --> F2
+    M4 --> F12
+    M5 --> F13
+    M6 --> F7
+    M7 --> F11
+    M8 --> F1
+    M9 --> F5
+    M10 --> F6
+    M11 --> F8
+    M12 --> F15
+    M13 --> F9
+    M14 --> F10
+    M15 --> F12
+    M16 --> F13
+    M17 --> F14
+
+    F1 --> F1
+    F2 --> F2
+    F3 --> F3
+    F4 --> F4
+    F5 --> F5
+    F6 --> F6
+    F7 --> F7
+    F8 --> F8
+    F9 --> F9
+    F10 --> F10
+    F11 --> F11
+    F12 --> F12
+    F13 --> F13
+    F14 --> F14
+    F15 --> F15
+
+    subgraph "Cross-Platform Layer"
+        P1[Windows Support]
+        P2[macOS Support]
+        P3[Linux Support]
+        P4[Hardware Acceleration]
+        P5[Native Integrations]
+    end
+
+    F11 --> P1
+    F11 --> P2
+    F11 --> P3
+    F11 --> P4
+    F11 --> P5
+
+    subgraph "Security & Compliance"
+        SEC1[Zero-Trust Architecture]
+        SEC2[Encryption at Rest/Transit]
+        SEC3[GDPR/CCPA Compliance]
+        SEC4[SOC 2 Type II]
+        SEC5[Audit Logging]
+        SEC6[Vulnerability Scanning]
+    end
+
+    F15 --> SEC1
+    F15 --> SEC2
+    F7 --> SEC3
+    F8 --> SEC4
+    F8 --> SEC5
+    F15 --> SEC6
+
+    subgraph "Performance Optimizations (Q1-Q4 2025)"
+        PERF1[Memory Pooling Rewrite]
+        PERF2[Redis Cache Integration]
+        PERF3[Work-Stealing Schedulers]
+        PERF4[Lazy Service Initialization]
+        PERF5[Parallel Processing Engine]
+        PERF6[Advanced Caching TTL]
+    end
+
+    F2 --> PERF1
+    F10 --> PERF2
+    F4 --> PERF3
+    F13 --> PERF4
+    S1 --> PERF5
+    F10 --> PERF6
+
+    subgraph "Plugin System Architecture"
+        PLUG1[WebAssembly Runtime]
+        PLUG2[Extension APIs]
+        PLUG3[Marketplace Infrastructure]
+        PLUG4[Security Sandboxing]
+        PLUG5[Version Management]
+        PLUG6[Dependency Resolution]
+    end
+
+    F14 --> PLUG1
+    F14 --> PLUG2
+    A3 --> PLUG3
+    F15 --> PLUG4
+    F14 --> PLUG5
+    F13 --> PLUG6

@@ -93,25 +93,52 @@ class PerformanceBenchmarks {
     }
 
     async runRenderBenchmark(benchmark) {
-        // Placeholder for render benchmark implementation
+        // Enhanced render benchmark implementation
         const puppeteer = require('puppeteer');
 
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
         const page = await browser.newPage();
 
+        // Navigate to the application
+        const url = benchmark.config.url || 'http://localhost:8080';
+        await page.goto(url, { waitUntil: 'networkidle0' });
+
         const results = [];
+        const iterations = benchmark.config.iterations || 10;
 
         // Run multiple render cycles
-        for (let i = 0; i < (benchmark.config.iterations || 10); i++) {
-            const startTime = Date.now();
+        for (let i = 0; i < iterations; i++) {
+            const startTime = performance.now();
 
-            // Trigger re-render (would need to be customized based on actual component)
-            await page.evaluate(() => {
-                // Placeholder - would trigger component re-render
+            // Trigger component re-render based on configuration
+            await page.evaluate((config) => {
+                if (config.selector) {
+                    const element = document.querySelector(config.selector);
+                    if (element) {
+                        // Force re-render by toggling visibility or updating content
+                        element.style.display = 'none';
+                        element.offsetHeight; // Force reflow
+                        element.style.display = '';
+                    }
+                }
+                
+                // Trigger React re-render if possible
+                if (window.React && config.reactComponent) {
+                    // Force update React components
+                    const event = new CustomEvent('forceUpdate');
+                    document.dispatchEvent(event);
+                }
+
                 return true;
-            });
+            }, benchmark.config);
 
-            const renderTime = Date.now() - startTime;
+            // Wait for render to complete
+            await page.waitForTimeout(100);
+
+            const renderTime = performance.now() - startTime;
             results.push(renderTime);
         }
 
@@ -123,106 +150,214 @@ class PerformanceBenchmarks {
             results,
             average: results.reduce((a, b) => a + b, 0) / results.length,
             min: Math.min(...results),
-            max: Math.max(...results)
+            max: Math.max(...results),
+            median: results.sort((a, b) => a - b)[Math.floor(results.length / 2)]
         };
     }
 
     async runMemoryBenchmark(benchmark) {
-        // Placeholder for memory benchmark implementation
+        // Enhanced memory benchmark implementation
         const puppeteer = require('puppeteer');
 
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--enable-precise-memory-info']
+        });
         const page = await browser.newPage();
 
+        const url = benchmark.config.url || 'http://localhost:8080';
+        await page.goto(url, { waitUntil: 'networkidle0' });
+
         const memoryReadings = [];
+        const duration = benchmark.config.duration || 30;
 
         // Monitor memory over time
-        for (let i = 0; i < (benchmark.config.duration || 30); i++) {
-            const memory = await page.evaluate(() => {
+        for (let i = 0; i < duration; i++) {
+            const memoryInfo = await page.evaluate(() => {
                 if (window.performance.memory) {
-                    return window.performance.memory.usedJSHeapSize;
+                    return {
+                        used: window.performance.memory.usedJSHeapSize,
+                        total: window.performance.memory.totalJSHeapSize,
+                        limit: window.performance.memory.jsHeapSizeLimit
+                    };
                 }
-                return 0;
+                return { used: 0, total: 0, limit: 0 };
             });
 
-            memoryReadings.push(memory);
+            memoryReadings.push({
+                timestamp: Date.now(),
+                ...memoryInfo
+            });
+
+            // Perform memory-intensive operations if configured
+            if (benchmark.config.stressTest) {
+                await page.evaluate(() => {
+                    // Create and destroy objects to stress memory
+                    const objects = [];
+                    for (let j = 0; j < 1000; j++) {
+                        objects.push({ data: new Array(1000).fill(Math.random()) });
+                    }
+                    // Let GC clean up
+                    objects.length = 0;
+                });
+            }
+
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         await browser.close();
 
+        const usedMemory = memoryReadings.map(r => r.used);
         return {
             success: true,
             type: 'memory',
             readings: memoryReadings,
-            average: memoryReadings.reduce((a, b) => a + b, 0) / memoryReadings.length,
-            growth: memoryReadings[memoryReadings.length - 1] - memoryReadings[0]
+            average: usedMemory.reduce((a, b) => a + b, 0) / usedMemory.length,
+            growth: usedMemory[usedMemory.length - 1] - usedMemory[0],
+            peak: Math.max(...usedMemory),
+            efficiency: memoryReadings[memoryReadings.length - 1].used / memoryReadings[memoryReadings.length - 1].total
         };
     }
 
     async runInteractionBenchmark(benchmark) {
-        // Placeholder for interaction benchmark implementation
+        // Enhanced interaction benchmark implementation
         const puppeteer = require('puppeteer');
 
-        const browser = await puppeteer.launch({ headless: true });
+        const browser = await puppeteer.launch({ 
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
         const page = await browser.newPage();
 
+        const url = benchmark.config.url || 'http://localhost:8080';
+        await page.goto(url, { waitUntil: 'networkidle0' });
+
         const interactionTimes = [];
+        const interactions = benchmark.config.interactions || [
+            { type: 'click', selector: 'button' },
+            { type: 'type', selector: 'input', text: 'test input' },
+            { type: 'scroll', distance: 500 }
+        ];
 
         // Perform interaction sequences
-        const interactions = benchmark.config.interactions || ['click', 'type', 'scroll'];
-
         for (const interaction of interactions) {
-            const startTime = Date.now();
+            const startTime = performance.now();
 
-            switch (interaction) {
-                case 'click':
-                    await page.click('button');
-                    break;
-                case 'type':
-                    await page.type('input', 'test input');
-                    break;
-                case 'scroll':
-                    await page.evaluate(() => window.scrollTo(0, 500));
-                    break;
+            try {
+                switch (interaction.type) {
+                    case 'click':
+                        if (interaction.selector) {
+                            await page.click(interaction.selector);
+                        }
+                        break;
+                    case 'type':
+                        if (interaction.selector) {
+                            await page.type(interaction.selector, interaction.text || 'test');
+                        }
+                        break;
+                    case 'scroll':
+                        await page.evaluate((distance) => {
+                            window.scrollTo(0, distance || 500);
+                        }, interaction.distance);
+                        break;
+                    case 'hover':
+                        if (interaction.selector) {
+                            await page.hover(interaction.selector);
+                        }
+                        break;
+                }
+
+                // Wait for interaction to complete
+                await page.waitForTimeout(100);
+
+                const interactionTime = performance.now() - startTime;
+                interactionTimes.push({
+                    type: interaction.type,
+                    time: interactionTime,
+                    selector: interaction.selector
+                });
+            } catch (error) {
+                interactionTimes.push({
+                    type: interaction.type,
+                    time: -1,
+                    error: error.message
+                });
             }
-
-            const interactionTime = Date.now() - startTime;
-            interactionTimes.push(interactionTime);
         }
 
         await browser.close();
 
+        const validTimes = interactionTimes.filter(t => t.time > 0).map(t => t.time);
         return {
             success: true,
             type: 'interaction',
-            times: interactionTimes,
-            average: interactionTimes.reduce((a, b) => a + b, 0) / interactionTimes.length
+            interactions: interactionTimes,
+            average: validTimes.length > 0 ? validTimes.reduce((a, b) => a + b, 0) / validTimes.length : 0,
+            fastest: validTimes.length > 0 ? Math.min(...validTimes) : 0,
+            slowest: validTimes.length > 0 ? Math.max(...validTimes) : 0
         };
     }
 
     async runCustomBenchmark(benchmark) {
-        // Placeholder for custom benchmark implementation
-        const { execSync } = require('child_process');
+        // Enhanced custom benchmark implementation
+        const { spawn } = require('child_process');
 
-        try {
-            const result = execSync(benchmark.config.command, {
-                encoding: 'utf8',
-                timeout: benchmark.config.timeout || 30000
+        return new Promise((resolve) => {
+            const startTime = Date.now();
+            const command = benchmark.config.command;
+            const args = benchmark.config.args || [];
+            const timeout = benchmark.config.timeout || 30000;
+
+            const process = spawn(command, args, {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout
             });
 
-            return {
-                success: true,
-                type: 'custom',
-                output: result,
-                parsed: this.parseCustomOutput(result, benchmark.config.parser)
-            };
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+            let stdout = '';
+            let stderr = '';
+
+            process.stdout.on('data', (data) => {
+                stdout += data.toString();
+            });
+
+            process.stderr.on('data', (data) => {
+                stderr += data.toString();
+            });
+
+            process.on('close', (code) => {
+                const duration = Date.now() - startTime;
+                
+                resolve({
+                    success: code === 0,
+                    type: 'custom',
+                    exitCode: code,
+                    duration,
+                    stdout,
+                    stderr,
+                    parsed: this.parseCustomOutput(stdout, benchmark.config.parser)
+                });
+            });
+
+            process.on('error', (error) => {
+                resolve({
+                    success: false,
+                    type: 'custom',
+                    error: error.message,
+                    duration: Date.now() - startTime
+                });
+            });
+
+            // Set timeout
+            setTimeout(() => {
+                process.kill('SIGTERM');
+                resolve({
+                    success: false,
+                    type: 'custom',
+                    error: 'Timeout exceeded',
+                    duration: Date.now() - startTime
+                });
+            }, timeout);
+        });
     }
 
     parseCustomOutput(output, parser) {

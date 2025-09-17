@@ -1,13 +1,29 @@
 [package]
 name = "test-performance-analyzer"
-
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
-rust-ai-ide-cargo = { path = "../crates/rust-ai-ide-cargo" }
-tokio = { version = "1.47.1", features = ["full"] }
-anyhow = "1.0.99"
-env_logger = "0.11.8"
-log = "0.4.27"
-# rust-ai-ide-workspace-hack = { path = "../workspace-hack" }
+anyhow.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+tokio = { workspace = true, features = ["full"] }
+tracing.workspace = true
+
+# Performance analysis dependencies
+criterion.workspace = true
+sysinfo.workspace = true
+
+# Shared workspace dependencies
+rust-ai-ide-common = { workspace = true }
+rust-ai-ide-performance = { workspace = true }
+rust-ai-ide-types = { workspace = true }
+
+[dev-dependencies]
+tokio-test.workspace = true

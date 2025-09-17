@@ -26,6 +26,7 @@ rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
 rayon = "1.8"          # For parallel cache operations
 uuid = { version = "1.0", features = ["v4", "serde"] }
 zstd = { version = "0.13", optional = true }  # For compression support
+tempfile.workspace = true
 
 [features]
 persistent = ["sled"]

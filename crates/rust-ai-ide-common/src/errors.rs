@@ -189,6 +189,12 @@ impl From<tokio::time::error::Elapsed> for IdeError {
     }
 }
 
+impl From<String> for IdeError {
+    fn from(message: String) -> Self {
+        IdeError::Generic { message }
+    }
+}
+
 /// Generic conversion from any error to IdeError
 pub fn convert_error<E: std::error::Error>(err: E) -> IdeError {
     IdeError::Generic {

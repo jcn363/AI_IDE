@@ -508,11 +508,8 @@ impl MarketplaceClient {
     }
 }
 
-impl Default for MarketplaceClient {
-    fn default() -> Self {
-        panic!("MarketplaceClient requires a PluginRegistry");
-    }
-}
+// MarketplaceClient intentionally does not implement Default
+// Use MarketplaceClient::new(registry) instead
 
 #[cfg(test)]
 mod tests {

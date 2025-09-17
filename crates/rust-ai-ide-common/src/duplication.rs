@@ -351,8 +351,10 @@ pub struct ModuleDuplicationStats {{
 impl {} {{
     /// Check module for potential duplications
     pub fn check_duplications(&self) -> Result<Vec<DuplicationResult>, String> {{
-        // Implementation would call rust_ai_ide_common::duplication::detect_duplications
-        unimplemented!("Duplication detection not implemented yet")
+        // TODO: Implement duplication detection algorithm
+        // For now, return empty results to prevent runtime panics
+        tracing::warn!("Duplication detection not yet implemented");
+        Ok(Vec::new())
     }}
 }}
 "#,
@@ -395,7 +397,10 @@ pub fn {}( {} ) -> Result<(), IdeError> {{
     // 3. Follow logging patterns if needed
     // 4. Consider performance implications
 
-    unimplemented!("Implementation pending duplication check")
+    // TODO: Implement function body generation with duplication prevention
+    // For now, return a basic implementation placeholder
+    tracing::warn!("Safe function template generation not yet implemented");
+    "    // Implementation pending - duplication check required\n    todo!(\"Implement function body\")"
 }}"#,
         format!("/// * `{}` - Description", param_count),
         function_name,

@@ -15,6 +15,7 @@ pub use futures::Future;
 pub use rust_ai_ide_errors::{IDEResult, RustAIError};
 
 // Re-export zero-copy modules
+pub mod async_io_optimizer;
 pub mod zero_copy;
 use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::sync::Arc;

@@ -9,8 +9,10 @@ import {
   Typography,
 } from '@mui/material';
 import React from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import Editor, { type EditorProps } from '@monaco-editor/react';
+
+// Create a typed version of the Editor component
+const EditorComponent = Editor as unknown as React.FC<EditorProps>;
 import { useAIAssistant } from '../hooks/useAIAssistant';
 
 interface AIOutputViewerProps {
@@ -74,18 +76,29 @@ const AIOutputViewer: React.FC<AIOutputViewerProps> = ({ onClose, maxHeight = '3
         <Box
           sx={{
             position: 'relative',
-            '& pre': {
-              margin: 0,
-              padding: '16px !important',
-              borderRadius: '4px',
-              maxHeight,
-              overflow: 'auto',
-            },
+            height: maxHeight,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            overflow: 'hidden',
           }}
         >
-          <SyntaxHighlighter language="rust" style={vscDarkPlus} showLineNumbers wrapLines>
-            {generatedContent}
-          </SyntaxHighlighter>
+          <EditorComponent
+            height="100%"
+            defaultLanguage="rust"
+            value={generatedContent}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              fontSize: 14,
+              wordWrap: 'on',
+              lineNumbers: 'on',
+              renderLineHighlight: 'all',
+              automaticLayout: true,
+              theme: 'vs-dark',
+            }}
+          />
         </Box>
       );
     }

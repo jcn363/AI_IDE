@@ -1,5 +1,5 @@
 import { axe, toHaveNoViolations } from '@axe-core/react';
-import { expect } from 'vitest';
+import { expect } from '@jest/globals';
 
 // Add custom matcher
 expect.extend(toHaveNoViolations);

@@ -716,7 +716,10 @@ mod tests {
                 assert!(model_client.api_key.is_none());
                 assert_eq!(model_client.request_timeout, Duration::from_secs(30));
             }
-            Err(e) => panic!("Failed to create ModelClient: {:?}", e),
+            Err(e) => {
+                eprintln!("Failed to create ModelClient: {:?}", e);
+                assert!(false, "ModelClient creation should succeed");
+            }
         }
     }
 
@@ -962,7 +965,7 @@ mod tests {
             assert_eq!(sugs.len(), 2);
             assert_eq!(sugs[0], "suggestion1");
         } else {
-            panic!("Suggestions should be present");
+            assert!(false, "Suggestions should be present in test result");
         }
         assert_eq!(result.usage.total_tokens, 30);
     }

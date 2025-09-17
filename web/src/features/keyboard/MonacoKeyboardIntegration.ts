@@ -49,21 +49,36 @@ export class MonacoKeyboardIntegrationImpl implements MonacoKeyboardIntegration 
     }
   }
 
-  updateMonacoKeybindings(editor: monaco.editor.IStandaloneCodeEditor): void {
+  updateMonacoKeybindings(editor: monaco.editor.IStandaloneCodeEditor, actions?: ShortcutAction[]): void {
     // Clear all existing bindings
     this.editorKeybindings.forEach((bindings) => {
       bindings.forEach((binding) => binding.dispose());
     });
     this.editorKeybindings.clear();
 
-    // TODO: Re-register all actions with current shortcuts
-    // This would require access to the registered actions from KeyboardService
+    // Re-register all actions with current shortcuts
+    if (actions) {
+      actions.forEach((action) => {
+        this.registerMonacoAction(editor, action);
+      });
+    }
   }
 
   private getKeysFromShortcut(action: ShortcutAction): KeyCombination[] {
-    // This would typically come from KeyboardService, but we don't have access here
-    // For now, return empty array
-    return [];
+    // Return default key combinations based on action context and name
+    const defaultBindings: Record<string, KeyCombination[]> = {
+      'save': [{ key: 's', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'copy': [{ key: 'c', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'paste': [{ key: 'v', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'cut': [{ key: 'x', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'undo': [{ key: 'z', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'redo': [{ key: 'y', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'find': [{ key: 'f', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+      'replace': [{ key: 'h', ctrlKey: true, altKey: false, shiftKey: false, metaKey: false }],
+    };
+
+    const actionKey = action.id.toLowerCase();
+    return defaultBindings[actionKey] || [];
   }
 
   private keyCombinationToMonacoKey(combo: KeyCombination): number | null {

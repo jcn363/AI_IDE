@@ -19,14 +19,14 @@ pub enum StorageBackend {
 
 /// File-based storage backend
 pub struct FileStorage<K, V> {
-    path: std::path::PathBuf,
+    _path: std::path::PathBuf,
     _phantom: std::marker::PhantomData<(K, V)>,
 }
 
 impl<K, V> FileStorage<K, V> {
     pub fn new(path: std::path::PathBuf) -> Self {
         Self {
-            path,
+            _path: path,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -166,7 +166,7 @@ where
             // Fallback to persistent storage
             match &self.storage_backend {
                 StorageBackend::Memory => Ok(None),
-                StorageBackend::File(path) => {
+                StorageBackend::File(_path) => {
                     // File-based loading would be implemented here
                     Ok(None)
                 }
@@ -191,7 +191,7 @@ where
         // Also store in persistent backend if configured
         match &self.storage_backend {
             StorageBackend::Memory => {}
-            StorageBackend::File(path) => {
+            StorageBackend::File(_path) => {
                 // File-based saving would be implemented here
             }
             #[cfg(feature = "persistent")]

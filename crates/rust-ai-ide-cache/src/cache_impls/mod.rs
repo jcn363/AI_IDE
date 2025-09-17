@@ -7,7 +7,7 @@ pub mod in_memory;
 pub mod redis;
 
 // Include implementation details
-mod in_memory_impl;
+pub mod in_memory_impl;
 
 // Re-exports for convenience
 pub use distributed_work_stealing::{

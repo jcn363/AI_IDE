@@ -3,7 +3,7 @@
 //! This module provides Redis-backed cache implementations with support for:
 //! - Single Redis instance caching
 //! - Redis Cluster for distributed caching with high availability
-//! - Connection pooling with bb8
+//! - Connection pooling with bb8-redis
 //! - Async operations with tokio
 //! - Automatic failover and resilience
 
@@ -14,7 +14,8 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
-use crate::{key_utils, Cache, CacheConfig, CacheEntry, CacheStats, IDEResult};
+use crate::{Cache, CacheEntry, CacheStats, IDEResult};
+use rust_ai_ide_errors;
 
 /// Redis connection configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,101 +87,48 @@ impl RedisConfig {
     }
 }
 
-/// Redis connection manager trait
-#[async_trait]
-trait RedisConnection: Send + Sync {
-    /// Execute a Redis operation with automatic retry and error handling
-    async fn execute<'a, F, Fut, T>(&self, operation: F) -> IDEResult<T>
-    where
-        F: FnOnce(&mut redis::Connection) -> Fut + Send,
-        Fut: std::future::Future<Output = redis::RedisResult<T>> + Send,
-        T: Send;
-
-    /// Check if the connection is healthy
-    async fn health_check(&self) -> bool;
+/// Redis connection manager types
+#[derive(Clone)]
+enum RedisConnectionManager {
+    Single(bb8::Pool<bb8_redis::RedisConnectionManager>),
+    #[cfg(feature = "redis-cluster")]
+    Cluster(redis::cluster::ClusterClient),
 }
 
 #[cfg(feature = "redis")]
-/// Single Redis instance implementation
-struct RedisConnectionImpl {
-    pool: bb8_redis::RedisConnectionManager,
-    pool_handle: bb8::Pool<bb8_redis::RedisConnectionManager>,
-}
-
-#[cfg(feature = "redis")]
-impl RedisConnectionImpl {
-    async fn new(config: &RedisConfig) -> IDEResult<Self> {
+impl RedisConnectionManager {
+    async fn new_single(config: &RedisConfig) -> IDEResult<Self> {
         let url = config.urls.first().ok_or_else(|| {
-            crate::IDEError::ConfigurationError("No Redis URL provided".to_string())
+            rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new("No Redis URL provided"))
         })?;
 
-        let manager = bb8_redis::RedisConnectionManager::new(url.clone()).map_err(|e| {
-            crate::IDEError::ConfigurationError(format!("Redis connection error: {}", e))
-        })?;
+        let manager = bb8_redis::RedisConnectionManager::new(url.clone())
+            .map_err(|e| {
+                rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(format!("Redis connection manager error: {}", e)))
+            })?;
 
-        let pool = bb8::Pool::builder()
+        let mut pool_builder = bb8::Pool::builder()
             .max_size(config.pool_max_size)
-            .min_idle(config.pool_min_idle)
-            .connection_timeout(Duration::from_secs(config.connection_timeout_secs))
+            .min_idle(Some(config.pool_min_idle));
+
+        if config.connection_timeout_secs > 0 {
+            pool_builder = pool_builder.connection_timeout(Duration::from_secs(config.connection_timeout_secs));
+        }
+
+        let pool = pool_builder
             .build(manager)
             .await
             .map_err(|e| {
-                crate::IDEError::ConfigurationError(format!("Redis pool creation error: {}", e))
+                rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(format!("Redis pool creation error: {}", e)))
             })?;
 
-        Ok(Self {
-            pool: manager,
-            pool_handle: pool,
-        })
+        Ok(Self::Single(pool))
     }
 }
 
-#[cfg(feature = "redis")]
-#[async_trait]
-impl RedisConnection for RedisConnectionImpl {
-    async fn execute<'a, F, Fut, T>(&self, operation: F) -> IDEResult<T>
-    where
-        F: FnOnce(&mut redis::Connection) -> Fut + Send,
-        Fut: std::future::Future<Output = redis::RedisResult<T>> + Send,
-        T: Send,
-    {
-        let mut conn =
-            self.pool_handle.get().await.map_err(|e| {
-                crate::IDEError::CacheError(format!("Redis connection error: {}", e))
-            })?;
-
-        let result = tokio::time::timeout(
-            Duration::from_secs(10), // Use default operation timeout
-            operation(&mut *conn),
-        )
-        .await
-        .map_err(|_| crate::IDEError::CacheError("Redis operation timeout".to_string()))?
-        .map_err(|e| crate::IDEError::CacheError(format!("Redis operation error: {}", e)))?;
-
-        Ok(result)
-    }
-
-    async fn health_check(&self) -> bool {
-        let result = self.pool_handle.get().await;
-        match result {
-            Ok(mut conn) => {
-                let check: redis::RedisResult<String> = redis::cmd("PING").query(&mut *conn);
-                check.is_ok()
-            }
-            Err(_) => false,
-        }
-    }
-}
-
-#[cfg(feature = "redis")]
-/// Redis cluster connection implementation
-struct RedisClusterConnectionImpl {
-    client: redis::cluster::ClusterClient,
-}
-
-#[cfg(feature = "redis")]
-impl RedisClusterConnectionImpl {
-    async fn new(config: &RedisConfig) -> IDEResult<Self> {
+#[cfg(feature = "redis-cluster")]
+impl RedisConnectionManager {
+    async fn new_cluster(config: &RedisConfig) -> IDEResult<Self> {
         let mut client_builder = redis::cluster::ClusterClientBuilder::new(config.urls.clone());
 
         if let Some(ref password) = config.password {
@@ -188,44 +136,67 @@ impl RedisClusterConnectionImpl {
         }
 
         let client = client_builder.build().map_err(|e| {
-            crate::IDEError::ConfigurationError(format!("Redis cluster client error: {}", e))
+            rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(format!("Redis cluster client error: {}", e)))
         })?;
 
-        Ok(Self { client })
+        Ok(Self::Cluster(client))
     }
 }
 
-#[async_trait]
-impl RedisConnection for RedisClusterConnectionImpl {
-    async fn execute<'a, F, Fut, T>(&self, operation: F) -> IDEResult<T>
+impl RedisConnectionManager {
+    async fn execute<F, Fut, T>(&self, operation: F) -> IDEResult<T>
     where
-        F: FnOnce(&mut redis::Connection) -> Fut + Send,
+        F: FnOnce(redis::aio::MultiplexedConnection) -> Fut + Send,
         Fut: std::future::Future<Output = redis::RedisResult<T>> + Send,
         T: Send,
     {
-        let mut conn = self.client.get_connection().map_err(|e| {
-            crate::IDEError::CacheError(format!("Redis cluster connection error: {}", e))
-        })?;
+        match self {
+            Self::Single(pool) => {
+                let conn = pool.get().await.map_err(|e| {
+                    rust_ai_ide_errors::RustAIError::Network(format!("Redis connection pool error: {}", e))
+                })?;
 
-        let result = tokio::time::timeout(Duration::from_secs(10), operation(&mut conn))
-            .await
-            .map_err(|_| {
-                crate::IDEError::CacheError("Redis cluster operation timeout".to_string())
-            })?
-            .map_err(|e| {
-                crate::IDEError::CacheError(format!("Redis cluster operation error: {}", e))
-            })?;
+                let result = tokio::time::timeout(
+                    Duration::from_secs(10), // Use default operation timeout
+                    operation(conn),
+                )
+                .await
+                .map_err(|_| rust_ai_ide_errors::RustAIError::Timeout("Redis operation timeout".to_string()))?
+                .map_err(|e| rust_ai_ide_errors::RustAIError::Network(format!("Redis operation error: {}", e)))?;
 
-        Ok(result)
+                Ok(result)
+            }
+            #[cfg(feature = "redis-cluster")]
+            Self::Cluster(client) => {
+                let conn = client.get_async_connection().await.map_err(|e| {
+                    rust_ai_ide_errors::RustAIError::Network(format!("Redis cluster connection error: {}", e))
+                })?;
+
+                let result = tokio::time::timeout(
+                    Duration::from_secs(10),
+                    operation(conn),
+                )
+                .await
+                .map_err(|_| rust_ai_ide_errors::RustAIError::Timeout("Redis cluster operation timeout".to_string()))?
+                .map_err(|e| rust_ai_ide_errors::RustAIError::Network(format!("Redis cluster operation error: {}", e)))?;
+
+                Ok(result)
+            }
+        }
     }
 
     async fn health_check(&self) -> bool {
-        match self.client.get_connection() {
-            Ok(mut conn) => {
-                let check: redis::RedisResult<String> = redis::cmd("PING").query(&mut conn);
-                check.is_ok()
-            }
-            Err(_) => false,
+        let result = match self {
+            Self::Single(pool) => pool.get().await.ok(),
+            #[cfg(feature = "redis-cluster")]
+            Self::Cluster(client) => client.get_async_connection().await.ok(),
+        };
+
+        if let Some(conn) = result {
+            let check: redis::RedisResult<String> = redis::cmd("PING").query_async(&mut *conn).await;
+            check.is_ok()
+        } else {
+            false
         }
     }
 }
@@ -233,29 +204,41 @@ impl RedisConnection for RedisClusterConnectionImpl {
 /// Redis-backed cache implementation
 pub struct RedisCache<K, V> {
     config: RedisConfig,
-    connection: Box<dyn RedisConnection>,
+    connection_manager: RedisConnectionManager,
     cache_stats: tokio::sync::RwLock<CacheStats>,
 }
 
 impl<K, V> RedisCache<K, V> {
     /// Create a new Redis cache instance
-    pub fn new(config: RedisConfig) -> IDEResult<Self> {
+    pub async fn new(config: RedisConfig) -> IDEResult<Self> {
         // Validate configuration
         if config.urls.is_empty() {
-            return Err(crate::IDEError::ConfigurationError(
-                "No Redis URLs provided".to_string(),
-            ));
+            return Err(rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new("No Redis URLs provided")));
         }
 
-        // Create appropriate connection based on configuration
-        let connection: Box<dyn RedisConnection> = if config.enable_cluster {
-            Box::new(RedisConnectionImpl::new(&config).map_err(|e| {
-                crate::IDEError::ConfigurationError(format!("Redis connection error: {:?}", e))
-            })?)
+        // Create appropriate connection manager based on configuration
+        let connection_manager = if config.enable_cluster {
+            #[cfg(not(feature = "redis-cluster"))]
+            {
+                return Err(rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
+                    "Redis cluster support not enabled. Enable 'redis-cluster' feature",
+                )));
+            }
+            #[cfg(feature = "redis-cluster")]
+            {
+                RedisConnectionManager::new_cluster(&config).await?
+            }
         } else {
-            Box::new(RedisConnectionImpl::new(&config).map_err(|e| {
-                crate::IDEError::ConfigurationError(format!("Redis connection error: {:?}", e))
-            })?)
+            #[cfg(not(feature = "redis"))]
+            {
+                return Err(rust_ai_ide_errors::RustAIError::Config(rust_ai_ide_errors::ConfigError::new(
+                    "Redis support not enabled. Enable 'redis-backend' feature",
+                )));
+            }
+            #[cfg(feature = "redis")]
+            {
+                RedisConnectionManager::new_single(&config).await?
+            }
         };
 
         let stats = CacheStats {
@@ -265,7 +248,7 @@ impl<K, V> RedisCache<K, V> {
 
         Ok(Self {
             config,
-            connection,
+            connection_manager,
             cache_stats: tokio::sync::RwLock::new(stats),
         })
     }
@@ -273,7 +256,7 @@ impl<K, V> RedisCache<K, V> {
     /// Generate namespaced cache key
     fn make_key(&self, key: &K) -> String
     where
-        K: Serialize,
+        K: Serialize + Debug,
     {
         let key_str = serde_json::to_string(key).unwrap_or_else(|_| format!("{:?}", key));
         format!("{}:{}", self.config.key_prefix, key_str)
@@ -285,24 +268,24 @@ impl<K, V> RedisCache<K, V> {
         V: Serialize,
     {
         serde_json::to_string(entry)
-            .map_err(|e| crate::IDEError::CacheError(format!("Serialization error: {}", e)))
+            .map_err(|e| rust_ai_ide_errors::RustAIError::Serialization(format!("Serialization error: {}", e)))
     }
 
     /// Deserialize cache entry from Redis format
     fn deserialize_entry(&self, data: &str) -> IDEResult<CacheEntry<V>>
     where
-        V: for<'de> Deserialize<'de>,
+        for<'de> V: Deserialize<'de>,
     {
         serde_json::from_str(data)
-            .map_err(|e| crate::IDEError::CacheError(format!("Deserialization error: {}", e)))
+            .map_err(|e| rust_ai_ide_errors::RustAIError::Serialization(format!("Deserialization error: {}", e)))
     }
 }
 
 #[async_trait]
 impl<K, V> Cache<K, V> for RedisCache<K, V>
 where
-    K: Send + Sync + Clone + std::hash::Hash + Eq + Serialize + Debug,
-    V: Send + Sync + Clone + Serialize + Debug,
+    K: Send + Sync + Clone + std::hash::Hash + Eq + Serialize + Debug + 'static,
+    V: Send + Sync + Clone + Serialize + Debug + 'static,
     for<'de> V: Deserialize<'de>,
 {
     async fn get(&self, key: &K) -> IDEResult<Option<V>> {
@@ -310,10 +293,8 @@ where
         let mut stats = self.cache_stats.write().await;
 
         let result: IDEResult<Option<String>> = self
-            .connection
-            .execute(
-                |conn| async move { redis::cmd("GET").arg(&cache_key).query_async(conn).await },
-            )
+            .connection_manager
+            .execute(|mut conn| async move { redis::cmd("GET").arg(&cache_key).query_async(&mut conn).await })
             .await;
 
         match result {
@@ -323,9 +304,9 @@ where
                         if entry.is_expired() {
                             // Remove expired entry
                             let _: IDEResult<()> = self
-                                .connection
-                                .execute(|conn| async move {
-                                    redis::cmd("DEL").arg(&cache_key).query_async(conn).await
+                                .connection_manager
+                                .execute(|mut conn| async move {
+                                    redis::cmd("DEL").arg(&cache_key).query_async(&mut conn).await
                                 })
                                 .await;
                             stats.record_miss();
@@ -333,26 +314,15 @@ where
                             Ok(None)
                         } else {
                             stats.record_hit();
-                            // Update last access time (could be optimized)
-                            let _ = self
-                                .connection
-                                .execute(|conn| async move {
-                                    redis::cmd("PEXPIRE")
-                                        .arg(&cache_key)
-                                        .arg(3600000)
-                                        .query_async(conn)
-                                        .await
-                                })
-                                .await;
                             Ok(Some(entry.value))
                         }
                     }
                     Err(_) => {
                         // Invalid data, remove it
                         let _: IDEResult<()> = self
-                            .connection
-                            .execute(|conn| async move {
-                                redis::cmd("DEL").arg(&cache_key).query_async(conn).await
+                            .connection_manager
+                            .execute(|mut conn| async move {
+                                redis::cmd("DEL").arg(&cache_key).query_async(&mut conn).await
                             })
                             .await;
                         stats.record_miss();
@@ -379,23 +349,23 @@ where
         let mut stats = self.cache_stats.write().await;
 
         let result: IDEResult<()> = if let Some(ttl_duration) = ttl {
-            self.connection
-                .execute(|conn| async move {
+            self.connection_manager
+                .execute(|mut conn| async move {
                     redis::cmd("SETEX")
                         .arg(&cache_key)
                         .arg(ttl_duration.as_secs() as i32)
                         .arg(&serialized)
-                        .query_async(conn)
+                        .query_async(&mut conn)
                         .await
                 })
                 .await
         } else {
-            self.connection
-                .execute(|conn| async move {
+            self.connection_manager
+                .execute(|mut conn| async move {
                     redis::cmd("SET")
                         .arg(&cache_key)
                         .arg(&serialized)
-                        .query_async(conn)
+                        .query_async(&mut conn)
                         .await
                 })
                 .await
@@ -415,10 +385,8 @@ where
 
         // First try to get the value before deleting
         let get_result: IDEResult<Option<String>> = self
-            .connection
-            .execute(
-                |conn| async move { redis::cmd("GETDEL").arg(&cache_key).query_async(conn).await },
-            )
+            .connection_manager
+            .execute(|mut conn| async move { redis::cmd("GETDEL").arg(&cache_key).query_async(&mut conn).await })
             .await;
 
         match get_result {
@@ -439,11 +407,11 @@ where
         // This is a simplified implementation
         // In production, you might want to use SCAN for safety
         let result: IDEResult<()> = self
-            .connection
-            .execute(|conn| async move {
-                let keys: Vec<String> = redis::cmd("KEYS").arg(&pattern).query_async(conn).await?;
+            .connection_manager
+            .execute(|mut conn| async move {
+                let keys: Vec<String> = redis::cmd("KEYS").arg(&pattern).query_async(&mut conn).await?;
                 if !keys.is_empty() {
-                    redis::cmd("DEL").arg(keys).query_async(conn).await?;
+                    redis::cmd("DEL").arg(keys).query_async::<_, ()>(&mut conn).await?;
                 }
                 Ok(())
             })
@@ -461,9 +429,9 @@ where
         let pattern = format!("{}:*", self.config.key_prefix);
 
         let result: IDEResult<Option<u32>> = self
-            .connection
-            .execute(|conn| async move {
-                let keys: Vec<String> = redis::cmd("KEYS").arg(&pattern).query_async(conn).await?;
+            .connection_manager
+            .execute(|mut conn| async move {
+                let keys: Vec<String> = redis::cmd("KEYS").arg(&pattern).query_async(&mut conn).await?;
                 Ok(Some(keys.len() as u32))
             })
             .await;
@@ -478,10 +446,8 @@ where
         let cache_key = self.make_key(key);
 
         let result: IDEResult<Option<i32>> = self
-            .connection
-            .execute(
-                |conn| async move { redis::cmd("EXISTS").arg(&cache_key).query_async(conn).await },
-            )
+            .connection_manager
+            .execute(|mut conn| async move { redis::cmd("EXISTS").arg(&cache_key).query_async(&mut conn).await })
             .await;
 
         matches!(result, Ok(Some(count)) if count > 0)

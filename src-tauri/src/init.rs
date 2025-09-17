@@ -138,10 +138,78 @@ pub async fn initialize_lsp_service(state: &AppState) -> Result<(), String> {
 pub async fn initialize_file_watcher_service(state: &AppState) -> Result<(), String> {
     log::info!("Initializing file watcher service");
 
-    // TODO: Implement file watcher initialization
-    // For now, just log success
-    log::debug!("File watcher service initialization placeholder");
+    // Get the app handle to pass to file watcher
+    let app_handle = state.get_app_handle()
+        .ok_or_else(|| "App handle not available for file watcher initialization".to_string())?;
 
+    // Get current workspace path for watching
+    let workspace_path = dirs::home_dir()
+        .ok_or_else(|| "Unable to get home directory".to_string())?
+        .join("Desktop")
+        .join("RUST_AI_IDE");
+
+    // Create file watcher
+    let file_watcher = crate::file_watcher::FileWatcher::new(workspace_path, app_handle)
+        .map_err(|e| format!("Failed to create file watcher: {}", e))?;
+
+    // Store file watcher in state
+    state.set_file_watcher(file_watcher).await;
+
+    log::info!("File watcher service initialized successfully");
+    Ok(())
+}
+/// Initialize webhook system on startup
+pub async fn initialize_webhook_system(state: &AppState) -> Result<(), String> {
+    log::info!("Initializing webhook system on port 3000");
+
+    let webhook_server = rust_ai_ide_webhooks::WebhookServer::new(3000).await
+        .map_err(|e| format!("Failed to create webhook server: {}", e))?;
+
+    // Spawn the webhook server as a background task
+    tokio::spawn(async move {
+        if let Err(e) = webhook_server.start().await {
+            log::error!("Failed to start webhook server: {}", e);
+        }
+    });
+
+    log::info!("Webhook system initialized successfully on port 3000");
+    Ok(())
+}
+
+/// Initialize monitoring metrics collection
+pub async fn initialize_monitoring_metrics(state: &AppState) -> Result<(), String> {
+    log::info!("Initializing monitoring metrics collection");
+
+    // Start performance monitoring in background
+    {
+        // Initialize performance metrics collection
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(60)); // Every minute
+            loop {
+                interval.tick().await;
+
+                // Collect system metrics
+                if let Ok(metrics) = crate::commands::performance::collect_system_metrics().await {
+                    log::debug!("Collected system metrics: {:?}", metrics);
+                    // In a real implementation, these would be sent to monitoring system
+                }
+
+                // Collect memory usage
+                if let Ok(memory_stats) = crate::commands::performance::collect_memory_stats().await {
+                    log::debug!("Collected memory stats: {:?}", memory_stats);
+                }
+
+                // Collect performance benchmarks
+                if let Ok(benchmarks) = crate::commands::performance::collect_performance_benchmarks().await {
+                    log::debug!("Collected performance benchmarks: {:?}", benchmarks);
+                }
+            }
+        });
+
+        // Note: event_bus and rate_limiter are already initialized in the AppState constructor
+    }
+
+    log::info!("Monitoring metrics collection initialized successfully");
     Ok(())
 }
 
@@ -164,6 +232,18 @@ pub async fn initialize_application(state: &AppState) -> Result<(), String> {
     // Initialize file watcher service
     if let Err(e) = initialize_file_watcher_service(state).await {
         log::error!("Failed to initialize file watcher service: {}", e);
+        // Continue with other initializations
+    }
+
+    // Initialize webhook system
+    if let Err(e) = initialize_webhook_system(state).await {
+        log::error!("Failed to initialize webhook system: {}", e);
+        // Continue with other initializations
+    }
+
+    // Initialize monitoring metrics collection
+    if let Err(e) = initialize_monitoring_metrics(state).await {
+        log::error!("Failed to initialize monitoring metrics: {}", e);
         // Continue with other initializations
     }
 

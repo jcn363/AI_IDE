@@ -14,6 +14,7 @@ use tokio::fs;
 use tokio::io::AsyncWriteExt;
 
 use crate::errors::IdeError;
+use crate::platform::{normalize_path_separators, Platform, PlatformFileSystem, PlatformMemoryHints};
 
 /// ===== FILE EXISTENCE AND BASIC CHECKS =====
 
@@ -377,7 +378,7 @@ pub fn relative_path_from<P: AsRef<Path>, Q: AsRef<Path>>(base: P, target: Q) ->
 
 /// Ensure path has consistent separators for the platform
 pub fn ensure_platform_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    path.as_ref().to_path_buf()
+    normalize_path_separators(path)
 }
 
 /// Merge two paths without panic
@@ -525,6 +526,193 @@ where
     }
 
     Ok(())
+}
+
+/// ===== CROSS-PLATFORM FILE SYSTEM MANAGER =====
+
+/// Cross-platform file system manager that handles platform differences
+pub struct CrossPlatformFileSystem;
+
+impl CrossPlatformFileSystem {
+    /// Create platform-optimized file with appropriate buffer sizes
+    pub async fn create_optimized_file<P: AsRef<Path>>(
+        path: P,
+        content: &[u8],
+    ) -> Result<(), IdeError> {
+        let buffer_size = PlatformFileSystem::optimal_buffer_size();
+        let path = path.as_ref();
+
+        if content.len() > buffer_size {
+            // For large files, use streaming approach
+            Self::write_large_file(path, content).await
+        } else {
+            // For small files, use standard approach
+            write_bytes_to_file(path, content).await
+        }
+    }
+
+    /// Optimized writing for large files using platform-specific buffer sizes
+    async fn write_large_file(path: &Path, content: &[u8]) -> Result<(), IdeError> {
+        use tokio::io::AsyncWriteExt;
+
+        let temp_path = path.with_extension("tmp");
+        let buffer_size = PlatformFileSystem::optimal_buffer_size();
+
+        {
+            let mut file = fs::File::create(&temp_path).await.map_err(|e| IdeError::Io {
+                message: format!("Failed to create temp file: {}", e),
+            })?;
+
+            for chunk in content.chunks(buffer_size) {
+                file.write_all(chunk).await.map_err(|e| IdeError::Io {
+                    message: format!("Failed to write chunk: {}", e),
+                })?;
+            }
+
+            file.flush().await.map_err(|e| IdeError::Io {
+                message: format!("Failed to flush file: {}", e),
+            })?;
+        }
+
+        // Atomic rename
+        fs::rename(&temp_path, path).await.map_err(|e| IdeError::Io {
+            message: format!("Failed to rename temp file: {}", e),
+        })?;
+
+        Ok(())
+    }
+
+    /// Cross-platform secure file deletion with platform-specific handling
+    pub async fn secure_delete<P: AsRef<Path>>(path: P) -> Result<(), IdeError> {
+        let path = path.as_ref();
+
+        #[cfg(target_os = "windows")]
+        {
+            // On Windows, use secure deletion if available
+            if let Ok(()) = Self::secure_delete_windows(path).await {
+                return Ok(());
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            // On macOS, use srm or secure deletion
+            if let Ok(()) = Self::secure_delete_unix(path, "srm").await {
+                return Ok(());
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            // On Linux, use shred or secure deletion
+            if let Ok(()) = Self::secure_delete_unix(path, "shred").await {
+                return Ok(());
+            }
+        }
+
+        // Fallback to regular deletion
+        remove_file(path).await
+    }
+
+    #[cfg(target_os = "windows")]
+    async fn secure_delete_windows(path: &Path) -> Result<(), IdeError> {
+        use tokio::process::Command;
+
+        let output = Command::new("cipher")
+            .args(&["/w", &path.to_string_lossy()])
+            .output()
+            .await
+            .map_err(|e| IdeError::Io {
+                message: format!("Failed to run cipher: {}", e),
+            })?;
+
+        if output.status.success() {
+            remove_file(path).await
+        } else {
+            Err(IdeError::Io {
+                message: "Secure deletion failed".to_string(),
+            })
+        }
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    async fn secure_delete_unix(path: &Path, command: &str) -> Result<(), IdeError> {
+        use tokio::process::Command;
+
+        let output = Command::new(command)
+            .args(&["-u", &path.to_string_lossy()])
+            .output()
+            .await
+            .map_err(|e| IdeError::Io {
+                message: format!("Failed to run {}: {}", command, e),
+            })?;
+
+        if output.status.success() {
+            Ok(())
+        } else {
+            Err(IdeError::Io {
+                message: format!("Secure deletion with {} failed", command),
+            })
+        }
+    }
+
+    /// Get platform-specific user directories
+    pub fn get_user_dirs() -> UserDirectories {
+        UserDirectories {
+            home: Platform::get_user_home_dir().unwrap_or_else(|_| PathBuf::from("/tmp")),
+            config: Platform::get_app_data_dir("rust-ai-ide").unwrap_or_else(|_| PathBuf::from("/tmp")),
+            cache: Platform::get_cache_dir("rust-ai-ide").unwrap_or_else(|_| PathBuf::from("/tmp")),
+            temp: Platform::get_temp_dir(),
+        }
+    }
+
+    /// Check if path is valid for current platform and security constraints
+    pub fn validate_path_security<P: AsRef<Path>>(path: P) -> Result<(), IdeError> {
+        use crate::platform::is_valid_path;
+
+        let path = path.as_ref();
+
+        if !is_valid_path(path) {
+            return Err(IdeError::Validation {
+                field: "path".to_string(),
+                reason: format!("Path contains invalid characters for platform: {:?}", path),
+            });
+        }
+
+        // Check for path traversal attempts
+        if path.to_string_lossy().contains("..") {
+            return Err(IdeError::Security {
+                reason: "Path traversal attempt detected".to_string(),
+            });
+        }
+
+        Ok(())
+    }
+}
+
+/// Platform-specific user directory structure
+pub struct UserDirectories {
+    pub home: PathBuf,
+    pub config: PathBuf,
+    pub cache: PathBuf,
+    pub temp: PathBuf,
+}
+
+impl UserDirectories {
+    /// Get the platform-specific config file path for an application
+    pub fn config_file(&self, app_name: &str, filename: &str) -> PathBuf {
+        self.config.join(app_name).join(filename)
+    }
+
+    /// Get the platform-specific cache file path
+    pub fn cache_file(&self, app_name: &str, filename: &str) -> PathBuf {
+        self.cache.join(app_name).join(filename)
+    }
+
+    /// Get the platform-specific temp file path
+    pub fn temp_file(&self, app_name: &str, filename: &str) -> PathBuf {
+        self.temp.join(format!("{}_{}", app_name, filename))
+    }
 }
 
 /// ===== TESTS =====

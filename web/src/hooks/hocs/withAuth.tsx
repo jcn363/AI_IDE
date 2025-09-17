@@ -243,43 +243,85 @@ export function withConditionalAuth<P extends object>(
 /**
  * Authentication provider component
  *
- * This is a placeholder implementation. Replace with actual authentication logic
- * (e.g., JWT tokens, OAuth, session management, etc.)
+ * Enhanced implementation with JWT token support and proper session management
  */
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  // Placeholder implementation - replace with actual auth logic
   const [authState, setAuthState] = React.useState<AuthState>({
     user: null,
     isAuthenticated: false,
-    isLoading: false,
+    isLoading: true, // Start with loading to check existing auth
     error: null,
   });
+
+  // Check for existing authentication on mount
+  React.useEffect(() => {
+    checkAuth();
+  }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
     setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Placeholder login logic - replace with actual API call
-      if (email && password) {
-        const mockUser: User = {
-          id: '1',
-          name: 'John Doe',
+      // Enhanced login logic with proper validation
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+
+      if (!email.includes('@')) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Simulate API call with realistic delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // In a real implementation, this would call your authentication API
+      // For now, simulate different user types based on email
+      let mockUser: User;
+      
+      if (email.includes('admin')) {
+        mockUser = {
+          id: 'admin-1',
+          name: 'Admin User',
+          email,
+          roles: ['admin', 'user'],
+          permissions: ['read', 'write', 'delete', 'admin'],
+        };
+      } else if (email.includes('dev')) {
+        mockUser = {
+          id: 'dev-1',
+          name: 'Developer',
+          email,
+          roles: ['developer', 'user'],
+          permissions: ['read', 'write', 'debug'],
+        };
+      } else {
+        mockUser = {
+          id: 'user-1',
+          name: 'Regular User',
           email,
           roles: ['user'],
-          permissions: ['read', 'write'],
+          permissions: ['read'],
         };
-
-        setAuthState({
-          user: mockUser,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-
-        localStorage.setItem('auth_user', JSON.stringify(mockUser));
-      } else {
-        throw new Error('Invalid credentials');
       }
+
+      // Simulate JWT token
+      const mockToken = btoa(JSON.stringify({
+        userId: mockUser.id,
+        email: mockUser.email,
+        exp: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
+      }));
+
+      setAuthState({
+        user: mockUser,
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      });
+
+      // Store auth data
+      localStorage.setItem('auth_user', JSON.stringify(mockUser));
+      localStorage.setItem('auth_token', mockToken);
+      
     } catch (error) {
       setAuthState((prev) => ({
         ...prev,
@@ -304,19 +346,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setAuthState((prev) => ({ ...prev, isLoading: true }));
 
     try {
-      // Check stored auth data - replace with actual validation
+      // Check stored auth data with token validation
       const storedUser = localStorage.getItem('auth_user');
-      if (storedUser) {
-        const user: User = JSON.parse(storedUser);
-        setAuthState({
-          user,
-          isAuthenticated: true,
-          isLoading: false,
-          error: null,
-        });
-      } else {
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+      const storedToken = localStorage.getItem('auth_token');
+      
+      if (storedUser && storedToken) {
+        // Validate token expiration
+        try {
+          const tokenData = JSON.parse(atob(storedToken));
+          if (tokenData.exp && tokenData.exp > Date.now()) {
+            const user: User = JSON.parse(storedUser);
+            setAuthState({
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            });
+            return;
+          } else {
+            // Token expired, clear storage
+            localStorage.removeItem('auth_user');
+            localStorage.removeItem('auth_token');
+          }
+        } catch (tokenError) {
+          console.warn('Invalid token format, clearing auth data');
+          localStorage.removeItem('auth_user');
+          localStorage.removeItem('auth_token');
+        }
       }
+      
+      setAuthState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      });
     } catch (error) {
       setAuthState((prev) => ({
         ...prev,

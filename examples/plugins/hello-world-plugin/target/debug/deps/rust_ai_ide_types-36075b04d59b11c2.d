@@ -1,0 +1,15 @@
+/home/user/Desktop/RUST_AI_IDE/examples/plugins/hello-world-plugin/target/debug/deps/rust_ai_ide_types-36075b04d59b11c2.d: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lib.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/cargo/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/ai/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/editor/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lsp/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/diagnostics/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/project/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/user_interface/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/performance/mod.rs
+
+/home/user/Desktop/RUST_AI_IDE/examples/plugins/hello-world-plugin/target/debug/deps/librust_ai_ide_types-36075b04d59b11c2.rlib: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lib.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/cargo/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/ai/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/editor/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lsp/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/diagnostics/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/project/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/user_interface/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/performance/mod.rs
+
+/home/user/Desktop/RUST_AI_IDE/examples/plugins/hello-world-plugin/target/debug/deps/librust_ai_ide_types-36075b04d59b11c2.rmeta: /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lib.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/cargo/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/ai/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/editor/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lsp/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/diagnostics/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/project/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/user_interface/mod.rs /home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/performance/mod.rs
+
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lib.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/cargo/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/ai/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/editor/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/lsp/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/diagnostics/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/project/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/user_interface/mod.rs:
+/home/user/Desktop/RUST_AI_IDE/crates/rust-ai-ide-types/src/performance/mod.rs:

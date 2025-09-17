@@ -94,7 +94,9 @@ impl {{#if trait_name}}{{trait_name}} for {{/if}}{{type_name}} {
     fn {{name}}(&self{{#if has_params}}, {{/if}}{{#each params}}{{name}}: {{type}}{{#unless @last}}, {{/unless}}{{/each}}){{#if return_type}} -> {{return_type}}{{/if}} {
         {{#if is_todo}}todo!("Implement {{name}}")
         {{~^~}}// TODO: Implement {{name}}
-        unimplemented!()
+        // Placeholder implementation to prevent runtime panics
+        tracing::warn!("Function {{name}} not yet implemented");
+        Default::default()
         {{/if}}
     }
     {{/each}}

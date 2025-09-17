@@ -7,6 +7,7 @@
 
 pub mod cleanup;
 pub mod runtime;
+pub mod startup_performance;
 pub mod startup;
 
 use std::sync::Arc;

@@ -50,7 +50,7 @@ async fn test_child_logger() {
     let parent_logger = global_logger();
 
     // Create a child logger with additional context
-    let child_context = LogContext::new("child_component")
+    let child_context = LogContext::new("child_component", "test_module")
         .with_operation("child_operation")
         .with_metadata("parent_id", "test_parent");
 

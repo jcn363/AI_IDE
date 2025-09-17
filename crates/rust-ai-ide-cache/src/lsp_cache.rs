@@ -100,12 +100,12 @@ impl LspAnalysisCache {
         &self,
         file_path: &PathBuf,
         analysis_type: &str,
-        current_file_hash: &str,
+        _current_file_hash: &str,
         analysis_params: Option<JsonValue>,
     ) -> bool {
         let key = Self::generate_analysis_key(file_path, analysis_type, analysis_params.as_ref());
 
-        if let Ok(Some(cached_result)) = self.cache.get(&key).await {
+        if let Ok(Some(_cached_result)) = self.cache.get(&key).await {
             // For LSP results, we trust the TTL and hash validation from the unified system
             // Additional file content validation can be added here if needed
             !self.cache.stats().await.hit_ratio.is_nan() // Hack: use stats to determine if we have
@@ -116,7 +116,7 @@ impl LspAnalysisCache {
     }
 
     /// Invalidate all analysis results for a file
-    pub async fn invalidate_file(&self, file_path: &PathBuf) -> IDEResult<usize> {
+    pub async fn invalidate_file(&self, _file_path: &PathBuf) -> IDEResult<usize> {
         // This would need to iterate through cache entries with file path pattern
         // For now, using a simplified approach
         // warn!("File-specific invalidation not fully implemented - clearing cache");

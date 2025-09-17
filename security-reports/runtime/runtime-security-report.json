@@ -1,17 +1,17 @@
 {
-  "timestamp": "2025-09-17T00:00:01+02:00",
+  "timestamp": "2025-09-17T20:00:01+02:00",
   "duration_seconds": 0,
   "overall_status": "FAILED",
   "checks": {
     "security_features": "COMPLETED",
-    "security_tests": "2",
+    "security_tests": "6",
     "memory_safety": "COMPLETED",
     "unsafe_code_analysis": "COMPLETED",
     "security_config_validation": "COMPLETED"
   },
   "issues": {
-    "warnings": 4,
-    "errors": 7
+    "warnings": 12,
+    "errors": 23
   },
   "recommendations": [
     "Review any WARNING messages in the security log",

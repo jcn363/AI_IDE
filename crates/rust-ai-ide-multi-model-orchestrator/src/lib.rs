@@ -20,11 +20,17 @@
 //! ! - **EventBus**: Real-time orchestration coordination
 //! ! - **LSP Service**: Model performance metrics collection
 
+pub mod advanced_failover_system;
+pub mod backup_model_manager;
 pub mod config;
 pub mod consensus_engine;
+pub mod enhanced_model_warmer;
+pub mod failover_coordinator;
+pub mod failover_metrics_collector;
 pub mod fallback_manager;
 pub mod health_monitor;
 pub mod load_balancer;
+pub mod model_recovery_manager;
 pub mod model_selector;
 pub mod orchestrator;
 pub mod types;

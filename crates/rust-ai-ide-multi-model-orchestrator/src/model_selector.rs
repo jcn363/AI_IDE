@@ -5,7 +5,57 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
+use async_trait::async_trait;
+use tokio::sync::RwLock;
+use moka::future::Cache;
+
+<![CDATA
+/// Performance metrics for the model warmer
+#[derive(Debug, Clone)]
+pub struct ModelWarmerMetrics {
+    pub total_warm_requests: u64,
+    pub successful_warms: u64,
+    pub failed_warms: u64,
+    pub average_warm_time_ms: f64,
+    pub cache_hit_rate: f64,
+    pub last_updated: Instant,
+}
+
+impl ModelWarmerMetrics {
+    pub fn new() -> Self {
+        Self {
+            total_warm_requests: 0,
+            successful_warms: 0,
+            failed_warms: 0,
+            average_warm_time_ms: 0.0,
+            cache_hit_rate: 0.0,
+            last_updated: Instant::now(),
+        }
+    }
+
+    pub fn record_warm_attempt(&mut self, success: bool, duration_ms: f64) {
+        self.total_warm_requests += 1;
+        if success {
+            self.successful_warms += 1;
+        } else {
+            self.failed_warms += 1;
+        }
+
+        // Update average warm time
+        let total_time = self.average_warm_time_ms * (self.total_warm_requests - 1) as f64;
+        self.average_warm_time_ms = (total_time + duration_ms) / self.total_warm_requests as f64;
+
+        // Update cache hit rate (simplified calculation)
+        if self.total_warm_requests > 0 {
+            self.cache_hit_rate = self.successful_warms as f64 / self.total_warm_requests as f64;
+        }
+
+        self.last_updated = Instant::now();
+    }
+}
+]]>
 use async_trait::async_trait;
 use tokio::sync::RwLock;
 

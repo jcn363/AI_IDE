@@ -224,34 +224,57 @@ function stringifyTOMLBasic(obj: any, indent = ''): string {
 }
 
 // Utility functions for Cargo.toml parsing and stringification
-export function parseCargoToml(toml: string): CargoManifest {
-  // TODO: Install @iarna/toml library: npm install @iarna/toml
-  // Currently using a basic TOML parser implementation
+export async function parseCargoToml(toml: string): Promise<CargoManifest> {
   try {
-    // Use a dynamic import to avoid hard dependency until library is installed
-    const parsedToml = parseTOMLBasic(toml);
-    return parsedToml as CargoManifest;
+    // Try to use a proper TOML library if available
+    try {
+      const { parse } = await import('@iarna/toml');
+      return parse(toml) as CargoManifest;
+    } catch (importError) {
+      console.warn('TOML library not available, using basic parser');
+      // Fallback to basic TOML parser implementation
+      const parsedToml = parseTOMLBasic(toml);
+      return parsedToml as CargoManifest;
+    }
   } catch (e) {
     console.error('Failed to parse Cargo.toml:', e);
     // Fallback to Rust backend Tauri command if available
     console.warn('Falling back to Rust backend for TOML parsing');
-
-    // In a real implementation, we would return the result from Tauri invoke
-    // For now, return empty manifest
-    return {};
+    
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const result = await invoke<CargoManifest>('parse_cargo_toml', { content: toml });
+      return result;
+    } catch (tauriError) {
+      console.error('Tauri fallback also failed:', tauriError);
+      return {};
+    }
   }
 }
 
-export function stringifyCargoToml(manifest: CargoManifest): string {
-  // TODO: Install @iarna/toml library: npm install @iarna/toml
-  // Currently using a basic TOML stringifier implementation
+export async function stringifyCargoToml(manifest: CargoManifest): Promise<string> {
   try {
-    // Use a dynamic import to avoid hard dependency until library is installed
-    const toml = stringifyTOMLBasic(manifest);
-    return toml;
+    // Try to use a proper TOML library if available
+    try {
+      const { stringify } = await import('@iarna/toml');
+      return stringify(manifest);
+    } catch (importError) {
+      console.warn('TOML library not available, using basic stringifier');
+      // Fallback to basic TOML stringifier implementation
+      const toml = stringifyTOMLBasic(manifest);
+      return toml;
+    }
   } catch (e) {
     console.error('Failed to stringify Cargo.toml:', e);
-    // Fallback to JSON for now
-    return JSON.stringify(manifest, null, 2);
+    // Fallback to Rust backend Tauri command if available
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const result = await invoke<string>('stringify_cargo_toml', { manifest });
+      return result;
+    } catch (tauriError) {
+      console.error('Tauri fallback also failed:', tauriError);
+      // Final fallback to JSON
+      return JSON.stringify(manifest, null, 2);
+    }
   }
 }

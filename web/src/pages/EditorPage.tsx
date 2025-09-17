@@ -297,8 +297,66 @@ const EditorPage: React.FC = (): ReactElement => {
 
   // Run code
   const handleRunCode = useCallback(async () => {
-    // TODO: Implement run code functionality
-  }, []);
+    if (!activeFilePath) {
+      setSnackbar({
+        open: true,
+        message: 'No active file to run',
+        severity: 'warning',
+      });
+      return;
+    }
+
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      
+      // Determine the file type and appropriate run command
+      const fileExtension = activeFilePath.split('.').pop()?.toLowerCase();
+      let command: string;
+      
+      switch (fileExtension) {
+        case 'rs':
+          command = 'cargo run';
+          break;
+        case 'js':
+        case 'ts':
+          command = 'node';
+          break;
+        case 'py':
+          command = 'python';
+          break;
+        default:
+          throw new Error(`Unsupported file type: ${fileExtension}`);
+      }
+
+      setSnackbar({
+        open: true,
+        message: `Running ${activeFilePath}...`,
+        severity: 'info',
+      });
+
+      // Execute the run command via Tauri
+      const result = await invoke('run_code', {
+        filePath: activeFilePath,
+        command,
+      });
+
+      setSnackbar({
+        open: true,
+        message: 'Code executed successfully',
+        severity: 'success',
+      });
+
+      console.log('Code execution result:', result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to run code';
+      setSnackbar({
+        open: true,
+        message: `Error running code: ${errorMessage}`,
+        severity: 'error',
+      });
+      console.error('Code execution failed:', error);
+    }
+  }, [activeFilePath]);
 
   // Breakpoints hook
   const { onEditorDidMount: onMountWithBreakpoints } = useEditorBreakpoints({

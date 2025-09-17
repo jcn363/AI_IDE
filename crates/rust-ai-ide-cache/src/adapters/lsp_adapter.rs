@@ -112,6 +112,7 @@ impl LegacyLspCacheAdapter {
     }
 
     // Helper method to access cache interface through the trait
+    #[allow(dead_code)]
     async fn get_cache_size(&self) -> usize {
         self.unified_cache.size().await
     }

@@ -11,6 +11,51 @@ use tokio::sync::RwLock;
 
 use crate::{Cache, CacheConfig, CacheEntry, CacheStats, IDEResult};
 
+/// Idle state detection and management
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum IdleState {
+    Active,
+    Idle,
+    DeepIdle, // Extended idle period with more aggressive cleanup
+}
+
+impl Default for IdleState {
+    fn default() -> Self {
+        IdleState::Active
+    }
+}
+
+impl IdleState {
+    /// Determine idle state based on inactivity duration
+    pub fn from_inactivity_duration(inactivity_seconds: u64, deep_idle_threshold: u64) -> Self {
+        if inactivity_seconds < 300 { // Less than 5 minutes
+            IdleState::Active
+        } else if inactivity_seconds < deep_idle_threshold {
+            IdleState::Idle
+        } else {
+            IdleState::DeepIdle
+        }
+    }
+
+    /// Get TTL reduction factor for idle state
+    pub fn ttl_reduction_factor(&self) -> f64 {
+        match self {
+            IdleState::Active => 1.0,
+            IdleState::Idle => 0.3, // 30% of normal TTL
+            IdleState::DeepIdle => 0.1, // 10% of normal TTL
+        }
+    }
+
+    /// Get max entries reduction factor for idle state
+    pub fn max_entries_reduction_factor(&self) -> f64 {
+        match self {
+            IdleState::Active => 1.0,
+            IdleState::Idle => 0.5, // 50% of normal max entries
+            IdleState::DeepIdle => 0.2, // 20% of normal max entries
+        }
+    }
+}
+
 /// Compressed data wrapper for large cache entries
 #[cfg(feature = "compression")]
 #[derive(Debug, Clone)]
@@ -63,14 +108,17 @@ impl Default for CompressedData {
 
 /// Enhanced in-memory cache implementation with Moka LRU, TTL, and compression
 pub struct InMemoryCache<
-    K: std::hash::Hash + Eq + Send + Sync + Clone + 'static,
-    V: Send + Sync + Clone + 'static,
+    K: std::hash::Hash + Eq + Send + Sync + Clone + serde::Serialize + 'static,
+    V: Send + Sync + Clone + serde::Serialize + 'static,
 > {
     cache: MokaCache<K, CacheEntry<V>>,
     config: CacheConfig,
     stats: Arc<RwLock<CacheStats>>,
     #[cfg(feature = "compression")]
     compressed_cache: Option<MokaCache<String, CompressedData>>,
+    /// Idle state management
+    idle_state: Arc<RwLock<IdleState>>,
+    last_activity: Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
 }
 
 impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + Clone + 'static>
@@ -128,7 +176,94 @@ impl<K: std::hash::Hash + Eq + Send + Sync + Clone + 'static, V: Send + Sync + C
             stats: Arc::new(RwLock::new(stats)),
             #[cfg(feature = "compression")]
             compressed_cache,
+            idle_state: Arc::new(RwLock::new(IdleState::Active)),
+            last_activity: Arc::new(RwLock::new(chrono::Utc::now())),
         }
+    }
+
+    /// Get current idle state
+    pub async fn idle_state(&self) -> IdleState {
+        *self.idle_state.read().await
+    }
+
+    /// Update idle state based on activity timing
+    pub async fn update_idle_state(&self) {
+        let now = chrono::Utc::now();
+        let last_activity = *self.last_activity.read().await;
+        let inactivity_duration = (now - last_activity).num_seconds() as u64;
+
+        let new_state = IdleState::from_inactivity_duration(
+            inactivity_duration,
+            self.config.idle_detection_timeout_seconds * 2, // Deep idle after 2x normal timeout
+        );
+
+        *self.idle_state.write().await = new_state;
+
+        if matches!(new_state, IdleState::Idle | IdleState::DeepIdle) {
+            // Trigger aggressive cleanup when entering idle states
+            let _ = self.perform_idle_cleanup().await;
+        }
+    }
+
+    /// Record cache activity to reset idle timer
+    pub async fn record_activity(&self) {
+        *self.last_activity.write().await = chrono::Utc::now();
+        // Reset to active state on any activity
+        *self.idle_state.write().await = IdleState::Active;
+    }
+
+    /// Perform aggressive cleanup when idle
+    async fn perform_idle_cleanup(&self) -> IDEResult<()> {
+        let idle_state = *self.idle_state.read().await;
+
+        // Calculate reduced limits for idle state
+        let ttl_reduction = idle_state.ttl_reduction_factor();
+        let max_entries_reduction = idle_state.max_entries_reduction_factor();
+
+        let max_entries = self.config.max_entries
+            .map(|max| ((max as f64 * max_entries_reduction) as usize).max(50)); // Minimum 50 entries
+
+        // Force cleanup expired entries
+        self.cleanup_expired().await?;
+
+        // If we have a max_entries limit for idle state, enforce it aggressively
+        if let Some(max_entries) = max_entries {
+            let current_entries = self.size().await;
+            if current_entries > max_entries {
+                // Remove oldest entries aggressively
+                let to_remove = current_entries - max_entries;
+                self.remove_oldest_entries(to_remove).await?;
+            }
+        }
+
+        // Reduce TTL for existing entries
+        self.adjust_ttl_for_idle(ttl_reduction).await?;
+
+        Ok(())
+    }
+
+    /// Remove oldest entries for aggressive cleanup
+    async fn remove_oldest_entries(&self, count: usize) -> IDEResult<()> {
+        // This is a simplified implementation - in practice, you'd need to iterate through entries
+        // and remove the oldest ones. For now, we'll just run cleanup.
+        self.cleanup_expired().await?;
+        Ok(())
+    }
+
+    /// Adjust TTL for existing entries during idle periods
+    async fn adjust_ttl_for_idle(&self, ttl_reduction: f64) -> IDEResult<()> {
+        // This would require iterating through all entries and adjusting their TTL
+        // For now, we rely on the natural expiration with reduced TTL for new entries
+        Ok(())
+    }
+
+    /// Get effective TTL considering idle state
+    fn effective_ttl(&self, base_ttl: Option<std::time::Duration>, idle_state: IdleState) -> Option<std::time::Duration> {
+        base_ttl.map(|ttl| {
+            let reduction_factor = idle_state.ttl_reduction_factor();
+            let reduced_seconds = (ttl.as_secs_f64() * reduction_factor) as u64;
+            std::time::Duration::from_secs(reduced_seconds.max(30)) // Minimum 30 seconds
+        })
     }
 }
 
@@ -139,6 +274,9 @@ where
     V: Send + Sync + Clone + serde::Serialize + 'static,
 {
     async fn get(&self, key: &K) -> IDEResult<Option<V>> {
+        // Record activity on cache access
+        self.record_activity().await;
+
         let mut stats = self.stats.write().await;
 
         // Check compressed cache first if compression is enabled
@@ -171,7 +309,14 @@ where
     }
 
     async fn insert(&self, key: K, value: V, ttl: Option<std::time::Duration>) -> IDEResult<()> {
+        // Record activity on cache write
+        self.record_activity().await;
+
         let mut stats = self.stats.write().await;
+
+        // Get current idle state for TTL adjustment
+        let idle_state = *self.idle_state.read().await;
+        let effective_ttl = self.effective_ttl(ttl, idle_state);
 
         // Check if compression should be used
         #[cfg(feature = "compression")]
@@ -192,7 +337,7 @@ where
             }
         }
 
-        let entry = CacheEntry::new_with_ttl(value, ttl, chrono::Utc::now());
+        let entry = CacheEntry::new_with_ttl(value, effective_ttl, chrono::Utc::now());
         self.cache.insert(key, entry).await;
         stats.record_set();
 
@@ -234,7 +379,7 @@ where
     }
 
     async fn size(&self) -> usize {
-        let mut total_size = self.cache.entry_count();
+        let total_size = self.cache.entry_count();
 
         #[cfg(feature = "compression")]
         if let Some(compressed_cache) = &self.compressed_cache {
@@ -492,6 +637,7 @@ impl CryptoKeyCache {
 }
 
 /// Performance monitoring and metrics for cache operations
+#[allow(dead_code)]
 pub struct CachePerformanceMonitor {
     cache_name: String,
     metrics: Arc<RwLock<CacheMetrics>>,
@@ -499,6 +645,7 @@ pub struct CachePerformanceMonitor {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct CacheMetrics {
     pub total_operations: u64,
     pub hit_count: u64,
@@ -552,21 +699,25 @@ impl CachePerformanceMonitor {
         metrics.last_updated = chrono::Utc::now();
     }
 
+    #[allow(dead_code)]
     pub async fn record_eviction(&self) {
         let mut metrics = self.metrics.write().await;
         metrics.eviction_count += 1;
     }
 
+    #[allow(dead_code)]
     pub async fn record_compression_ratio(&self, ratio: f64) {
         let mut metrics = self.metrics.write().await;
         metrics.compression_ratio_avg = (metrics.compression_ratio_avg + ratio) / 2.0;
     }
 
+    #[allow(dead_code)]
     pub async fn update_memory_usage(&self, memory_mb: f64) {
         let mut metrics = self.metrics.write().await;
         metrics.memory_usage_mb = memory_mb;
     }
 
+    #[allow(dead_code)]
     pub async fn get_metrics(&self) -> CacheMetrics {
         self.metrics.read().await.clone()
     }
@@ -629,6 +780,7 @@ impl CachePerformanceMonitor {
 }
 
 /// Enhanced cache with performance monitoring
+#[allow(dead_code)]
 pub struct MonitoredInMemoryCache<
     K: std::hash::Hash + Eq + Send + Sync + Clone + serde::Serialize + 'static,
     V: Send + Sync + Clone + serde::Serialize + 'static,
@@ -637,6 +789,7 @@ pub struct MonitoredInMemoryCache<
     monitor: Arc<CachePerformanceMonitor>,
 }
 
+#[allow(dead_code)]
 impl<
         K: std::hash::Hash + Eq + Send + Sync + Clone + serde::Serialize + 'static,
         V: Send + Sync + Clone + serde::Serialize + 'static,
@@ -694,6 +847,7 @@ impl<
 }
 
 /// Export specialized monitored cache types for different use cases
+#[allow(dead_code)]
 pub type DependencyGraphCache = MonitoredInMemoryCache<String, serde_json::Value>;
 
 #[cfg(test)]

@@ -120,11 +120,23 @@ export function Layout({ children }: Readonly<LayoutProps>) {
           activeFilePath={useAppSelector(
             (state) => tabManagementSelectors.selectActivePane(state)?.activeFile || null
           )}
-          isSaving={false} // TODO: Implement saving state in tabManagementSlice if needed
+          isSaving={useAppSelector((state) => {
+            // Check if editor state has saving information
+            if ('editor' in state && state.editor && typeof state.editor === 'object') {
+              return (state.editor as any).isSaving || false;
+            }
+            // Check if any pane has unsaved changes
+            const activePane = tabManagementSelectors.selectActivePane(state);
+            return activePane?.hasUnsavedChanges || false;
+          })}
           isConnected={useAppSelector((state) => {
             // Check if language server state is available in the store
             if ('languageServer' in state) {
               return (state as any).languageServer?.isConnected || false;
+            }
+            // Check if editor state has connection info
+            if ('editor' in state && state.editor && typeof state.editor === 'object') {
+              return (state.editor as any).isConnected !== false;
             }
             // Fallback to true if language server state is not available
             return true;

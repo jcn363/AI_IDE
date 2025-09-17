@@ -24,6 +24,11 @@ log = { workspace = true }
 once_cell = { workspace = true }
 dirs-next = { workspace = true }
 dirs = { version = "^5.0.0" }
+
+# Advanced ML dependencies
+ndarray = "0.15"
+ndarray-linalg = { version = "0.16", features = ["openblas"] }
+statrs = "0.16"
 rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
 rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
 rust-ai-ide-security = { path = "../rust-ai-ide-security" }

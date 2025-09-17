@@ -258,8 +258,15 @@ impl Finding for AnalysisFinding {
 
     fn location(&self) -> &CodeLocation {
         // For backward compatibility, create a CodeLocation from the AnalysisFinding fields
-        // In a real implementation, this would be stored properly
-        unimplemented!("AnalysisFinding does not have a proper CodeLocation field")
+        // TODO: Implement proper CodeLocation field in AnalysisFinding
+        tracing::warn!("AnalysisFinding CodeLocation not properly implemented");
+        // Return a default location to prevent runtime panics
+        CodeLocation {
+            file_path: self.file_path.clone().unwrap_or_default(),
+            line: self.line.unwrap_or(0),
+            column: self.column.unwrap_or(0),
+            length: 0,
+        }
     }
 
     fn suggestion(&self) -> Option<&str> {

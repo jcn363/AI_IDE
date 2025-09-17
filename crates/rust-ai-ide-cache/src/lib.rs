@@ -28,7 +28,6 @@ pub mod strategies;
 
 use std::collections::HashMap;
 use std::hash::Hash;
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -43,6 +42,9 @@ type Timestamp = chrono::DateTime<chrono::Utc>;
 pub use cache_impls::*;
 pub use storage::*;
 pub use strategies::*;
+
+// Re-export idle state management
+pub use cache_impls::in_memory_impl::IdleState;
 
 /// Collaboration-related types and identifiers
 #[derive(Debug, Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
@@ -217,6 +219,11 @@ pub struct CacheConfig {
     pub max_memory_mb: Option<usize>,
     pub compression_threshold_kb: Option<usize>,
     pub background_cleanup_interval_seconds: u64,
+    /// Idle state optimizations
+    pub idle_ttl_reduction_factor: f64, // Reduce TTL by this factor when idle (e.g., 0.5 = 50% of normal)
+    pub idle_max_entries_reduction_factor: f64, // Reduce max entries when idle
+    pub idle_memory_pressure_threshold_mb: usize, // Memory pressure threshold for idle optimizations
+    pub idle_detection_timeout_seconds: u64, // Time without activity to consider idle
 }
 
 impl Default for CacheConfig {
@@ -229,6 +236,11 @@ impl Default for CacheConfig {
             max_memory_mb: None,
             compression_threshold_kb: None,
             background_cleanup_interval_seconds: 300, // 5 minutes
+            // Idle state optimizations
+            idle_ttl_reduction_factor: 0.3, // Reduce TTL to 30% when idle (aggressive cleanup)
+            idle_max_entries_reduction_factor: 0.5, // Reduce max entries to 50% when idle
+            idle_memory_pressure_threshold_mb: 512, // Trigger optimizations at 512MB usage
+            idle_detection_timeout_seconds: 300, // Consider idle after 5 minutes of inactivity
         }
     }
 }
@@ -252,9 +264,6 @@ pub enum EvictionPolicy {
     /// Windowed TinyLFU - advanced frequency-based eviction
     #[serde(rename = "w_tiny_lfu")]
     WTinyLFU,
-    /// Segmented LRU - hybrid of LRU with multiple segments
-    #[serde(rename = "segmented_lru")]
-    SegmentedLRU,
     /// Clock algorithm - approximate LRU with O(1) operations
     Clock,
 }
@@ -473,7 +482,7 @@ impl CollaborativeCacheStats {
 /// Cache manager for coordinating multiple caches with collaboration support
 pub struct CacheManager {
     caches:        HashMap<String, Box<dyn std::any::Any + Send + Sync>>,
-    config:        CacheConfig,
+    _config:       CacheConfig,
     collab_config: CollaborationConfig,
     stats:         RwLock<CacheStats>,
     collab_stats:  RwLock<CollaborativeCacheStats>,
@@ -497,7 +506,7 @@ impl CacheManager {
 
         Self {
             caches: HashMap::new(),
-            config,
+            _config: config,
             collab_config: CollaborationConfig::default(),
             stats: RwLock::new(stats),
             collab_stats: RwLock::new(collab_stats),
@@ -929,7 +938,7 @@ where
             session_id.as_string(),
             serde_json::to_string(&key).unwrap_or_default()
         );
-        let hashed_key = sha256::digest(prefixed_key);
+        let _hashed_key = sha256::digest(prefixed_key);
 
         // Store with collaborative metadata
         let mut cache_entry = CacheEntry::new(value);
@@ -946,7 +955,7 @@ where
     }
 
     /// Retrieve a collaborative cache entry
-    async fn collab_retrieve(&self, session_id: &SessionId, key: &K) -> IDEResult<Option<V>> {
+    async fn collab_retrieve(&self, _session_id: &SessionId, key: &K) -> IDEResult<Option<V>> {
         self.get(key).await
     }
 
@@ -957,7 +966,7 @@ where
             user_id.as_str(),
             serde_json::to_string(&key).unwrap_or_default()
         );
-        let hashed_key = sha256::digest(prefixed_key);
+        let _hashed_key = sha256::digest(prefixed_key);
 
         let mut cache_entry = CacheEntry::new(value);
         cache_entry
@@ -971,7 +980,7 @@ where
     }
 
     /// Retrieve user-specific cache entry
-    async fn user_retrieve(&self, user_id: &UserId, key: &K) -> IDEResult<Option<V>> {
+    async fn user_retrieve(&self, _user_id: &UserId, key: &K) -> IDEResult<Option<V>> {
         self.get(key).await
     }
 

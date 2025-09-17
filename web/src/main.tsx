@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import './index.css';
 import { CssBaseline } from './components/shared/MaterialUI';
 import '@fontsource/roboto/300.css';
 import '@fontsource/roboto/400.css';

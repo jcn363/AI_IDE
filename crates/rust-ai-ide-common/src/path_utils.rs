@@ -1,6 +1,8 @@
 /// ! Path manipulation utilities for consistent cross-platform path handling
 use std::path::{Path, PathBuf};
 
+use crate::platform::{normalize_path_separators, Platform};
+
 /// Normalize a path by resolving '.' and '..' components consistently
 pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
     let mut result = PathBuf::new();
@@ -65,7 +67,7 @@ pub fn relative_path_from<P: AsRef<Path>, Q: AsRef<Path>>(base: P, target: Q) ->
 
 /// Ensure path has consistent separators for the platform
 pub fn ensure_platform_path<P: AsRef<Path>>(path: P) -> PathBuf {
-    path.as_ref().to_path_buf()
+    normalize_path_separators(path)
 }
 
 /// Merge two paths without panic

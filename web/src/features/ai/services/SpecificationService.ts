@@ -13,11 +13,18 @@ import type {
  * Converts natural language specifications into executable code
  */
 export class SpecificationService {
-  validateSpec(description: string) {
-    throw new Error('Method not implemented.');
+  /**
+   * Validate specification description
+   */
+  async validateSpec(description: string): Promise<ValidationResult> {
+    return this.validateSpecification(description);
   }
-  enhanceCode(generatedCode: GeneratedCode, enhancements: string[]) {
-    throw new Error('Method not implemented.');
+
+  /**
+   * Enhance generated code with additional features
+   */
+  async enhanceCode(generatedCode: GeneratedCode, enhancements: string[]): Promise<GeneratedCode> {
+    return this.enhanceGeneratedCode(generatedCode, enhancements);
   }
   private static instance: SpecificationService;
 

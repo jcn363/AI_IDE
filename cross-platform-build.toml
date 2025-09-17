@@ -1,0 +1,307 @@
+# Cross-Platform Build Configuration for Rust AI IDE
+# This file defines build settings, dependencies, and distribution configs for Windows, macOS, and Linux
+
+[package]
+name = "rust-ai-ide"
+version = "1.0.0"
+edition = "2021"
+rust-version = "1.91.0"
+authors = ["Rust AI IDE Team"]
+description = "Cross-platform AI-powered IDE with advanced code intelligence"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/rust-ai-ide/rust-ai-ide"
+
+[workspace]
+members = ["crates/*", "src-tauri"]
+default-members = ["src-tauri"]
+
+[features]
+default = ["all-platforms"]
+windows = ["windows-specific"]
+macos = ["macos-specific"]
+linux = ["linux-specific"]
+all-platforms = ["windows", "macos", "linux"]
+
+[dependencies]
+# Core dependencies - platform agnostic
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.0", features = ["full"] }
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Platform-specific dependencies
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3", features = ["everything"] }
+windows = "0.52.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2"
+cocoa = "0.25"
+core-foundation = "0.9"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dbus = "0.9"
+libdbus-sys = "0.2"
+
+[build-dependencies]
+# Cross-platform build tools
+cc = "1.0"
+bindgen = "0.69"
+
+# Platform-specific build dependencies
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winres = "0.1"
+
+[target.'cfg(target_os = "macos")'.build-dependencies]
+cargo-bundle = "0.6"
+
+[target.'cfg(target_os = "linux")'.build-dependencies]
+pkg-config = "0.3"
+
+[profile.release]
+# Optimized release builds
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# Platform-specific release optimizations
+[target.'cfg(target_os = "windows")'.profile.release]
+# Windows-specific optimizations
+[target.'cfg(target_os = "macos")'.profile.release]
+# macOS-specific optimizations
+[target.'cfg(target_os = "linux")'.profile.release]
+# Linux-specific optimizations
+
+[package.metadata.bundle]
+# macOS bundle configuration
+name = "Rust AI IDE"
+identifier = "com.rust-ai-ide.app"
+version = "1.0.0"
+copyright = "Copyright (c) 2024 Rust AI IDE Team"
+category = "DeveloperTool"
+short_description = "AI-powered IDE for Rust development"
+long_description = "Advanced IDE with AI assistance, code intelligence, and cross-platform support"
+
+[package.metadata.bundle.macos]
+# macOS-specific bundle settings
+frameworks = ["Security", "CoreFoundation"]
+minimum_system_version = "10.15"
+entitlements = "entitlements.plist"
+signing_identity = "Developer ID Application"
+provider_short_name = "RustAI"
+
+[package.metadata.bundle.windows]
+# Windows-specific bundle settings
+certificate_thumbprint = "1234567890abcdef"
+digest_algorithm = "sha256"
+timestamp_url = "http://timestamp.digicert.com"
+
+[package.metadata.bundle.linux]
+# Linux-specific bundle settings
+deb_depends = "libc6 (>= 2.17), libgtk-3-0 (>= 3.10), libwebkit2gtk-4.0-37"
+rpm_requires = "glibc >= 2.17, gtk3 >= 3.10, webkit2gtk3 >= 2.4"
+
+# Cross-compilation targets
+[package.metadata.cross]
+targets = [
+    "x86_64-pc-windows-msvc",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-apple-darwin",
+    "aarch64-unknown-linux-gnu"
+]
+
+# CI/CD Configuration
+[package.metadata.ci]
+# Build targets for CI
+build_targets = [
+    "x86_64-pc-windows-msvc",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu"
+]
+
+# Test configuration
+[package.metadata.ci.test]
+# Platform-specific test configurations
+windows = { timeout = "30m", parallel = 4 }
+macos = { timeout = "25m", parallel = 6 }
+linux = { timeout = "20m", parallel = 8 }
+
+# Code signing configuration
+[package.metadata.signing]
+# Windows code signing
+windows = { certificate = "cert.pfx", password = "${WINDOWS_CERT_PASSWORD}" }
+# macOS code signing
+macos = { identity = "Developer ID Application", entitlements = "entitlements.plist" }
+
+# Distribution configuration
+[package.metadata.distribution]
+# Release channels
+channels = ["stable", "beta", "nightly"]
+
+# Update server configuration
+update_server = "https://updates.rust-ai-ide.com"
+
+# Platform-specific installers
+[package.metadata.distribution.installers]
+windows = { type = "msi", signing = true }
+macos = { type = "dmg", signing = true, notarization = true }
+linux = { types = ["deb", "rpm", "appimage"] }
+
+# CDN configuration for distribution
+[package.metadata.distribution.cdn]
+primary = "https://cdn.rust-ai-ide.com"
+fallback = "https://cdn-fallback.rust-ai-ide.com"
+
+# Telemetry and analytics
+[package.metadata.telemetry]
+enabled = true
+platform_specific = true
+
+# Windows telemetry
+[target.'cfg(target_os = "windows")'.package.metadata.telemetry]
+provider = "windows-etw"
+events = ["app_start", "feature_usage", "error_reports"]
+
+# macOS telemetry
+[target.'cfg(target_os = "macos")'.package.metadata.telemetry]
+provider = "os-log"
+events = ["app_start", "feature_usage", "crash_reports"]
+
+# Linux telemetry
+[target.'cfg(target_os = "linux")'.package.metadata.telemetry]
+provider = "systemd-journal"
+events = ["app_start", "feature_usage", "error_reports"]
+
+# Security hardening
+[package.metadata.security]
+# Enable security features
+hardened = true
+
+# Platform-specific security settings
+[target.'cfg(target_os = "windows")'.package.metadata.security]
+# Windows Defender integration
+defender_exclusions = ["*.exe", "*.dll"]
+# Windows-specific security features
+features = ["aslr", "dep", "cfg", "seh"]
+
+[target.'cfg(target_os = "macos")'.package.metadata.security]
+# macOS security features
+entitlements = "security-entitlements.plist"
+hardened_runtime = true
+library_validation = true
+
+[target.'cfg(target_os = "linux")'.package.metadata.security]
+# Linux security features
+pie = true
+stack_protector = true
+fortify_source = true
+
+# Performance profiling
+[package.metadata.performance]
+# Enable performance monitoring
+monitoring = true
+
+# Platform-specific performance settings
+[target.'cfg(target_os = "windows")'.package.metadata.performance]
+# Windows performance counters
+counters = ["cpu_usage", "memory_usage", "disk_io"]
+
+[target.'cfg(target_os = "macos")'.package.metadata.performance]
+# macOS performance monitoring
+instruments = ["time_profiler", "memory_leaks", "system_trace"]
+
+[target.'cfg(target_os = "linux")'.package.metadata.performance]
+# Linux performance tools
+tools = ["perf", "strace", "valgrind"]
+
+# Internationalization
+[package.metadata.i18n]
+# Supported locales
+locales = ["en", "es", "fr", "de", "zh", "ja", "ko"]
+
+# Platform-specific locale handling
+[target.'cfg(target_os = "windows")'.package.metadata.i18n]
+# Windows locale APIs
+api = "win32"
+
+[target.'cfg(target_os = "macos")'.package.metadata.i18n]
+# macOS locale services
+api = "cocoa"
+
+[target.'cfg(target_os = "linux")'.package.metadata.i18n]
+# Linux locale settings
+api = "glibc"
+
+# Documentation
+[package.metadata.docs]
+# Generate platform-specific documentation
+platforms = ["windows", "macos", "linux"]
+
+# API documentation settings
+api_docs = { enabled = true, format = "html" }
+
+# User documentation
+user_docs = { enabled = true, languages = ["en", "es", "fr"] }
+
+# Development environment
+[package.metadata.dev]
+# Development tools configuration
+formatters = ["rustfmt", "prettier"]
+linters = ["clippy", "eslint"]
+test_runners = ["cargo-test", "vitest"]
+
+# Platform-specific dev tools
+[target.'cfg(target_os = "windows")'.package.metadata.dev]
+# Windows development tools
+tools = ["windbg", "visual-studio"]
+
+[target.'cfg(target_os = "macos")'.package.metadata.dev]
+# macOS development tools
+tools = ["lldb", "instruments", "xcode"]
+
+[target.'cfg(target_os = "linux")'.package.metadata.dev]
+# Linux development tools
+tools = ["gdb", "valgrind", "strace", "perf"]
+
+# Accessibility
+[package.metadata.accessibility]
+# Enable accessibility features
+enabled = true
+
+# Platform-specific accessibility
+[target.'cfg(target_os = "windows")'.package.metadata.accessibility]
+# Windows accessibility APIs
+apis = ["uia", "msaa"]
+
+[target.'cfg(target_os = "macos")'.package.metadata.accessibility]
+# macOS accessibility framework
+framework = "accessibility"
+
+[target.'cfg(target_os = "linux")'.package.metadata.accessibility]
+# Linux accessibility tools
+tools = ["orca", "at-spi"]
+
+# Maintenance and support
+[package.metadata.maintenance]
+# Support policy
+supported_platforms = ["windows", "macos", "linux"]
+minimum_versions = { windows = "10", macos = "10.15", linux = "glibc-2.17" }
+
+# Update channels
+update_channels = ["stable", "beta", "dev"]
+
+# Community and support
+[package.metadata.maintenance.support]
+docs = "https://docs.rust-ai-ide.com"
+forum = "https://forum.rust-ai-ide.com"
+issues = "https://github.com/rust-ai-ide/rust-ai-ide/issues"
+
+# License compliance
+[package.metadata.license]
+# License scanning configuration
+scanner = "cargo-deny"
+licenses = ["MIT", "Apache-2.0", "BSD-3-Clause"]
+exceptions = ["Unicode-DFS-2016"]

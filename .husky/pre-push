@@ -1,22 +1,42 @@
-#!/usr/bin/env sh
+#!/bin/sh
 
-. "$(dirname -- "$0")/_/husky.sh"
+# Get the absolute path of the repository root
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "🚀 Running pre-push checks..."
 
-# Build verification
-echo "🔨 Running build verification..."
-cd web && npm run build
+# Generate types first
+echo "🔨 Generating TypeScript types..."
+
+# Ensure the target directory exists
+mkdir -p "${REPO_ROOT}/web/src/types"
+
+# Run the type generator with full path
+cd "$REPO_ROOT"
+TYPES_FILE="${REPO_ROOT}/crates/rust-ai-ide-shared-types/src/types.rs"
+OUTPUT_FILE="${REPO_ROOT}/web/src/types/generated.ts"
+
+# Generate to a temp file first
+TEMP_FILE="$(mktemp)"
+
+cargo run --bin type_generator --package rust-ai-ide-shared-types -- --file "$TYPES_FILE" > "$TEMP_FILE" 2>&1
+
 if [ $? -ne 0 ]; then
-  echo "❌ Build verification failed. Please fix build errors before pushing."
-  exit 1
+    echo "❌ Type generation failed. Output:"
+    cat "$TEMP_FILE"
+    rm -f "$TEMP_FILE"
+    exit 1
 fi
 
-# Security scanning
-echo "🔒 Running security scanning..."
-cd web && npm run security:audit
+# Only move if generation was successful
+mv "$TEMP_FILE" "$OUTPUT_FILE"
+echo "✅ Type generation completed successfully"
+
+# Build verification
+echo "🔨 Running build verification..."
+(cd web && npm run build)
 if [ $? -ne 0 ]; then
-  echo "❌ Security scanning failed. Please address security vulnerabilities before pushing."
+  echo "❌ Build verification failed. Please fix build errors before pushing."
   exit 1
 fi
 

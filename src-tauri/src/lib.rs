@@ -38,6 +38,7 @@ mod utils;
 mod command_templates;
 mod infra;
 // Command router removed - handlers are used directly
+mod utils;
 mod types;
 
 // Import I/O types for compiler integration

@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use tokio::fs;
 
 use crate::errors::IdeError;
+use crate::platform::{PlatformFileSystem, PlatformMemoryHints};
 
 /// Asynchronous file existence check
 pub async fn file_exists<P: AsRef<Path>>(path: P) -> bool {
@@ -29,12 +30,29 @@ pub async fn read_file_to_string<P: AsRef<Path>>(path: P) -> Result<String, IdeE
     Ok(content)
 }
 
-/// Safe read entire file to bytes
+/// Safe read entire file to bytes with platform-optimized buffering
 pub async fn read_file_to_bytes<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, IdeError> {
     let content = fs::read(path).await.map_err(|e| IdeError::Io {
         message: e.to_string(),
     })?;
     Ok(content)
+}
+
+/// Platform-optimized buffered file reader
+pub async fn read_file_with_optimized_buffer<P: AsRef<Path>>(path: P) -> Result<Vec<u8>, IdeError> {
+    use tokio::io::AsyncReadExt;
+
+    let mut file = fs::File::open(path).await.map_err(|e| IdeError::Io {
+        message: e.to_string(),
+    })?;
+
+    let buffer_size = PlatformFileSystem::optimal_buffer_size();
+    let mut buffer = Vec::with_capacity(buffer_size);
+    file.read_to_end(&mut buffer).await.map_err(|e| IdeError::Io {
+        message: e.to_string(),
+    })?;
+
+    Ok(buffer)
 }
 
 /// Write string to file atomically (via temp file)

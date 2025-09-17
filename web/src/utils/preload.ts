@@ -32,8 +32,7 @@ export const preloadRoute = (route: string) => {
   const preloadMap: Record<string, string[]> = {
     '/editor': ['monaco-editor', '@monaco-editor/react'],
     '/debugger': ['react-window', 'react-virtuoso'],
-    '/dependencies': ['d3'],
-    '/testing': ['react-syntax-highlighter'],
+    '/dependencies': ['d3']
   };
 
   const modules = preloadMap[route];

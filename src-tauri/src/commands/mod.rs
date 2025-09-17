@@ -21,6 +21,7 @@ pub mod search;
 pub mod security;
 pub mod terminal;
 pub mod types;
+pub mod warmup_predictor;
 
 pub mod keyboard;
 pub mod multicursor;

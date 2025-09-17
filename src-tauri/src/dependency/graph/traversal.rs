@@ -13,10 +13,13 @@ pub fn depth_first_traverse<'a>(
     start: &str,
     direction: Direction,
 ) -> impl Iterator<Item = (&'a DependencyNode, Vec<&'a DependencyEdge>)> + 'a {
-    let start_idx = graph
-        .find_node(start)
-        .map(|(idx, _)| idx)
-        .unwrap_or_else(|| panic!("Node not found: {}", start));
+    let start_idx = match graph.find_node(start).map(|(idx, _)| idx) {
+        Some(idx) => idx,
+        None => {
+            tracing::warn!("Node not found during traversal: {}", start);
+            return std::iter::empty().collect::<Vec<_>>().into_iter();
+        }
+    };
 
     let mut visited = HashSet::new();
     let mut stack = vec![(start_idx, Vec::new())];
@@ -49,10 +52,13 @@ pub fn find_all_paths<'a>(
     to: &str,
     direction: Direction,
 ) -> Vec<Vec<(&'a DependencyNode, &'a DependencyEdge)>> {
-    let from_idx = graph
-        .find_node(from)
-        .map(|(idx, _)| idx)
-        .unwrap_or_else(|| panic!("Node not found: {}", from));
+    let from_idx = match graph.find_node(from).map(|(idx, _)| idx) {
+        Some(idx) => idx,
+        None => {
+            tracing::warn!("Source node not found for path finding: {}", from);
+            return Vec::new();
+        }
+    };
 
     let to_idx = graph
         .find_node(to)

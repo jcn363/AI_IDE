@@ -23,7 +23,7 @@ struct WorkerNode {
     local_cache: HashMap<String, CacheEntry<String>>,
     load_factor: f64,
     is_active: bool,
-    last_heartbeat: chrono::DateTime<chrono::Utc>,
+    _last_heartbeat: chrono::DateTime<chrono::Utc>,
 }
 
 /// Work-stealing algorithm configuration
@@ -84,7 +84,7 @@ impl DistributedWorkStealingCache {
             local_cache: HashMap::new(),
             load_factor: 0.0,
             is_active: true,
-            last_heartbeat: chrono::Utc::now(),
+            _last_heartbeat: chrono::Utc::now(),
         };
         workers.insert(worker_id, worker);
         Ok(())
@@ -246,7 +246,6 @@ impl Cache<String, String> for DistributedWorkStealingCache {
                         return Ok(Some(entry.value.clone()));
                     } else {
                         // Remove expired entry
-                        drop(worker);
                         self.workers
                             .write()
                             .await

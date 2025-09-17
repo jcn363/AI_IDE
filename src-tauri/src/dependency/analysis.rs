@@ -111,13 +111,8 @@ pub struct DependencyGraphBuilder {
     root_package: String,
 }
 
-impl Default for DependencyGraphBuilder {
-    fn default() -> Self {
-        // Cannot provide a safe default for Metadata, so we implement
-        // a Default that panics if used incorrectly
-        panic!("DependencyGraphBuilder does not support Default::default(), use DependencyGraphBuilder::new() instead")
-    }
-}
+// DependencyGraphBuilder intentionally does not implement Default
+// Use DependencyGraphBuilder::new(project_path) instead
 
 impl DependencyGraphBuilder {
     /// Create a new builder for the project at the given path

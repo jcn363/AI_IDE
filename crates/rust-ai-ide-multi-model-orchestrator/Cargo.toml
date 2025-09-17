@@ -65,6 +65,9 @@ rust-ai-ide-predictive-quality = { path = "../rust-ai-ide-predictive-quality" }
 rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp", features = ["ai", "multi-language-lsp"] }
 rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
 
+# Warmup prediction system
+rust-ai-ide-warmup-predictor = { path = "../rust-ai-ide-warmup-predictor" }
+
 [dev-dependencies]
 tokio-test = { workspace = true }
 tempfile = { workspace = true }

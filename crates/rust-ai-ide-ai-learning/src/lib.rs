@@ -11,6 +11,8 @@
 //! - **PersonalizationEngine**: User-specific adaptations and recommendations
 //! - **TeamLearning**: Collaborative knowledge sharing between users
 //! - **ModelTrainer**: Local model improvement from usage data
+//! - **HyperparameterTuner**: Automated hyperparameter optimization with Bayesian methods
+//! - **ModelPerformanceProfiler**: Real-time model performance monitoring and analytics
 //!
 //! ## Features
 //!
@@ -36,6 +38,12 @@ use {analysis_placeholder as analysis, refactoring_placeholder as refactoring};
 
 // Re-export types module for external access
 pub mod types;
+
+// Hyperparameter tuning module
+pub mod hyperparameter_tuning;
+
+// Model performance profiling module
+pub mod model_performance_profiling;
 
 /// Learning data privacy levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -566,11 +574,13 @@ impl ModelTrainer {
 
 /// Main AI Learning System orchestrator
 pub struct AILearningSystem {
-    learning_engine:        Arc<LearningEngine>,
-    pattern_learner:        Arc<PatternLearner>,
-    personalization_engine: Arc<PersonalizationEngine>,
-    team_learning:          Arc<TeamLearning>,
-    model_trainer:          Arc<ModelTrainer>,
+    learning_engine:             Arc<LearningEngine>,
+    pattern_learner:             Arc<PatternLearner>,
+    personalization_engine:      Arc<PersonalizationEngine>,
+    team_learning:               Arc<TeamLearning>,
+    model_trainer:               Arc<ModelTrainer>,
+    hyperparameter_tuner:        Arc<hyperparameter_tuning::HyperparameterTuner>,
+    performance_profiler:        Arc<model_performance_profiling::ModelPerformanceProfiler>,
 }
 
 impl AILearningSystem {
@@ -581,6 +591,8 @@ impl AILearningSystem {
         let personalization_engine = Arc::new(PersonalizationEngine::new(learning_engine.clone()).await?);
         let team_learning = Arc::new(TeamLearning::new().await?);
         let model_trainer = Arc::new(ModelTrainer::new().await?);
+        let hyperparameter_tuner = Arc::new(hyperparameter_tuning::HyperparameterTuner::new().await?);
+        let performance_profiler = Arc::new(model_performance_profiling::ModelPerformanceProfiler::new().await?);
 
         Ok(Self {
             learning_engine,
@@ -588,6 +600,8 @@ impl AILearningSystem {
             personalization_engine,
             team_learning,
             model_trainer,
+            hyperparameter_tuner,
+            performance_profiler,
         })
     }
 
@@ -614,6 +628,16 @@ impl AILearningSystem {
     /// Get model trainer
     pub fn model_trainer(&self) -> Arc<ModelTrainer> {
         self.model_trainer.clone()
+    }
+
+    /// Get hyperparameter tuner
+    pub fn hyperparameter_tuner(&self) -> Arc<hyperparameter_tuning::HyperparameterTuner> {
+        self.hyperparameter_tuner.clone()
+    }
+
+    /// Get model performance profiler
+    pub fn performance_profiler(&self) -> Arc<model_performance_profiling::ModelPerformanceProfiler> {
+        self.performance_profiler.clone()
     }
 }
 

@@ -334,6 +334,24 @@ pub struct AdaptiveMemoryManager {
     memory_monitor:       MemoryMonitor,
     allocation_decisions: Vec<AllocationDecision>,
     config:               AdaptiveConfig,
+    /// Idle state tracking for aggressive cleanup
+    idle_state:           Arc<RwLock<IdleState>>,
+    last_activity:        Arc<RwLock<chrono::DateTime<chrono::Utc>>>,
+    idle_cleanup_task:    Option<tokio::task::JoinHandle<()>>,
+}
+
+/// Idle state for memory optimization
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum IdleState {
+    Active,
+    Idle,
+    DeepIdle,
+}
+
+impl Default for IdleState {
+    fn default() -> Self {
+        IdleState::Active
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -376,6 +394,9 @@ impl AdaptiveMemoryManager {
             memory_monitor: MemoryMonitor::new(),
             allocation_decisions: Vec::new(),
             config,
+            idle_state: Arc::new(RwLock::new(IdleState::Active)),
+            last_activity: Arc::new(RwLock::new(chrono::Utc::now())),
+            idle_cleanup_task: None,
         }
     }
 
@@ -467,6 +488,122 @@ impl AdaptiveMemoryManager {
     /// Get current allocation strategy
     pub async fn get_current_strategy(&self) -> AllocationStrategy {
         self.current_strategy.read().await.clone()
+    }
+
+    /// Record activity to reset idle timer
+    pub async fn record_activity(&self) {
+        *self.last_activity.write().await = chrono::Utc::now();
+        *self.idle_state.write().await = IdleState::Active;
+    }
+
+    /// Update idle state based on inactivity
+    pub async fn update_idle_state(&self) {
+        let now = chrono::Utc::now();
+        let last_activity = *self.last_activity.read().await;
+        let inactivity_duration = (now - last_activity).num_seconds() as u64;
+
+        let new_state = if inactivity_duration < 300 { // Less than 5 minutes
+            IdleState::Active
+        } else if inactivity_duration < 900 { // Less than 15 minutes
+            IdleState::Idle
+        } else {
+            IdleState::DeepIdle
+        };
+
+        let mut current_state = self.idle_state.write().await;
+        let state_changed = *current_state != new_state;
+
+        *current_state = new_state;
+
+        // Trigger aggressive cleanup if entering idle states
+        if state_changed && matches!(new_state, IdleState::Idle | IdleState::DeepIdle) {
+            let _ = self.perform_idle_memory_optimization().await;
+        }
+    }
+
+    /// Get current idle state
+    pub async fn idle_state(&self) -> IdleState {
+        *self.idle_state.read().await
+    }
+
+    /// Perform aggressive memory optimization during idle periods
+    async fn perform_idle_memory_optimization(&self) -> IDEResult<()> {
+        let idle_state = *self.idle_state.read().await;
+
+        info!("Performing idle memory optimization for state: {:?}", idle_state);
+
+        // Scale down allocation strategy during idle
+        let mut strategy = self.current_strategy.write().await;
+
+        match idle_state {
+            IdleState::Idle => {
+                // Reduce allocation chunks by 30%
+                strategy.allocation_chunk_size_kb = (strategy.allocation_chunk_size_kb as f64 * 0.7) as usize;
+                strategy.preallocation_chunks = (strategy.preallocation_chunks as f64 * 0.8) as usize;
+            }
+            IdleState::DeepIdle => {
+                // Aggressive reduction by 50%
+                strategy.allocation_chunk_size_kb = (strategy.allocation_chunk_size_kb as f64 * 0.5) as usize;
+                strategy.preallocation_chunks = (strategy.preallocation_chunks as f64 * 0.6) as usize;
+                strategy.deallocation_threshold_gb = (strategy.deallocation_threshold_gb * 0.5).max(0.5);
+            }
+            IdleState::Active => {} // No change for active state
+        }
+
+        // Ensure minimum values
+        strategy.allocation_chunk_size_kb = strategy.allocation_chunk_size_kb.max(64);
+        strategy.preallocation_chunks = strategy.preallocation_chunks.max(1);
+        strategy.deallocation_threshold_gb = strategy.deallocation_threshold_gb.max(0.1);
+
+        debug!(
+            "Idle optimization applied: {} KB chunks, {} preallocations, {:.2} GB threshold",
+            strategy.allocation_chunk_size_kb,
+            strategy.preallocation_chunks,
+            strategy.deallocation_threshold_gb
+        );
+
+        Ok(())
+    }
+
+    /// Monitor memory pressure and trigger cleanup if needed
+    pub async fn monitor_memory_pressure(&self, current_usage_mb: usize) -> IDEResult<()> {
+        let idle_state = *self.idle_state.read().await;
+
+        // Different thresholds based on idle state
+        let pressure_threshold = match idle_state {
+            IdleState::Active => 1024, // 1GB for active
+            IdleState::Idle => 512,     // 512MB for idle
+            IdleState::DeepIdle => 256, // 256MB for deep idle
+        };
+
+        if current_usage_mb > pressure_threshold {
+            warn!("Memory pressure detected: {} MB > {} MB threshold", current_usage_mb, pressure_threshold);
+            self.trigger_memory_cleanup().await?;
+        }
+
+        Ok(())
+    }
+
+    /// Trigger immediate memory cleanup
+    async fn trigger_memory_cleanup(&self) -> IDEResult<()> {
+        // Force garbage collection hints
+        // Note: In real Rust, we can't force GC, but we can hint and trigger cleanup
+
+        // Update strategy for immediate cleanup
+        let mut strategy = self.current_strategy.write().await;
+        strategy.garbage_collection_interval_seconds = 30; // More aggressive GC
+
+        // Trigger cleanup on allocation decisions
+        self.allocation_decisions.retain(|decision| {
+            // Keep only recent decisions (last hour)
+            let age_seconds = (chrono::Utc::now() - decision.timestamp).num_seconds();
+            age_seconds < 3600
+        });
+
+        info!("Memory cleanup triggered - retained {} allocation decisions",
+              self.allocation_decisions.len());
+
+        Ok(())
     }
 }
 

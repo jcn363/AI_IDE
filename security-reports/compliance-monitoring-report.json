@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-09-17T16:35:14+02:00",
+  "tool": "Compliance Monitoring",
+  "frameworks_checked": [
+    "GDPR",
+    "HIPAA",
+    "Licensing"
+  ],
+  "gdpr_compliant": "false",
+  "hipaa_compliant": "false",
+  "license_compliant": "false",
+  "issues_found": 2,
+  "status": "ISSUES_FOUND",
+  "recommendations": [
+    "Review and update compliance documentation",
+    "Implement automated compliance checks",
+    "Conduct compliance training if needed"
+  ]
+}

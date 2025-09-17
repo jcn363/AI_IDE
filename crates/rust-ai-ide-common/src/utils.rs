@@ -44,7 +44,7 @@ pub async fn retry_with_backoff<F, Fut, T, E>(
 where
     F: FnMut() -> Fut,
     Fut: std::future::Future<Output = Result<T, E>>,
-    E: std::fmt::Display,
+    E: std::fmt::Display + From<std::io::Error>,
 {
     let mut delay = initial_delay;
     for attempt in 1..=max_attempts {
@@ -65,7 +65,9 @@ where
             }
         }
     }
-    unreachable!("Loop should always return");
+    // This should never be reached, but handle gracefully
+    tracing::error!("Stream processing loop completed unexpectedly");
+    Err(std::io::Error::new(std::io::ErrorKind::Other, "Stream processing failed").into())
 }
 
 /// Stream processing with concurrency limit
@@ -97,7 +99,7 @@ where
     F: FnMut() -> Fut + Send + Clone + 'static,
     Fut: std::future::Future<Output = Result<T, E>> + Send + 'static,
     T: Send + 'static,
-    E: std::fmt::Display + std::fmt::Debug + Send + 'static,
+    E: std::fmt::Display + std::fmt::Debug + Send + 'static + From<std::io::Error>,
 {
     let mut op = operation;
 

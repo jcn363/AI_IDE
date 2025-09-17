@@ -84,6 +84,14 @@ pub mod unified_logger;
 
 // Unified configuration management system
 pub mod config;
+// Cross-platform utilities
+pub mod platform;
+// Platform-specific security features
+pub mod security;
+// Platform-agnostic configuration storage
+pub mod config_storage;
+// Cross-platform plugin compatibility
+pub mod plugin_compatibility;
 
 // ===== PLUGIN TYPES =====================================================================
 // Re-export plugin-related types for plugin architecture

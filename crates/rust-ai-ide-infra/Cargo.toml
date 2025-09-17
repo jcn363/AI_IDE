@@ -1,0 +1,37 @@
+[package]
+name = "rust-ai-ide-infra"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+
+[dependencies]
+# Workspace dependencies
+rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-advanced-memory = { path = "../rust-ai-ide-advanced-memory" }
+rust-ai-ide-lazy-loading = { path = "../rust-ai-ide-lazy-loading" }
+rust-ai-ide-cache = { path = "../rust-ai-ide-cache" }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+async-trait = "0.1"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+
+# Logging
+tracing = "0.1"
+
+# Collections
+dashmap = "5.0"
+indexmap = "2.0"
+
+# Utilities
+thiserror = "1.0"
+anyhow = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }

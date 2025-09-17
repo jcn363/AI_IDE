@@ -23,16 +23,22 @@
 #![warn(clippy::all, clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 
+pub mod adaptive_load_balancer;
 pub mod error;
 pub mod metrics;
+pub mod performance_monitor;
 pub mod scheduler;
 pub mod task;
+pub mod task_prioritizer;
 pub mod worker;
 
+pub use adaptive_load_balancer::{AdaptiveLoadBalancer, WorkDistribution};
 pub use error::SchedulerError;
 pub use metrics::{CpuMetrics, SchedulerMetrics};
+pub use performance_monitor::{PerformanceMonitor, PerformanceSnapshot};
 pub use scheduler::WorkStealingScheduler;
 pub use task::{Task, TaskPriority};
+pub use task_prioritizer::{TaskPrioritizer, TaskMetadata};
 pub use worker::Worker;
 
 /// Configuration for the work-stealing scheduler

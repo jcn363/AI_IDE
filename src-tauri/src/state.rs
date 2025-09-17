@@ -316,6 +316,18 @@ pub struct AppState {
     // Observability and monitoring
     /// Comprehensive observability manager for metrics, tracing, and health checks
     observability_manager: Arc<Mutex<Option<ObservabilityManager>>>,
+
+    // Model warmup prediction system
+    /// Main model warmup predictor service
+    warmup_predictor: Arc<Mutex<Option<rust_ai_ide_warmup_predictor::ModelWarmupPredictor>>>,
+    /// Advanced pattern analyzer for user behavior
+    pattern_analyzer: Arc<Mutex<Option<rust_ai_ide_warmup_predictor::advanced_patterns::AdvancedPatternAnalyzer>>>,
+    /// ML model trainer for prediction accuracy
+    ml_trainer: Arc<Mutex<Option<rust_ai_ide_warmup_predictor::ml_trainer::MLModelTrainer>>>,
+    /// ML model evaluator for performance assessment
+    ml_evaluator: Arc<Mutex<Option<rust_ai_ide_warmup_predictor::ml_evaluator::MLModelEvaluator>>>,
+    /// Performance benchmarker for system evaluation
+    benchmarker: Arc<Mutex<Option<rust_ai_ide_warmup_predictor::benchmark_tools::PerformanceBenchmarker>>>,
 }
 
 impl AppState {
@@ -335,6 +347,11 @@ impl AppState {
             memory_optimizer:      Arc::new(Mutex::new(None)),
             battery_monitor:       Arc::new(Mutex::new(None)),
             observability_manager: Arc::new(Mutex::new(None)),
+            warmup_predictor:      Arc::new(Mutex::new(None)),
+            pattern_analyzer:      Arc::new(Mutex::new(None)),
+            ml_trainer:            Arc::new(Mutex::new(None)),
+            ml_evaluator:          Arc::new(Mutex::new(None)),
+            benchmarker:           Arc::new(Mutex::new(None)),
         })
     }
 
@@ -444,5 +461,46 @@ impl AppState {
 
     pub async fn get_observability_manager(&self) -> Option<ObservabilityManager> {
         self.observability_manager.lock().await.clone()
+    }
+
+    // Warmup predictor service accessors
+    pub async fn set_warmup_predictor(&self, predictor: rust_ai_ide_warmup_predictor::ModelWarmupPredictor) {
+        *self.warmup_predictor.lock().await = Some(predictor);
+    }
+
+    pub async fn get_warmup_predictor(&self) -> Option<rust_ai_ide_warmup_predictor::ModelWarmupPredictor> {
+        self.warmup_predictor.lock().await.clone()
+    }
+
+    pub async fn set_pattern_analyzer(&self, analyzer: rust_ai_ide_warmup_predictor::advanced_patterns::AdvancedPatternAnalyzer) {
+        *self.pattern_analyzer.lock().await = Some(analyzer);
+    }
+
+    pub async fn get_pattern_analyzer(&self) -> Option<rust_ai_ide_warmup_predictor::advanced_patterns::AdvancedPatternAnalyzer> {
+        self.pattern_analyzer.lock().await.clone()
+    }
+
+    pub async fn set_ml_trainer(&self, trainer: rust_ai_ide_warmup_predictor::ml_trainer::MLModelTrainer) {
+        *self.ml_trainer.lock().await = Some(trainer);
+    }
+
+    pub async fn get_ml_trainer(&self) -> Option<rust_ai_ide_warmup_predictor::ml_trainer::MLModelTrainer> {
+        self.ml_trainer.lock().await.clone()
+    }
+
+    pub async fn set_ml_evaluator(&self, evaluator: rust_ai_ide_warmup_predictor::ml_evaluator::MLModelEvaluator) {
+        *self.ml_evaluator.lock().await = Some(evaluator);
+    }
+
+    pub async fn get_ml_evaluator(&self) -> Option<rust_ai_ide_warmup_predictor::ml_evaluator::MLModelEvaluator> {
+        self.ml_evaluator.lock().await.clone()
+    }
+
+    pub async fn set_benchmarker(&self, benchmarker: rust_ai_ide_warmup_predictor::benchmark_tools::PerformanceBenchmarker) {
+        *self.benchmarker.lock().await = Some(benchmarker);
+    }
+
+    pub async fn get_benchmarker(&self) -> Option<rust_ai_ide_warmup_predictor::benchmark_tools::PerformanceBenchmarker> {
+        self.benchmarker.lock().await.clone()
     }
 }

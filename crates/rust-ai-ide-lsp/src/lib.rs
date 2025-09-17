@@ -277,6 +277,12 @@ pub mod project;
 pub mod refactoring;
 pub mod rust_analyzer;
 pub mod utils;
+// AI Model Service Module
+// LSP AI Model Service Module
+// AI Model Commands Module
+pub mod ai_model_commands;
+pub mod lsp_ai_model_service;
+pub mod ai_model_service;
 pub mod workspace;
 
 // Multi-language support modules

@@ -218,7 +218,7 @@ where
         let mut scored_entries: Vec<_> = entries
             .iter()
             .enumerate()
-            .map(|(idx, (key, entry))| {
+            .map(|(idx, (_, entry))| {
                 let score = self.calculate_eviction_score(entry, entry.access_count);
                 (idx, score, current_usage - self.estimate_entry_size(entry))
             })
@@ -236,7 +236,7 @@ where
         let mut selected = Vec::new();
         let mut running_memory = current_usage;
 
-        for (idx, score, reduced_memory) in scored_entries {
+        for (idx, _score, reduced_memory) in scored_entries {
             if selected.len() >= target_count || running_memory <= target_memory {
                 break;
             }
@@ -246,97 +246,6 @@ where
         }
 
         selected
-    }
-}
-
-/// TTL-based cleanup strategy
-pub struct TtlCleanupStrategy;
-
-impl TtlCleanupStrategy {
-    pub fn cleanup_expired<K, V>(entries: &mut Vec<(K, CacheEntry<V>)>) -> usize
-    where
-        K: Clone,
-    {
-        let initial_len = entries.len();
-        entries.retain(|(_, entry)| !entry.is_expired());
-        initial_len - entries.len()
-    }
-}
-
-/// Performance-aware eviction strategy that considers multiple factors and adapts to usage patterns
-pub struct AdaptiveStrategy {
-    pub weight_recent: f32,
-    pub weight_frequency: f32,
-    pub weight_size: f32,
-    pub adaptive_mode: std::sync::atomic::AtomicBool,
-    pub usage_history:
-        std::sync::RwLock<std::collections::VecDeque<(chrono::DateTime<chrono::Utc>, usize, f64)>>,
-    pub prediction_enabled: bool,
-}
-
-impl Default for AdaptiveStrategy {
-    fn default() -> Self {
-        Self {
-            weight_recent: 0.4,
-            weight_frequency: 0.4,
-            weight_size: 0.2,
-            adaptive_mode: std::sync::atomic::AtomicBool::new(true),
-            usage_history: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(1000)),
-            prediction_enabled: true,
-        }
-    }
-}
-
-impl AdaptiveStrategy {
-    /// Adapt weights based on historical usage patterns
-    pub async fn adapt_weights(&self, current_hit_rate: f64, current_throughput: f64) {
-        if !self
-            .adaptive_mode
-            .load(std::sync::atomic::Ordering::Relaxed)
-        {
-            return;
-        }
-
-        let history = self.usage_history.read().unwrap();
-        if history.len() < 10 {
-            return;
-        }
-
-        // Calculate trend: is performance improving?
-        let recent_performance: Vec<_> = history
-            .iter()
-            .rev()
-            .take(5)
-            .map(|(_, _, perf)| *perf)
-            .collect();
-        let avg_recent = recent_performance.iter().sum::<f64>() / recent_performance.len() as f64;
-        let trend = avg_recent
-            - (history.iter().map(|(_, _, perf)| *perf).sum::<f64>() / history.len() as f64);
-
-        // Adjust weights based on trend
-        if trend > 0.0 {
-            // Performance is improving, slight adjustment towards current weights
-            let factor = 0.02 * trend.signum(); // Small adjustment
-            self.adjust_weight_for_improvement(factor).await;
-        }
-
-        // Log current metrics
-        {
-            let mut history = self.usage_history.write().unwrap();
-            if history.len() >= 1000 {
-                history.pop_front();
-            }
-            history.push_back((
-                chrono::Utc::now(),
-                current_hit_rate as usize,
-                current_throughput,
-            ));
-        }
-    }
-
-    async fn adjust_weight_for_improvement(&self, _factor: f64) {
-        // Weight adjustment logic could be implemented here if needed
-        // For now, we maintain fixed weights
     }
 }
 
@@ -370,7 +279,7 @@ where
         let scores: Vec<_> = entries
             .iter()
             .enumerate()
-            .map(|(idx, (key, entry))| {
+            .map(|(idx, (_, entry))| {
                 // Base scores
                 let recent_score = (max_recent - entry.last_accessed.timestamp()) as f32 / 3600.0; // hours ago
                 let frequency_score = max_frequency.saturating_sub(entry.access_count) as f32;
@@ -435,8 +344,8 @@ where
         let result: Vec<_> = scores
             .into_iter()
             .take(target_count)
-            .filter(|(idx, score)| {
-                let entry = entries[*idx].1;
+            .filter(|(_idx, _score)| {
+                let entry = entries[*_idx].1;
                 // Don't evict entries accessed within last minute if they have high access count
                 let minutes_since_access =
                     ((now.timestamp() - entry.last_accessed.timestamp()) as f64) / 60.0;
@@ -446,185 +355,6 @@ where
             .collect();
 
         result
-    }
-}
-
-fn adaptive_scoring<V>(
-    recent_score: f32,
-    frequency_score: f32,
-    size_score: f32,
-    entry: &CacheEntry<V>,
-    strategy: &AdaptiveStrategy,
-) -> f32 {
-    // Use historical data to adjust weights dynamically
-    let history = strategy.usage_history.try_read().unwrap();
-    if history.is_empty() {
-        return recent_score * 0.4 + frequency_score * 0.4 + size_score * 0.2;
-    }
-
-    // Calculate average hit rate
-    let avg_hit_rate: f64 = history
-        .iter()
-        .map(|(_, hit_rate, _)| *hit_rate as f64)
-        .sum::<f64>()
-        / history.len() as f64;
-
-    // Adjust weights based on hit rate performance
-    let (recent_weight, freq_weight, size_weight) = if avg_hit_rate > 0.8 {
-        // High hit rate - favor frequency
-        (0.3, 0.5, 0.2)
-    } else if avg_hit_rate > 0.6 {
-        // Medium hit rate - balanced
-        (0.4, 0.4, 0.2)
-    } else {
-        // Low hit rate - favor recency
-        (0.6, 0.2, 0.2)
-    };
-
-    recent_score * recent_weight + frequency_score * freq_weight + size_score * size_weight
-}
-
-fn predict_future_access<V>(entry: &CacheEntry<V>, now: chrono::DateTime<chrono::Utc>) -> f32 {
-    // Simple prediction based on access patterns
-    let time_since_last_access = (now.timestamp() - entry.last_accessed.timestamp()) as f32;
-
-    if entry.access_count == 0 {
-        return 0.0;
-    }
-
-    let avg_access_interval = time_since_last_access / entry.access_count as f32;
-
-    // Predict if this entry will be accessed soon based on historical pattern
-    if avg_access_interval < 10.0 && entry.access_count > 3 {
-        // Frequently accessed, predict higher chance of future access
-        (10.0 - avg_access_interval).max(0.0) * 0.5
-    } else {
-        0.0
-    }
-}
-
-/// Strategy selector for choosing the right strategy based on usage patterns
-pub struct StrategySelector;
-
-impl StrategySelector {
-    pub fn select_strategy<K, V>(
-        entries: &[(&K, &CacheEntry<V>)],
-        config: &CacheConfig,
-    ) -> Box<dyn EvictionStrategy<K, V> + Send + Sync>
-    where
-        K: Clone + Send + Sync + 'static + std::hash::Hash,
-        V: Send + Sync + serde::Serialize + serde::de::DeserializeOwned + 'static,
-    {
-        match config.eviction_policy {
-            EvictionPolicy::Lru => Box::new(LruStrategy),
-            EvictionPolicy::Lfu => Box::new(LfuStrategy),
-            EvictionPolicy::Fifo => Box::new(FifoStrategy),
-            EvictionPolicy::Random => Box::new(RandomStrategy::new()),
-            EvictionPolicy::SizeBased => Box::new(SizeStrategy {
-                max_memory_usage: config.max_memory_mb.unwrap_or(100) * 1024 * 1024,
-                current_memory: std::sync::atomic::AtomicUsize::new(0),
-                priority_weights: std::sync::RwLock::new(std::collections::HashMap::new()),
-            }),
-            EvictionPolicy::Adaptive => Box::new(AdaptiveStrategy::default()),
-            EvictionPolicy::WTinyLFU => Box::new(WTinyLFU::default()),
-            EvictionPolicy::SegmentedLRU => Box::new(SegmentedLRUStrategy::default()),
-            EvictionPolicy::Clock => Box::new(ClockStrategy::default()),
-        }
-    }
-}
-
-/// W-TinyLFU (Windowed TinyLFU) eviction strategy
-/// Advanced cache replacement policy that combines recency and frequency
-pub struct WTinyLFU {
-    window_size: usize,
-    sketch_width: usize,
-    sketch_depth: usize,
-    window_accesses: std::sync::RwLock<std::collections::VecDeque<(u64, u64)>>, // (timestamp, hash)
-    main_accesses: std::sync::RwLock<std::collections::HashMap<u64, u8>>,       // Hash -> frequency
-    current_window_size: std::sync::atomic::AtomicUsize,
-}
-
-impl WTinyLFU {
-    pub fn new(window_size: usize) -> Self {
-        Self {
-            window_size,
-            sketch_width: 1024,
-            sketch_depth: 4,
-            window_accesses: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(
-                window_size,
-            )),
-            main_accesses: std::sync::RwLock::new(std::collections::HashMap::new()),
-            current_window_size: std::sync::atomic::AtomicUsize::new(0),
-        }
-    }
-
-    fn hash_key<K>(&self, key: &K) -> u64
-    where
-        K: std::hash::Hash,
-    {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let mut hasher = DefaultHasher::new();
-        key.hash(&mut hasher);
-        hasher.finish()
-    }
-
-    fn estimate_frequency(&self, hash: u64) -> u8 {
-        self.main_accesses
-            .read()
-            .unwrap()
-            .get(&hash)
-            .copied()
-            .unwrap_or(0)
-    }
-
-    fn record_access(&self, hash: u64, now: u64) {
-        // Windowed TinyLFU algorithm
-        {
-            let mut window = self.window_accesses.write().unwrap();
-            window.push_back((now, hash));
-            if window.len() > self.window_size {
-                if let Some((_, old_hash)) = window.pop_front() {
-                    // Move frequent items to main structure
-                    if self.estimate_frequency(old_hash) > 1 {
-                        self.main_accesses
-                            .write()
-                            .unwrap()
-                            .entry(old_hash)
-                            .and_modify(|freq| {
-                                if *freq < 255 {
-                                    *freq += 1;
-                                }
-                            })
-                            .or_insert(1);
-                    }
-                }
-            }
-        }
-
-        // Update main frequency
-        self.main_accesses
-            .write()
-            .unwrap()
-            .entry(hash)
-            .and_modify(|freq| {
-                if *freq < 255 {
-                    *freq += 1;
-                }
-            })
-            .or_insert(1);
-
-        self.current_window_size.store(
-            self.window_accesses.read().unwrap().len(),
-            std::sync::atomic::Ordering::Relaxed,
-        );
-    }
-}
-
-impl Default for WTinyLFU {
-    fn default() -> Self {
-        Self::new(10000) // Default window size
     }
 }
 
@@ -654,8 +384,8 @@ where
         let mut scored_entries: Vec<_> = entries
             .iter()
             .enumerate()
-            .map(|(idx, (key, entry))| {
-                let hash = self.hash_key(key);
+            .map(|(idx, (_, entry))| {
+                let hash = self.hash_key(entry);
                 let frequency = self.estimate_frequency(hash);
 
                 // Record access for future decisions
@@ -686,54 +416,6 @@ where
     }
 }
 
-/// Segmented LRU strategy for better cache performance
-/// Uses two segments: probationary and protected
-pub struct SegmentedLRUStrategy {
-    probationary_capacity: usize,
-    protected_capacity: usize,
-    probationary: std::sync::RwLock<std::collections::VecDeque<u64>>, // Hash of keys
-    protected: std::sync::RwLock<std::collections::VecDeque<u64>>,
-}
-
-impl SegmentedLRUStrategy {
-    fn hash_key<K: std::hash::Hash>(&self, key: &K) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-        let mut hasher = DefaultHasher::new();
-        key.hash(&mut hasher);
-        hasher.finish()
-    }
-}
-
-impl Default for SegmentedLRUStrategy {
-    fn default() -> Self {
-        Self {
-            probationary_capacity: 1000,
-            protected_capacity: 500,
-            probationary: std::sync::RwLock::new(std::collections::VecDeque::new()),
-            protected: std::sync::RwLock::new(std::collections::VecDeque::new()),
-        }
-    }
-}
-
-impl<K, V> EvictionStrategy<K, V> for SegmentedLRUStrategy
-where
-    K: Clone + std::hash::Hash,
-    V: serde::Serialize,
-{
-    fn select_entries_for_eviction(
-        &self,
-        entries: &[(&K, &CacheEntry<V>)],
-        target_count: usize,
-    ) -> Vec<K>
-    where
-        K: Clone,
-    {
-        // Simple implementation: just use LRU on probationary segment
-        // In practice, this would track hits and move entries between segments
-        LruStrategy.select_entries_for_eviction(entries, target_count)
-    }
-}
 
 /// Clock algorithm (second chance algorithm) for efficient LRU approximation
 pub struct ClockStrategy {
@@ -771,11 +453,11 @@ where
         let mut selected = Vec::new();
 
         while selected.len() < target_count && hand < entries.len() {
-            let entry = entries[hand].1;
+            let _entry = entries[hand].1;
             // Use timestamp as simple proxy for clock hand
             let key_hash = {
                 use std::collections::hash_map::DefaultHasher;
-                use std::hash::{Hash, Hasher};
+                use std::hash::Hasher;
                 let mut hasher = DefaultHasher::new();
                 entries[hand].0.hash(&mut hasher);
                 hasher.finish()
@@ -862,6 +544,92 @@ mod tests {
 
     use chrono::Utc;
 
+    /// Adaptive eviction strategy with configurable weights
+    #[derive(Debug, Clone)]
+    pub struct AdaptiveStrategy {
+        pub weight_recent:     f32,
+        pub weight_frequency:  f32,
+        pub weight_size:       f32,
+        pub adaptive_mode:     std::sync::atomic::AtomicBool,
+        pub prediction_enabled: bool,
+        pub frequency_map:     std::sync::RwLock<std::collections::HashMap<u64, u32>>,
+    }
+    
+    /// W-TinyLFU eviction strategy implementation
+    #[derive(Debug, Clone)]
+    pub struct WTinyLFU {
+        pub window_size: usize,
+        pub reset_threshold: u64,
+        pub frequency_map: std::sync::RwLock<std::collections::HashMap<u64, u32>>,
+    }
+    
+    impl Default for AdaptiveStrategy {
+        fn default() -> Self {
+            Self {
+                weight_recent: 0.3,
+                weight_frequency: 0.4,
+                weight_size: 0.3,
+                adaptive_mode: std::sync::atomic::AtomicBool::new(false),
+                prediction_enabled: false,
+                frequency_map: std::sync::RwLock::new(std::collections::HashMap::new()),
+            }
+        }
+    }
+    
+    impl Default for WTinyLFU {
+        fn default() -> Self {
+            Self {
+                window_size: 10000,
+                reset_threshold: 100000,
+                frequency_map: std::sync::RwLock::new(std::collections::HashMap::new()),
+            }
+        }
+    }
+    
+    impl WTinyLFU {
+        fn hash_key(&self, entry: &CacheEntry<impl serde::Serialize>) -> u64 {
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::Hasher;
+            let mut hasher = DefaultHasher::new();
+            entry.created_at.timestamp().hash(&mut hasher);
+            hasher.finish()
+        }
+    
+        fn estimate_frequency(&self, hash: u64) -> u32 {
+            *self.frequency_map.read().unwrap().get(&hash).unwrap_or(&0)
+        }
+    
+        fn record_access(&self, hash: u64, timestamp: u64) {
+            let mut map = self.frequency_map.write().unwrap();
+            let count = map.entry(hash).or_insert(0);
+            *count += 1;
+    
+            // Reset periodically to prevent unbounded growth
+            if timestamp % self.reset_threshold == 0 {
+                map.clear();
+            }
+        }
+    }
+    
+    fn adaptive_scoring(recent_score: f32, frequency_score: f32, size_score: f32, entry: &CacheEntry<impl serde::Serialize>, strategy: &AdaptiveStrategy) -> f32 {
+        // Adaptive scoring based on historical performance
+        // This is a simplified implementation
+        recent_score * strategy.weight_recent + frequency_score * strategy.weight_frequency + size_score * strategy.weight_size
+    }
+    
+    fn predict_future_access(entry: &CacheEntry<impl serde::Serialize>, now: chrono::DateTime<chrono::Utc>) -> f32 {
+        // Simple prediction based on access patterns
+        // This is a placeholder implementation
+        let time_since_access = (now - entry.last_accessed).num_seconds() as f32;
+        if time_since_access < 60.0 {
+            0.8 // High chance of being accessed soon
+        } else if time_since_access < 3600.0 {
+            0.5 // Moderate chance
+        } else {
+            0.1 // Low chance
+        }
+    }
+    
     use super::*;
 
     fn create_test_entry(

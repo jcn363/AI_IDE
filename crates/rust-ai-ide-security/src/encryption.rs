@@ -701,6 +701,7 @@ impl EncryptedConfigManager {
             performance_optimizer,
             pq_crypto_engine,
         })
+    }
 
     /// Enhanced set encrypted configuration value with multi-key and performance optimization (Wave 3)
     pub async fn set_config(&self, user: &UserContext, key: &str, value: &str, sensitivity: SensitivityLevel) -> SecurityResult<()> {

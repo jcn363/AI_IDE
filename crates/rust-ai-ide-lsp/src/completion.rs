@@ -295,8 +295,8 @@ impl CompletionProvider {
             ai_completions.push(CompletionItem {
                 label: "map()".to_string(),
                 kind: Some(CompletionItemKind::METHOD),
-                detail: Some("Iterator::map".to_string()),
-                documentation: Some(lsp_types::Documentation::String("Transforms each element of an iterator with the provided closure".to_string())),
+                detail: Some("Iterator::map ".to_string()),
+                documentation: Some(lsp_types::Documentation::String("Transforms each element of an iterator with the provided closure ".to_string())),
                 insert_text: Some("map(${1:|element|) { ${2:$element} }".to_string()),
                 insert_text_format: Some(InsertTextFormat::SNIPPET),
                 command: None,
@@ -312,8 +312,8 @@ impl CompletionProvider {
             ai_completions.push(CompletionItem {
                 label: "iter()".to_string(),
                 kind: Some(CompletionItemKind::METHOD),
-                detail: Some("Iterator::iter".to_string()),
-                documentation: Some(lsp_types::Documentation::String("Returns an iterator over the elements of a collection".to_string())),
+                detail: Some("Iterator::iter ".to_string()),
+                documentation: Some(lsp_types::Documentation::String("Returns an iterator over the elements of a collection ".to_string())),
                 insert_text: Some("iter()".to_string()),
                 insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
                 command: None,
@@ -332,8 +332,8 @@ impl CompletionProvider {
             ai_completions.push(CompletionItem {
                 label: "Default::default()".to_string(),
                 kind: Some(CompletionItemKind::FUNCTION),
-                detail: Some("Create default instance".to_string()),
-                documentation: Some(lsp_types::Documentation::String("Creates a new instance with default values using the Default trait".to_string())),
+                detail: Some("Create default instance ".to_string()),
+                documentation: Some(lsp_types::Documentation::String("Creates a new instance with default values using the Default trait ".to_string())),
                 insert_text: Some("Default::default()".to_string()),
                 insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
                 command: None,
@@ -365,7 +365,7 @@ impl CompletionProvider {
                             context_completions.push(CompletionItem {
                                 label: symbol.to_string(),
                                 kind: Some(CompletionItemKind::MODULE),
-                                detail: Some("Imported symbol".to_string()),
+                                detail: Some("Imported symbol ".to_string()),
                                 insert_text: Some(symbol.to_string()),
                                 insert_text_format: Some(InsertTextFormat::PLAIN_TEXT),
                                 command: None,
@@ -485,7 +485,7 @@ pub async fn handle_completion_item_resolve(
     _provider: &CompletionProvider,
     _params: lsp_types::CompletionItem,
 ) -> Result<lsp_types::CompletionItem, rust_ai_ide_errors::LSPError> {
-    Err(rust_ai_ide_errors::LSPError::ProtocolError("Not implemented".to_string()))
+    Err(rust_ai_ide_errors::LSPError::ProtocolError("Not implemented yet".to_string()))
 }
 
 // Need to implement the LSP compatibility trait

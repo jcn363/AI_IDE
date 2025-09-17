@@ -6,13 +6,16 @@ use crossbeam_deque::Injector;
 use tokio::sync::{mpsc, RwLock};
 use tokio::task;
 
+use crate::adaptive_load_balancer::AdaptiveLoadBalancer;
 use crate::error::{SchedulerError, SchedulerResult};
 use crate::metrics::{MetricsCollector, SchedulerMetrics};
+use crate::performance_monitor::PerformanceMonitor;
 use crate::task::{BoxedTask, TaskResult};
+use crate::task_prioritizer::TaskPrioritizer;
 use crate::worker::{Worker, WorkerPool};
 use crate::SchedulerConfig;
 
-/// Main work-stealing scheduler
+/// Main work-stealing scheduler with advanced CPU utilization
 pub struct WorkStealingScheduler {
     /// Worker pool
     worker_pool: WorkerPool,
@@ -28,6 +31,12 @@ pub struct WorkStealingScheduler {
     is_running: std::sync::atomic::AtomicBool,
     /// Start time for uptime tracking
     start_time: std::time::Instant,
+    /// Adaptive load balancer for optimal CPU utilization
+    load_balancer: Arc<AdaptiveLoadBalancer>,
+    /// Task prioritizer for intelligent scheduling
+    prioritizer: Arc<TaskPrioritizer>,
+    /// Performance monitor for real-time adjustments
+    perf_monitor: Arc<PerformanceMonitor>,
 }
 
 impl WorkStealingScheduler {
@@ -54,6 +63,27 @@ impl WorkStealingScheduler {
         // Create metrics collector
         let metrics = Arc::new(MetricsCollector::new());
 
+        // Create adaptive load balancer
+        let load_balancer = Arc::new(AdaptiveLoadBalancer::new(num_workers, 0.8));
+
+        // Create task prioritizer
+        let prioritizer = Arc::new(TaskPrioritizer::new());
+
+        // Create performance monitor
+        let perf_monitor = Arc::new(PerformanceMonitor::new(1000, std::time::Duration::from_millis(50)));
+
+        // Start performance monitoring
+        let perf_monitor_clone = Arc::clone(&perf_monitor);
+        tokio::spawn(async move {
+            perf_monitor_clone.start_monitoring().await;
+        });
+
+        // Start load balancing task
+        let load_balancer_clone = Arc::clone(&load_balancer);
+        tokio::spawn(async move {
+            load_balancer_clone.start_load_balancing_task().await;
+        });
+
         // Start metrics collection task if enabled
         if config.enable_cpu_monitoring {
             Self::start_metrics_collection(Arc::clone(&metrics), config.metrics_interval_ms);
@@ -70,6 +100,9 @@ impl WorkStealingScheduler {
             config,
             is_running: std::sync::atomic::AtomicBool::new(true),
             start_time: std::time::Instant::now(),
+            load_balancer,
+            prioritizer,
+            perf_monitor,
         })
     }
 

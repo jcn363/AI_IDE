@@ -201,7 +201,10 @@ mod tests {
                 assert!(scale_result.fractal_scaling_active);
                 assert!(scale_result.quantum_recursion_enabled);
             }
-            Err(e) => panic!("Infinite scaling failed: {:?}", e),
+            Err(e) => {
+                eprintln!("Infinite scaling operation failed: {:?}", e);
+                assert!(false, "Infinite scaling should succeed in test");
+            }
         }
     }
 

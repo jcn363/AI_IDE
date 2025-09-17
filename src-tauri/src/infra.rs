@@ -331,6 +331,7 @@ where
 /// The ConnectionPool provides thread-safe connection pooling for network services,
 /// particularly LSP (Language Server Protocol) connections. This component implements
 /// the connection pooling pattern mandated by AGENTS.md for database and network operations.
+/// Enhanced with idle-aware sizing for memory optimization during idle periods.
 ///
 /// ## Architecture
 ///
@@ -338,6 +339,7 @@ where
 /// - Thread-safe access through Arc<Mutex<>> pattern
 /// - Configurable maximum connection limits to prevent resource exhaustion
 /// - In-memory HashMap storage for fast lookups and insertions
+/// - Idle-aware connection scaling to reduce memory usage during idle periods
 ///
 /// ## Supported Connection Types
 ///
@@ -345,6 +347,13 @@ where
 /// - Database connections
 /// - External API clients
 /// - Any cloneable, thread-safe resource
+///
+/// ## Idle State Optimization
+///
+/// The pool automatically scales connection limits based on activity levels:
+/// - **Active**: Full connection capacity (default max_connections)
+/// - **Idle**: 50% reduction in max connections
+/// - **Deep Idle**: 80% reduction in max connections
 ///
 /// ## Usage Examples
 ///
@@ -376,16 +385,30 @@ where
 /// - Minimal memory overhead per connection
 /// - Configurable connection limits prevent resource exhaustion
 /// - Thread-safe for concurrent access patterns
+/// - Adaptive scaling reduces memory footprint during idle periods
 ///
 /// ## Error Handling
 ///
 /// - Returns `None` for missing connections (graceful degradation)
 /// - Validates connection limits before adding new connections
 /// - Thread-safe operations with proper locking
+/// - Automatic cleanup of excess connections during idle state transitions
+
+/// Idle state for connection pool scaling
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+enum PoolIdleState {
+    Active,
+    Idle,
+    DeepIdle,
+}
+
 #[derive(Debug, Clone)]
 pub struct ConnectionPool<C> {
     pool: Arc<Mutex<HashMap<String, C>>>,
-    max_connections: usize,
+    base_max_connections: usize,
+    current_max_connections: Arc<Mutex<usize>>,
+    idle_state: Arc<Mutex<PoolIdleState>>,
+    last_activity: Arc<Mutex<chrono::DateTime<chrono::Utc>>>,
 }
 
 impl<C> ConnectionPool<C>
@@ -396,6 +419,7 @@ where
     ///
     /// Initializes with a maximum of 10 connections, suitable for most LSP server scenarios.
     /// The pool uses an in-memory HashMap for efficient connection storage and retrieval.
+    /// Enhanced with idle-aware connection scaling for memory optimization.
     ///
     /// # Returns
     /// A new ConnectionPool instance ready for connection management.
@@ -405,10 +429,13 @@ where
     /// let pool = ConnectionPool::<MyConnection>::new();
     /// ```
     pub fn new() -> Self {
-        let max_connections = 10;
+        let base_max_connections = 10;
         Self {
             pool: Arc::new(Mutex::new(HashMap::new())),
-            max_connections,
+            base_max_connections,
+            current_max_connections: Arc::new(Mutex::new(base_max_connections)),
+            idle_state: Arc::new(Mutex::new(PoolIdleState::Active)),
+            last_activity: Arc::new(Mutex::new(chrono::Utc::now())),
         }
     }
 
@@ -439,6 +466,7 @@ where
     ///
     /// Stores the connection in the pool if capacity allows. The key must be unique;
     /// existing connections with the same key will be replaced.
+    /// Enhanced with idle-aware connection limits for memory optimization.
     ///
     /// # Parameters
     /// - `key`: Unique identifier for the connection
@@ -449,7 +477,8 @@ where
     /// - `Err(String)` if the maximum connection limit has been reached
     ///
     /// # Errors
-    /// Returns an error if adding the connection would exceed the maximum connection limit.
+    /// Returns an error if adding the connection would exceed the maximum connection limit
+    /// based on current idle state scaling.
     ///
     /// # Example
     /// ```rust,ignore
@@ -457,9 +486,14 @@ where
     /// pool.add_connection("rust-analyzer".to_string(), connection).await?;
     /// ```
     pub async fn add_connection(&self, key: String, connection: C) -> Result<(), String> {
+        // Record activity on connection addition
+        *self.last_activity.lock().await = chrono::Utc::now();
+        *self.idle_state.lock().await = PoolIdleState::Active;
+
+        let current_max = *self.current_max_connections.lock().await;
         let mut pool = self.pool.lock().await;
-        if pool.len() >= self.max_connections {
-            return Err("Max connections reached".to_string());
+        if pool.len() >= current_max {
+            return Err("Max connections reached for current idle state".to_string());
         }
         pool.insert(key, connection);
         Ok(())
@@ -508,6 +542,89 @@ where
     pub async fn connection_count(&self) -> usize {
         let pool = self.pool.lock().await;
         pool.len()
+    }
+
+    /// Record activity to reset idle timer
+    pub async fn record_activity(&self) {
+        *self.last_activity.lock().await = chrono::Utc::now();
+        *self.idle_state.lock().await = PoolIdleState::Active;
+    }
+
+    /// Update idle state and adjust connection limits accordingly
+    pub async fn update_idle_state(&self) {
+        let now = chrono::Utc::now();
+        let last_activity = *self.last_activity.lock().await;
+        let inactivity_duration = (now - last_activity).num_seconds() as u64;
+
+        let new_state = if inactivity_duration < 300 { // Less than 5 minutes
+            PoolIdleState::Active
+        } else if inactivity_duration < 900 { // Less than 15 minutes
+            PoolIdleState::Idle
+        } else {
+            PoolIdleState::DeepIdle
+        };
+
+        let mut current_state = self.idle_state.lock().await;
+        let state_changed = *current_state != new_state;
+
+        *current_state = new_state;
+
+        // Adjust connection limits when entering idle states
+        if state_changed {
+            let new_max = match new_state {
+                PoolIdleState::Active => self.base_max_connections,
+                PoolIdleState::Idle => (self.base_max_connections as f64 * 0.5) as usize, // 50% reduction
+                PoolIdleState::DeepIdle => (self.base_max_connections as f64 * 0.2) as usize, // 80% reduction
+            };
+
+            let mut current_max = self.current_max_connections.lock().await;
+            let old_max = *current_max;
+            *current_max = new_max.max(1); // Ensure at least 1 connection
+
+            // Clean up excess connections if needed
+            if new_max < old_max {
+                let _ = self.cleanup_excess_connections(new_max).await;
+            }
+
+            debug!("Connection pool idle state changed to {:?}, max connections: {} -> {}",
+                   new_state, old_max, new_max);
+        }
+    }
+
+    /// Clean up connections that exceed the new idle-aware limit
+    async fn cleanup_excess_connections(&self, max_allowed: usize) -> Result<(), String> {
+        let mut pool = self.pool.lock().await;
+        let current_count = pool.len();
+
+        if current_count <= max_allowed {
+            return Ok(());
+        }
+
+        // Remove excess connections (simplified - removes oldest first)
+        // In a real implementation, you'd want more sophisticated selection
+        let excess = current_count - max_allowed;
+        let mut keys_to_remove = Vec::new();
+
+        for (key, _) in pool.iter().take(excess) {
+            keys_to_remove.push(key.clone());
+        }
+
+        for key in keys_to_remove {
+            pool.remove(&key);
+        }
+
+        info!("Cleaned up {} excess connections due to idle state change", excess);
+        Ok(())
+    }
+
+    /// Get current idle state
+    pub async fn idle_state(&self) -> PoolIdleState {
+        *self.idle_state.lock().await
+    }
+
+    /// Get current maximum connections based on idle state
+    pub async fn current_max_connections(&self) -> usize {
+        *self.current_max_connections.lock().await
     }
 }
 
