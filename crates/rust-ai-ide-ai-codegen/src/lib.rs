@@ -34,7 +34,6 @@
 use std::sync::Arc;
 use std::collections::HashMap;
 use tokio::sync::Mutex;
-use serde::{Deserialize, Serialize};
 
 pub mod error;
 pub mod types;

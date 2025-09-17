@@ -17,18 +17,22 @@ use crate::types::*;
 
 /// Core code health scorer
 pub struct CodeHealthScorer {
-    multi_metric_analyzer:  Arc<MultiMetricHealthAnalyzer>,
-    trend_analyzer:         Arc<CodeQualityTrendAnalyzer>,
-    benchmark_comparer:     Arc<HealthBenchmarkComparer>,
-    real_time_scorer:       Arc<RealTimeHealthScorer>,
+    multi_metric_analyzer: Arc<MultiMetricHealthAnalyzer>,
+    trend_analyzer: Arc<CodeQualityTrendAnalyzer>,
+    benchmark_comparer: Arc<HealthBenchmarkComparer>,
+    real_time_scorer: Arc<RealTimeHealthScorer>,
     performance_integrator: Arc<PerformanceHealthIntegrator>,
-    score_cache:            moka::future::Cache<String, HealthScoreResult>,
+    score_cache: moka::future::Cache<String, HealthScoreResult>,
 }
 
 impl CodeHealthScorer {
     /// Create new health scorer
-    pub async fn new(model_service: Arc<PredictiveModelService>, performance_monitor: Arc<PerformanceMonitor>) -> Self {
-        let multi_metric_analyzer = Arc::new(MultiMetricHealthAnalyzer::new(Arc::clone(&model_service)));
+    pub async fn new(
+        model_service: Arc<PredictiveModelService>,
+        performance_monitor: Arc<PerformanceMonitor>,
+    ) -> Self {
+        let multi_metric_analyzer =
+            Arc::new(MultiMetricHealthAnalyzer::new(Arc::clone(&model_service)));
 
         let trend_analyzer = Arc::new(CodeQualityTrendAnalyzer::new());
 
@@ -40,7 +44,8 @@ impl CodeHealthScorer {
             &performance_monitor,
         )));
 
-        let score_cache: moka::future::Cache<String, HealthScoreResult> = moka::future::Cache::builder()
+        let score_cache: moka::future::Cache<String, HealthScoreResult> =
+            moka::future::Cache::builder()
                 .time_to_live(std::time::Duration::from_millis(300)) // <300ms requirement
                 .build();
 
@@ -167,15 +172,18 @@ impl CodeHealthScorer {
         }
     }
 
-    async fn generate_recommendations(&self, _metric_scores: &HashMap<String, f64>) -> Vec<HealthRecommendation> {
+    async fn generate_recommendations(
+        &self,
+        _metric_scores: &HashMap<String, f64>,
+    ) -> Vec<HealthRecommendation> {
         // TODO: Generate intelligent recommendations based on metric scores
         vec![HealthRecommendation {
-            priority:         SeverityLevel::High,
-            category:         "security".to_string(),
-            description:      "Address outstanding credential exposure vulnerabilities".to_string(),
+            priority: SeverityLevel::High,
+            category: "security".to_string(),
+            description: "Address outstanding credential exposure vulnerabilities".to_string(),
             estimated_impact: 0.3,
             estimated_effort: EffortLevel::Medium,
-            related_metrics:  vec!["security".to_string(), "maintainability".to_string()],
+            related_metrics: vec!["security".to_string(), "maintainability".to_string()],
         }]
     }
 }
@@ -215,9 +223,9 @@ impl CodeQualityTrendAnalyzer {
     async fn analyze_trends(&self, _files: &[String]) -> Result<TrendAnalysis> {
         // TODO: Analyze trends over time periods
         Ok(TrendAnalysis {
-            period_days:           30,
-            health_trend:          TrendDirection::Improving,
-            significant_changes:   vec![],
+            period_days: 30,
+            health_trend: TrendDirection::Improving,
+            significant_changes: vec![],
             forecast_next_30_days: 0.82,
         })
     }
@@ -242,9 +250,9 @@ impl HealthBenchmarkComparer {
     ) -> Result<BenchmarkComparison> {
         // TODO: Compare against industry or project benchmarks
         Ok(BenchmarkComparison {
-            benchmark_name:        benchmark_name.to_string(),
-            benchmark_score:       0.75,
-            percentile_rank:       0.65,
+            benchmark_name: benchmark_name.to_string(),
+            benchmark_score: 0.75,
+            percentile_rank: 0.65,
             areas_above_benchmark: vec!["performance".to_string()],
             areas_below_benchmark: vec!["test_coverage".to_string()],
         })
@@ -276,7 +284,10 @@ impl PerformanceHealthIntegrator {
         }
     }
 
-    async fn integrate_performance_metrics(&self, _files: &[String]) -> Result<PerformanceIntegration> {
+    async fn integrate_performance_metrics(
+        &self,
+        _files: &[String],
+    ) -> Result<PerformanceIntegration> {
         // TODO: Integrate performance metrics from Phase 1 performance monitor
         Ok(PerformanceIntegration {})
     }
@@ -284,8 +295,8 @@ impl PerformanceHealthIntegrator {
 
 // Supporting types
 pub struct BenchmarkData {
-    pub score:        f64,
-    pub percentile:   f64,
+    pub score: f64,
+    pub percentile: f64,
     pub last_updated: DateTime<Utc>,
 }
 

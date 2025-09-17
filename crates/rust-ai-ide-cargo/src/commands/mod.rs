@@ -35,8 +35,8 @@ pub async fn build(project_path: &Path, release: bool) -> Result<BuildResult> {
 
     Ok(BuildResult {
         success: output.status.success(),
-        output:  stdout,
-        error:   stderr,
+        output: stdout,
+        error: stderr,
     })
 }
 
@@ -91,7 +91,9 @@ pub async fn add_dependency(project_path: &Path, name: &str, version: Option<&st
 }
 
 /// Initialize all command handlers
-pub fn init_commands<R: tauri::Runtime>(app: &tauri::AppHandle<R>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init_commands<R: tauri::Runtime>(
+    app: &tauri::AppHandle<R>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Initialize dependency management
     let deps_dir = std::env::current_dir()?.join("target").join("deps_cache");
     std::fs::create_dir_all(&deps_dir)?;
@@ -133,20 +135,20 @@ pub async fn format(project_path: &Path) -> Result<()> {
 pub struct PerformanceMetrics {
     #[serde(rename = "total_time")]
     pub total_time_ms: f64,
-    pub crates:        HashMap<String, CrateMetrics>,
-    pub dependencies:  HashMap<String, f64>,
+    pub crates: HashMap<String, CrateMetrics>,
+    pub dependencies: HashMap<String, f64>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct CrateMetrics {
     #[serde(rename = "build_time")]
-    pub build_time_ms:   f64,
+    pub build_time_ms: f64,
     #[serde(rename = "codegen_time")]
     pub codegen_time_ms: f64,
-    pub codegen_units:   usize,
-    pub incremental:     bool,
-    pub dependencies:    Vec<String>,
-    pub features:        Vec<String>,
+    pub codegen_units: usize,
+    pub incremental: bool,
+    pub dependencies: Vec<String>,
+    pub features: Vec<String>,
 }
 
 // Helper function to convert Duration to milliseconds as f64
@@ -155,7 +157,11 @@ fn duration_to_ms(duration: std::time::Duration) -> f64 {
 }
 
 /// Run performance analysis on the project
-pub async fn analyze_performance(project_path: &Path, release: bool, incremental: bool) -> Result<PerformanceMetrics> {
+pub async fn analyze_performance(
+    project_path: &Path,
+    release: bool,
+    incremental: bool,
+) -> Result<PerformanceMetrics> {
     // Pass the path reference directly to avoid unnecessary cloning
     let analyzer = PerformanceAnalyzer::new(project_path, release, incremental);
     let metrics = analyzer.analyze_build().await?;
@@ -163,14 +169,17 @@ pub async fn analyze_performance(project_path: &Path, release: bool, incremental
     // Convert to the serializable format with durations as milliseconds
     let mut crates = HashMap::new();
     for (name, crate_metrics) in metrics.crates {
-        crates.insert(name, CrateMetrics {
-            build_time_ms:   duration_to_ms(crate_metrics.build_time),
-            codegen_time_ms: duration_to_ms(crate_metrics.codegen_time),
-            codegen_units:   crate_metrics.codegen_units,
-            incremental:     crate_metrics.incremental,
-            dependencies:    crate_metrics.dependencies,
-            features:        crate_metrics.features,
-        });
+        crates.insert(
+            name,
+            CrateMetrics {
+                build_time_ms: duration_to_ms(crate_metrics.build_time),
+                codegen_time_ms: duration_to_ms(crate_metrics.codegen_time),
+                codegen_units: crate_metrics.codegen_units,
+                incremental: crate_metrics.incremental,
+                dependencies: crate_metrics.dependencies,
+                features: crate_metrics.features,
+            },
+        );
     }
 
     // Convert dependencies to use milliseconds as well
@@ -201,7 +210,7 @@ pub async fn clippy(project_path: &Path) -> Result<BuildResult> {
 
     Ok(BuildResult {
         success: output.status.success(),
-        output:  stdout,
-        error:   stderr,
+        output: stdout,
+        error: stderr,
     })
 }

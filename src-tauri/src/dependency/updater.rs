@@ -30,7 +30,10 @@ impl DependencyUpdater {
         }
     }
 
-    pub async fn update_dependencies(&self, dry_run: bool) -> Result<Vec<DependencyUpdate>, UpdateError> {
+    pub async fn update_dependencies(
+        &self,
+        dry_run: bool,
+    ) -> Result<Vec<DependencyUpdate>, UpdateError> {
         let mut local_manifest = LocalManifest::try_new(&self.manifest_path)?;
         let mut updates = Vec::new();
 
@@ -63,7 +66,11 @@ impl DependencyUpdater {
         Ok(updates)
     }
 
-    async fn check_for_update(&self, name: &str, dep: &Dependency) -> Result<Option<DependencyUpdate>, UpdateError> {
+    async fn check_for_update(
+        &self,
+        name: &str,
+        dep: &Dependency,
+    ) -> Result<Option<DependencyUpdate>, UpdateError> {
         // Skip git and path dependencies
         if dep
             .source
@@ -83,9 +90,9 @@ impl DependencyUpdater {
         if let Some(latest) = latest_version {
             if !dep.req.matches(&latest) {
                 return Ok(Some(DependencyUpdate {
-                    name:            name.to_string(),
+                    name: name.to_string(),
                     current_version: dep.req.to_string(),
-                    new_version:     latest.to_string(),
+                    new_version: latest.to_string(),
                 }));
             }
         }
@@ -99,7 +106,11 @@ impl DependencyUpdater {
         Ok(Some(Version::parse("1.0.0").unwrap()))
     }
 
-    fn apply_updates(&self, updates: &[DependencyUpdate], manifest: &mut LocalManifest) -> Result<(), UpdateError> {
+    fn apply_updates(
+        &self,
+        updates: &[DependencyUpdate],
+        manifest: &mut LocalManifest,
+    ) -> Result<(), UpdateError> {
         for update in updates {
             // Find the dependency in the manifest
             if let Some(dep_item) = manifest
@@ -117,7 +128,7 @@ impl DependencyUpdater {
 
 #[derive(Debug, Clone)]
 pub struct DependencyUpdate {
-    pub name:            String,
+    pub name: String,
     pub current_version: String,
-    pub new_version:     String,
+    pub new_version: String,
 }

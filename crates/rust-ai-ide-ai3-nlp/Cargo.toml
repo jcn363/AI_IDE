@@ -20,7 +20,7 @@ async-trait = "0.1"
 tch = { version = "0.17", optional = true }  # PyTorch bindings - updated to match rust-bert requirements
 #transformer = { version = "0.1", optional = true }
 tokenizers = { version = "0.19", optional = true }
-rust-bert = { version = "0.23", optional = true }  # Updated for security patches (protobuf vulnerability)
+# rust-bert = { version = "0.23", optional = true }  # Removed due to protobuf RUSTSEC-2024-0437 vulnerability
 
 # Integration with previous waves
 rust-ai-ide-ai1-semantic = { path = "../rust-ai-ide-ai1-semantic" }
@@ -31,5 +31,5 @@ rust-ai-ide-ai3-quantum = { path = "../rust-ai-ide-ai3-quantum" }
 
 [features]
 default = []
-ml_models = ["tch", "tokenizers", "rust-bert"]
+ml_models = ["tch", "tokenizers"]
 full = ["ml_models"]

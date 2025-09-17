@@ -10,25 +10,25 @@ use crate::types::ServiceId;
 /// Main service orchestrator that coordinates all orchestration layer components
 #[derive(Debug)]
 pub struct ServiceOrchestrator {
-    service_registry:  Arc<ServiceRegistry>,
+    service_registry: Arc<ServiceRegistry>,
     // Message router will be added in message_router.rs
-    message_router:    Arc<tokio::sync::RwLock<Option<crate::message_router::MessageRouter>>>,
+    message_router: Arc<tokio::sync::RwLock<Option<crate::message_router::MessageRouter>>>,
     // Health monitor will be added in health_monitor.rs
-    health_monitor:    Arc<tokio::sync::RwLock<Option<crate::health_monitor::HealthMonitor>>>,
+    health_monitor: Arc<tokio::sync::RwLock<Option<crate::health_monitor::HealthMonitor>>>,
     // Lifecycle manager will be added in lifecycle_manager.rs
     lifecycle_manager: Arc<tokio::sync::RwLock<Option<crate::lifecycle_manager::LifecycleManager>>>,
-    initialized:       Arc<RwLock<bool>>,
+    initialized: Arc<RwLock<bool>>,
 }
 
 impl ServiceOrchestrator {
     /// Create a new service orchestrator
     pub fn new() -> Self {
         Self {
-            service_registry:  Arc::new(ServiceRegistry::default()),
-            message_router:    Arc::new(RwLock::new(None)),
-            health_monitor:    Arc::new(RwLock::new(None)),
+            service_registry: Arc::new(ServiceRegistry::default()),
+            message_router: Arc::new(RwLock::new(None)),
+            health_monitor: Arc::new(RwLock::new(None)),
             lifecycle_manager: Arc::new(RwLock::new(None)),
-            initialized:       Arc::new(RwLock::new(false)),
+            initialized: Arc::new(RwLock::new(false)),
         }
     }
 
@@ -43,15 +43,18 @@ impl ServiceOrchestrator {
         info!("Initializing Service Orchestrator...");
 
         // Initialize message router
-        let message_router = crate::message_router::MessageRouter::new(self.service_registry.clone());
+        let message_router =
+            crate::message_router::MessageRouter::new(self.service_registry.clone());
         *self.message_router.write().await = Some(message_router);
 
         // Initialize health monitor
-        let health_monitor = crate::health_monitor::HealthMonitor::new(self.service_registry.clone());
+        let health_monitor =
+            crate::health_monitor::HealthMonitor::new(self.service_registry.clone());
         *self.health_monitor.write().await = Some(health_monitor);
 
         // Initialize lifecycle manager
-        let lifecycle_manager = crate::lifecycle_manager::LifecycleManager::new(self.service_registry.clone());
+        let lifecycle_manager =
+            crate::lifecycle_manager::LifecycleManager::new(self.service_registry.clone());
         *self.lifecycle_manager.write().await = Some(lifecycle_manager);
 
         *self.initialized.write().await = true;
@@ -122,7 +125,7 @@ impl ServiceOrchestrator {
 /// Orchard status information
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct OrchestratorStatus {
-    pub initialized:   bool,
+    pub initialized: bool,
     pub service_count: usize,
 }
 
@@ -134,7 +137,10 @@ impl Default for ServiceOrchestrator {
 
 impl ServiceOrchestrator {
     /// Register a service with validation
-    pub async fn register_service(&self, registration: crate::types::ServiceRegistration) -> OrchestrationResult<()> {
+    pub async fn register_service(
+        &self,
+        registration: crate::types::ServiceRegistration,
+    ) -> OrchestrationResult<()> {
         if !self.is_initialized().await {
             return Err(OrchestrationError::ValidationError(
                 "Orchestrator is not initialized".to_string(),
@@ -159,7 +165,9 @@ impl ServiceOrchestrator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{ServiceCapabilities, ServicePriority, ServiceRegistration, ServiceStatus, ServiceVersion};
+    use crate::types::{
+        ServiceCapabilities, ServicePriority, ServiceRegistration, ServiceStatus, ServiceVersion,
+    };
 
     #[tokio::test]
     async fn test_orchestrator_initialization() {
@@ -188,21 +196,21 @@ mod tests {
         orchestrator.initialize().await.unwrap();
 
         let registration = ServiceRegistration {
-            id:                    "test-service".to_string(),
-            name:                  "Test Service".to_string(),
-            description:           "A test service for orchestrator".to_string(),
-            version:               ServiceVersion::new(1, 0, 0),
-            status:                ServiceStatus::Ready,
-            capabilities:          ServiceCapabilities {
-                supported_operations:    vec!["test_operation".to_string()],
+            id: "test-service".to_string(),
+            name: "Test Service".to_string(),
+            description: "A test service for orchestrator".to_string(),
+            version: ServiceVersion::new(1, 0, 0),
+            status: ServiceStatus::Ready,
+            capabilities: ServiceCapabilities {
+                supported_operations: vec!["test_operation".to_string()],
                 max_concurrent_requests: Some(10),
-                rate_limits:             None,
-                dependencies:            vec![],
-                provides:                vec!["test_capability".to_string()],
+                rate_limits: None,
+                dependencies: vec![],
+                provides: vec!["test_capability".to_string()],
             },
             health_check_endpoint: None,
-            priority:              ServicePriority::Normal,
-            tags:                  vec!["test".to_string()],
+            priority: ServicePriority::Normal,
+            tags: vec!["test".to_string()],
         };
 
         // Register service

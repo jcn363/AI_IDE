@@ -6,7 +6,11 @@
 use super::*;
 
 pub trait EvictionStrategy<K, V> {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
         V: serde::Serialize;
@@ -16,7 +20,11 @@ pub trait EvictionStrategy<K, V> {
 pub struct LruStrategy;
 
 impl<K, V> EvictionStrategy<K, V> for LruStrategy {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -35,7 +43,11 @@ impl<K, V> EvictionStrategy<K, V> for LruStrategy {
 pub struct LfuStrategy;
 
 impl<K, V> EvictionStrategy<K, V> for LfuStrategy {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -54,7 +66,11 @@ impl<K, V> EvictionStrategy<K, V> for LfuStrategy {
 pub struct FifoStrategy;
 
 impl<K, V> EvictionStrategy<K, V> for FifoStrategy {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -72,7 +88,7 @@ impl<K, V> EvictionStrategy<K, V> for FifoStrategy {
 /// Size-based eviction strategy with memory awareness
 pub struct SizeStrategy {
     pub max_memory_usage: usize,
-    pub current_memory:   std::sync::atomic::AtomicUsize,
+    pub current_memory: std::sync::atomic::AtomicUsize,
     pub priority_weights: std::sync::RwLock<std::collections::HashMap<String, f32>>,
 }
 
@@ -87,7 +103,7 @@ impl Default for SizeStrategy {
 
         Self {
             max_memory_usage: 100 * 1024 * 1024, // 100MB default
-            current_memory:   std::sync::atomic::AtomicUsize::new(0),
+            current_memory: std::sync::atomic::AtomicUsize::new(0),
             priority_weights: std::sync::RwLock::new(weights),
         }
     }
@@ -138,7 +154,11 @@ impl SizeStrategy {
         }
     }
 
-    fn calculate_eviction_score(&self, entry: &CacheEntry<impl serde::Serialize>, access_count: u64) -> f64 {
+    fn calculate_eviction_score(
+        &self,
+        entry: &CacheEntry<impl serde::Serialize>,
+        access_count: u64,
+    ) -> f64 {
         let priority_weight = entry
             .metadata
             .get("priority")
@@ -146,8 +166,10 @@ impl SizeStrategy {
             .and_then(|p| self.priority_weights.read().unwrap().get(p).copied())
             .unwrap_or(1.0);
 
-        let size_weight = (self.estimate_entry_size(entry) as f64 / self.max_memory_usage as f64).min(1.0);
-        let freshness_weight = chrono::Utc::now().timestamp() as f64 - entry.last_accessed.timestamp() as f64;
+        let size_weight =
+            (self.estimate_entry_size(entry) as f64 / self.max_memory_usage as f64).min(1.0);
+        let freshness_weight =
+            chrono::Utc::now().timestamp() as f64 - entry.last_accessed.timestamp() as f64;
         let usage_weight = if access_count > 0 {
             1.0 / (access_count as f64 + 1.0)
         } else {
@@ -155,7 +177,8 @@ impl SizeStrategy {
         };
 
         // Higher score means more likely to be evicted
-        (size_weight * 0.4 + freshness_weight * 0.3 * priority_weight as f64 + usage_weight * 0.3).clamp(0.0, 1.0)
+        (size_weight * 0.4 + freshness_weight * 0.3 * priority_weight as f64 + usage_weight * 0.3)
+            .clamp(0.0, 1.0)
     }
 }
 
@@ -164,7 +187,11 @@ where
     V: serde::de::DeserializeOwned + serde::Serialize,
     K: Clone,
 {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -238,22 +265,23 @@ impl TtlCleanupStrategy {
 
 /// Performance-aware eviction strategy that considers multiple factors and adapts to usage patterns
 pub struct AdaptiveStrategy {
-    pub weight_recent:      f32,
-    pub weight_frequency:   f32,
-    pub weight_size:        f32,
-    pub adaptive_mode:      std::sync::atomic::AtomicBool,
-    pub usage_history:      std::sync::RwLock<std::collections::VecDeque<(chrono::DateTime<chrono::Utc>, usize, f64)>>,
+    pub weight_recent: f32,
+    pub weight_frequency: f32,
+    pub weight_size: f32,
+    pub adaptive_mode: std::sync::atomic::AtomicBool,
+    pub usage_history:
+        std::sync::RwLock<std::collections::VecDeque<(chrono::DateTime<chrono::Utc>, usize, f64)>>,
     pub prediction_enabled: bool,
 }
 
 impl Default for AdaptiveStrategy {
     fn default() -> Self {
         Self {
-            weight_recent:      0.4,
-            weight_frequency:   0.4,
-            weight_size:        0.2,
-            adaptive_mode:      std::sync::atomic::AtomicBool::new(true),
-            usage_history:      std::sync::RwLock::new(std::collections::VecDeque::with_capacity(1000)),
+            weight_recent: 0.4,
+            weight_frequency: 0.4,
+            weight_size: 0.2,
+            adaptive_mode: std::sync::atomic::AtomicBool::new(true),
+            usage_history: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(1000)),
             prediction_enabled: true,
         }
     }
@@ -282,7 +310,8 @@ impl AdaptiveStrategy {
             .map(|(_, _, perf)| *perf)
             .collect();
         let avg_recent = recent_performance.iter().sum::<f64>() / recent_performance.len() as f64;
-        let trend = avg_recent - (history.iter().map(|(_, _, perf)| *perf).sum::<f64>() / history.len() as f64);
+        let trend = avg_recent
+            - (history.iter().map(|(_, _, perf)| *perf).sum::<f64>() / history.len() as f64);
 
         // Adjust weights based on trend
         if trend > 0.0 {
@@ -316,7 +345,11 @@ where
     K: Clone,
     V: serde::Serialize,
 {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -405,7 +438,8 @@ where
             .filter(|(idx, score)| {
                 let entry = entries[*idx].1;
                 // Don't evict entries accessed within last minute if they have high access count
-                let minutes_since_access = ((now.timestamp() - entry.last_accessed.timestamp()) as f64) / 60.0;
+                let minutes_since_access =
+                    ((now.timestamp() - entry.last_accessed.timestamp()) as f64) / 60.0;
                 !(minutes_since_access < 1.0 && entry.access_count > 5)
             })
             .map(|(idx, _)| entries[idx].0.clone())
@@ -488,7 +522,7 @@ impl StrategySelector {
             EvictionPolicy::Random => Box::new(RandomStrategy::new()),
             EvictionPolicy::SizeBased => Box::new(SizeStrategy {
                 max_memory_usage: config.max_memory_mb.unwrap_or(100) * 1024 * 1024,
-                current_memory:   std::sync::atomic::AtomicUsize::new(0),
+                current_memory: std::sync::atomic::AtomicUsize::new(0),
                 priority_weights: std::sync::RwLock::new(std::collections::HashMap::new()),
             }),
             EvictionPolicy::Adaptive => Box::new(AdaptiveStrategy::default()),
@@ -502,11 +536,11 @@ impl StrategySelector {
 /// W-TinyLFU (Windowed TinyLFU) eviction strategy
 /// Advanced cache replacement policy that combines recency and frequency
 pub struct WTinyLFU {
-    window_size:         usize,
-    sketch_width:        usize,
-    sketch_depth:        usize,
-    window_accesses:     std::sync::RwLock<std::collections::VecDeque<(u64, u64)>>, // (timestamp, hash)
-    main_accesses:       std::sync::RwLock<std::collections::HashMap<u64, u8>>,     // Hash -> frequency
+    window_size: usize,
+    sketch_width: usize,
+    sketch_depth: usize,
+    window_accesses: std::sync::RwLock<std::collections::VecDeque<(u64, u64)>>, // (timestamp, hash)
+    main_accesses: std::sync::RwLock<std::collections::HashMap<u64, u8>>,       // Hash -> frequency
     current_window_size: std::sync::atomic::AtomicUsize,
 }
 
@@ -516,7 +550,9 @@ impl WTinyLFU {
             window_size,
             sketch_width: 1024,
             sketch_depth: 4,
-            window_accesses: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(window_size)),
+            window_accesses: std::sync::RwLock::new(std::collections::VecDeque::with_capacity(
+                window_size,
+            )),
             main_accesses: std::sync::RwLock::new(std::collections::HashMap::new()),
             current_window_size: std::sync::atomic::AtomicUsize::new(0),
         }
@@ -597,7 +633,11 @@ where
     K: Clone + std::hash::Hash,
     V: serde::Serialize,
 {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -650,9 +690,9 @@ where
 /// Uses two segments: probationary and protected
 pub struct SegmentedLRUStrategy {
     probationary_capacity: usize,
-    protected_capacity:    usize,
-    probationary:          std::sync::RwLock<std::collections::VecDeque<u64>>, // Hash of keys
-    protected:             std::sync::RwLock<std::collections::VecDeque<u64>>,
+    protected_capacity: usize,
+    probationary: std::sync::RwLock<std::collections::VecDeque<u64>>, // Hash of keys
+    protected: std::sync::RwLock<std::collections::VecDeque<u64>>,
 }
 
 impl SegmentedLRUStrategy {
@@ -669,9 +709,9 @@ impl Default for SegmentedLRUStrategy {
     fn default() -> Self {
         Self {
             probationary_capacity: 1000,
-            protected_capacity:    500,
-            probationary:          std::sync::RwLock::new(std::collections::VecDeque::new()),
-            protected:             std::sync::RwLock::new(std::collections::VecDeque::new()),
+            protected_capacity: 500,
+            probationary: std::sync::RwLock::new(std::collections::VecDeque::new()),
+            protected: std::sync::RwLock::new(std::collections::VecDeque::new()),
         }
     }
 }
@@ -681,7 +721,11 @@ where
     K: Clone + std::hash::Hash,
     V: serde::Serialize,
 {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -693,14 +737,14 @@ where
 
 /// Clock algorithm (second chance algorithm) for efficient LRU approximation
 pub struct ClockStrategy {
-    clock_hand:     std::sync::atomic::AtomicUsize,
+    clock_hand: std::sync::atomic::AtomicUsize,
     reference_bits: std::sync::RwLock<std::collections::HashMap<u64, bool>>, // Hash -> reference bit
 }
 
 impl Default for ClockStrategy {
     fn default() -> Self {
         Self {
-            clock_hand:     std::sync::atomic::AtomicUsize::new(0),
+            clock_hand: std::sync::atomic::AtomicUsize::new(0),
             reference_bits: std::sync::RwLock::new(std::collections::HashMap::new()),
         }
     }
@@ -711,7 +755,11 @@ where
     K: Clone + std::hash::Hash,
     V: serde::Serialize,
 {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -776,7 +824,11 @@ impl RandomStrategy {
 }
 
 impl<K, V> EvictionStrategy<K, V> for RandomStrategy {
-    fn select_entries_for_eviction(&self, entries: &[(&K, &CacheEntry<V>)], target_count: usize) -> Vec<K>
+    fn select_entries_for_eviction(
+        &self,
+        entries: &[(&K, &CacheEntry<V>)],
+        target_count: usize,
+    ) -> Vec<K>
     where
         K: Clone,
     {
@@ -791,7 +843,8 @@ impl<K, V> EvictionStrategy<K, V> for RandomStrategy {
 
         // Simple Fisher-Yates shuffle
         for i in (1..indices.len()).rev() {
-            let j = (self.seed.wrapping_mul(1103515245).wrapping_add(12345) % (i + 1) as u64) as usize;
+            let j =
+                (self.seed.wrapping_mul(1103515245).wrapping_add(12345) % (i + 1) as u64) as usize;
             indices.swap(i, j);
         }
 
@@ -811,7 +864,11 @@ mod tests {
 
     use super::*;
 
-    fn create_test_entry(created_at: Timestamp, last_accessed: Timestamp, access_count: u64) -> CacheEntry<String> {
+    fn create_test_entry(
+        created_at: Timestamp,
+        last_accessed: Timestamp,
+        access_count: u64,
+    ) -> CacheEntry<String> {
         CacheEntry {
             value: "test".to_string(),
             created_at,
@@ -848,7 +905,8 @@ mod tests {
             ("very_new", create_test_entry(now, now, 5)),
         ];
 
-        let entries_refs: Vec<(&String, &CacheEntry<String>)> = entries.iter().map(|(k, v)| (k, v)).collect();
+        let entries_refs: Vec<(&String, &CacheEntry<String>)> =
+            entries.iter().map(|(k, v)| (k, v)).collect();
 
         let evicted = strategy.select_entries_for_eviction(&entries_refs, 2);
 
@@ -867,7 +925,8 @@ mod tests {
             ("low_freq2", create_test_entry(now, now, 2)),
         ];
 
-        let entries_refs: Vec<(&String, &CacheEntry<String>)> = entries.iter().map(|(k, v)| (k, v)).collect();
+        let entries_refs: Vec<(&String, &CacheEntry<String>)> =
+            entries.iter().map(|(k, v)| (k, v)).collect();
 
         let evicted = strategy.select_entries_for_eviction(&entries_refs, 1);
 
@@ -895,7 +954,8 @@ mod tests {
             ),
         ];
 
-        let entries_refs: Vec<(&String, &CacheEntry<String>)> = entries.iter().map(|(k, v)| (k, v)).collect();
+        let entries_refs: Vec<(&String, &CacheEntry<String>)> =
+            entries.iter().map(|(k, v)| (k, v)).collect();
 
         let evicted = strategy.select_entries_for_eviction(&entries_refs, 2);
 
@@ -946,7 +1006,8 @@ mod tests {
             ("key5", create_test_entry(now, now, 1)),
         ];
 
-        let entries_refs: Vec<(&String, &CacheEntry<String>)> = entries.iter().map(|(k, v)| (k, v)).collect();
+        let entries_refs: Vec<(&String, &CacheEntry<String>)> =
+            entries.iter().map(|(k, v)| (k, v)).collect();
 
         let evicted = strategy.select_entries_for_eviction(&entries_refs, 2);
 
@@ -977,7 +1038,8 @@ mod tests {
             ),
         ];
 
-        let entries_refs: Vec<(&String, &CacheEntry<String>)> = entries.iter().map(|(k, v)| (k, v)).collect();
+        let entries_refs: Vec<(&String, &CacheEntry<String>)> =
+            entries.iter().map(|(k, v)| (k, v)).collect();
 
         let evicted = strategy.select_entries_for_eviction(&entries_refs, 1);
 

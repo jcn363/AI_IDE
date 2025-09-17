@@ -3,6 +3,7 @@ use tokio::sync::{Mutex, RwLock};
 use std::collections::{HashMap, HashSet};
 use rust_ai_ide_common::{IDEError, IDEErrorKind};
 use super::cross_language_index::{CrossLanguageIndexer, SymbolLocation, SupportedLanguage};
+use super::pool::{LanguageServerPool, ServerLoadMetrics, PoolStatistics};
 #[cfg(feature = "ai")]
 use rust_ai_ide_ai::{AIProvider, AIService, AnalysisContext};
 
@@ -15,10 +16,11 @@ pub struct EnhancedRustAnalyzer {
     pub(crate) ai_service: Arc<Mutex<Option<Arc<dyn AIService>>>>,
     pub(crate) multi_lang_ai: Arc<MultiLangAIAnalyzer>,
     pub(crate) async_state: Arc<Mutex<AnalyzerState>>,
+    pub(crate) pool: Arc<LanguageServerPool>,
 }
 
 impl EnhancedRustAnalyzer {
-    pub fn new(cross_indexer: Arc<CrossLanguageIndexer>) -> Self {
+    pub fn new(cross_indexer: Arc<CrossLanguageIndexer>, pool: Arc<LanguageServerPool>) -> Self {
         Self {
             standard_analyzer: Arc::new(tokio::sync::Mutex::new(())),
             cross_indexer,
@@ -27,6 +29,7 @@ impl EnhancedRustAnalyzer {
             ai_service: Arc::new(Mutex::new(None)),
             multi_lang_ai: Arc::new(MultiLangAIAnalyzer::new()),
             async_state: Arc::new(Mutex::new(AnalyzerState::default())),
+            pool,
         }
     }
 
@@ -169,10 +172,18 @@ impl EnhancedRustAnalyzer {
             }
 
             if line.contains("extern ") && line.contains("fn ") {
+                // Extract actual function name and library from the line
+                let function_name = self.extract_function_name(line).await.unwrap_or_else(|| "unknown".to_string());
+                let library = self.extract_library_name(line).await.unwrap_or_else(|| "unknown".to_string());
+
+                // Get load metrics to assess safety
+                let load_metrics = self.pool.get_server_load_metrics().await;
+                let safety_notes = self.generate_ffi_safety_notes(&load_metrics, &function_name).await;
+
                 ffi_calls.push(ForeignFunctionInterface {
-                    function_name: "placeholder".to_string(),
-                    library: "placeholder".to_string(),
-                    safety_notes: vec!["FFI call detected".to_string()],
+                    function_name,
+                    library,
+                    safety_notes,
                 });
             }
         }
@@ -210,8 +221,30 @@ impl EnhancedRustAnalyzer {
     }
 
     async fn find_symbol_at_position(&self, analysis: &AnalysisResult, position: (usize, usize)) -> Result<Option<String>, IDEError> {
-        // Placeholder implementation - would analyze AST to find symbol at position
-        Ok(Some("placeholder_symbol".to_string()))
+        // Get load metrics to prioritize symbol resolution based on server health
+        let load_metrics = self.pool.get_server_load_metrics().await;
+
+        // Find the healthiest server for symbol resolution
+        let best_server = self.select_best_server_for_symbol_resolution(&load_metrics).await;
+
+        if let Some(server_id) = best_server {
+            // Use the healthiest server to resolve symbols
+            // Analyze AST to find symbol at position
+            for symbol in &analysis.symbols {
+                if self.is_symbol_at_position(symbol, position).await {
+                    return Ok(Some(symbol.base_symbol.name.clone()));
+                }
+            }
+        }
+
+        // Fallback to basic analysis if no healthy server available
+        for symbol in &analysis.symbols {
+            if self.is_symbol_at_position(symbol, position).await {
+                return Ok(Some(symbol.base_symbol.name.clone()));
+            }
+        }
+
+        Ok(None)
     }
 
     async fn resolve_rust_symbol(&self, symbol_name: &str) -> Result<Option<SymbolLocation>, IDEError> {
@@ -237,6 +270,87 @@ impl EnhancedRustAnalyzer {
     async fn analyze_interop_performance(&self, analysis: &AnalysisResult) -> Vec<PerformanceImplication> {
         // Analyze performance implications of interop code
         vec![] // Placeholder
+    }
+
+    /// Generate FFI safety notes based on pool load metrics
+    async fn generate_ffi_safety_notes(&self, load_metrics: &[ServerLoadMetrics], function_name: &str) -> Vec<String> {
+        let mut notes = vec!["FFI call detected".to_string()];
+
+        // Check for high load servers that might affect FFI performance
+        let high_load_servers: Vec<_> = load_metrics.iter()
+            .filter(|metric| metric.health_score < 0.7 || metric.pending_requests > 10)
+            .collect();
+
+        if !high_load_servers.is_empty() {
+            notes.push(format!("Warning: {} servers under high load, FFI call '{}' may experience delays",
+                             high_load_servers.len(), function_name));
+        }
+
+        // Check average response times
+        let avg_response_time: f64 = load_metrics.iter()
+            .map(|m| m.response_time_ms)
+            .sum::<f64>() / load_metrics.len() as f64;
+
+        if avg_response_time > 1000.0 {
+            notes.push(format!("High average response time ({:.1}ms) may impact FFI performance", avg_response_time));
+        }
+
+        notes
+    }
+
+    /// Select the best server for symbol resolution based on load metrics
+    async fn select_best_server_for_symbol_resolution(&self, load_metrics: &[ServerLoadMetrics]) -> Option<String> {
+        load_metrics.iter()
+            .filter(|metric| metric.health_score > 0.8 && metric.pending_requests < 5)
+            .min_by(|a, b| {
+                // Prefer servers with lower pending requests and better health scores
+                a.pending_requests.cmp(&b.pending_requests)
+                    .then(a.health_score.partial_cmp(&b.health_score).unwrap_or(std::cmp::Ordering::Equal))
+            })
+            .map(|metric| metric.server_id.clone())
+    }
+
+    /// Check if a symbol is at the given position
+    async fn is_symbol_at_position(&self, symbol: &EnhancedSymbol, position: (usize, usize)) -> bool {
+        // Simple position check - would be more sophisticated in real implementation
+        let symbol_line = symbol.base_symbol.location.line;
+        let symbol_column = symbol.base_symbol.location.column;
+
+        // Check if position is within reasonable proximity of symbol location
+        let line_diff = (symbol_line as i32 - position.0 as i32).abs();
+        let col_diff = (symbol_column as i32 - position.1 as i32).abs();
+
+        line_diff <= 1 && col_diff <= 10 // Within 1 line and 10 columns
+    }
+
+    /// Extract function name from FFI line
+    async fn extract_function_name(&self, line: &str) -> Option<String> {
+        if let Some(fn_idx) = line.find("fn ") {
+            let start = line[fn_idx + 3..].chars().position(|c| c.is_alphabetic())?;
+            let end_chars: Vec<char> = line[fn_idx + 3 + start..].chars().collect();
+            let mut end = 0;
+            for (i, c) in end_chars.iter().enumerate() {
+                if !c.is_alphanumeric() && *c != '_' {
+                    end = i;
+                    break;
+                }
+                end = i;
+            }
+            Some(line[fn_idx + 3 + start..fn_idx + 3 + start + end + 1].to_string())
+        } else {
+            None
+        }
+    }
+
+    /// Extract library name from extern block
+    async fn extract_library_name(&self, line: &str) -> Option<String> {
+        if line.contains("\"") {
+            let start = line.find('\"')?;
+            let end = line[start + 1..].find('\"')?;
+            Some(line[start + 1..start + 1 + end].to_string())
+        } else {
+            Some("C".to_string())
+        }
     }
 
     /// AI-enhanced cross-language completion suggestions

@@ -38,18 +38,16 @@ impl ExtractInterfaceOperation {
         for item in &syntax.items {
             if let syn::Item::Impl(impl_block) = item {
                 // Check if this impl block is for our target struct
-                if let Some(struct_path) = &impl_block.self_ty {
-                    if let syn::Type::Path(type_path) = struct_path {
-                        if let Some(last_segment) = type_path.path.segments.last() {
-                            if last_segment.ident == struct_name {
-                                for impl_item in &impl_block.items {
-                                    if let syn::ImplItem::Fn(method) = impl_item {
-                                        if matches!(method.vis, syn::Visibility::Public(_)) {
-                                            methods.push(ExtractedMethod {
-                                                signature: method.sig.clone(),
-                                                attrs: method.attrs.clone(),
-                                            });
-                                        }
+                if let syn::Type::Path(type_path) = &*impl_block.self_ty {
+                    if let Some(last_segment) = type_path.path.segments.last() {
+                        if last_segment.ident == struct_name {
+                            for impl_item in &impl_block.items {
+                                if let syn::ImplItem::Fn(method) = impl_item {
+                                    if matches!(method.vis, syn::Visibility::Public(_)) {
+                                        methods.push(ExtractedMethod {
+                                            signature: method.sig.clone(),
+                                            attrs: method.attrs.clone(),
+                                        });
                                     }
                                 }
                             }
@@ -142,12 +140,17 @@ impl ExtractInterfaceOperation {
                 ""
             };
 
+            let params = method.signature.inputs.iter()
+                .map(|input| format!("{}", quote::quote!(#input)))
+                .collect::<Vec<_>>()
+                .join(", ");
+
             impl_code.push_str(&format!(
-                "    {}fn {} {} {{\n        {}self.{} {{\n            todo!(\"Implement {} method\")\n        }}\n    \
+                "    {}fn {}({}) {{\n        {}self.{} {{\n            todo!(\"Implement {} method\")\n        }}\n    \
                  }}\n",
                 async_prefix,
                 method_ident,
-                quote::quote!(#(method.signature.inputs),*),
+                params,
                 async_prefix,
                 method_ident,
                 method_ident
@@ -196,7 +199,7 @@ impl RefactoringOperation for ExtractInterfaceOperation {
 
         // Parse the Rust file
         let content = fs::read_to_string(file_path)?;
-        let syntax = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
+        let syntax = syn::parse_str::<syn::File>(&content)?;
 
         // Extract the target struct name
         let struct_name = context
@@ -216,13 +219,14 @@ impl RefactoringOperation for ExtractInterfaceOperation {
             .as_ref()
             .and_then(|opts| opts.get("interfaceName"))
             .and_then(|v| v.as_str())
-            .unwrap_or_else(|| &format!("{}Interface", struct_name));
+            .map(String::from)
+            .unwrap_or_else(|| format!("{}Interface", struct_name));
 
         // Generate trait definition
-        let trait_code = self.generate_trait_code(trait_name, &methods);
+        let trait_code = self.generate_trait_code(&trait_name, &methods);
 
         // Generate implementation
-        let impl_code = self.generate_impl_code(trait_name, struct_name, &methods);
+        let impl_code = self.generate_impl_code(&trait_name, struct_name, &methods);
 
         // Find the best insertion point for the trait (before the struct)
         let lines: Vec<&str> = content.lines().collect();
@@ -322,6 +326,7 @@ impl RefactoringOperation for ExtractInterfaceOperation {
 }
 // Split Class operation - splits a large class into multiple smaller classes
 pub struct SplitClassOperation;
+
 
 /// Analyzed field information for splitting
 #[derive(Clone)]
@@ -562,7 +567,7 @@ impl RefactoringOperation for SplitClassOperation {
 
         // Read and parse source file
         let content = fs::read_to_string(file_path)?;
-        let syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         let struct_name = context
             .symbol_name
@@ -657,7 +662,7 @@ impl RefactoringOperation for SplitClassOperation {
         context: &RefactoringContext,
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         let content = fs::read_to_string(&context.file_path)?;
-        let syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         let struct_name = context.symbol_name.clone().unwrap_or_default();
 
@@ -742,7 +747,7 @@ impl SplitClassOperation {
     fn generate_split_struct(
         &self,
         config: &SplitConfiguration,
-        index: usize,
+        _index: usize,
     ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let mut struct_code = String::new();
 
@@ -803,7 +808,9 @@ impl SplitClassOperation {
         for config in configs {
             for method in &config.methods {
                 composition_code.push_str(&format!(
-                    "\nimpl {} {{\n    {} {{\n        self.{}.{}\n    }}\n}}\n",
+                    "\nimpl {} {{
+    {} {{
+        self.{}.{}\n    }}\n}}\n",
                     original_struct_name,
                     quote::quote!(#method.signature),
                     config.class_name.to_lowercase(),

@@ -31,13 +31,13 @@ impl RustsecScanner {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VulnerabilityInfo {
-    pub package_name:     String,
-    pub version:          String,
+    pub package_name: String,
+    pub version: String,
     pub vulnerability_id: String,
-    pub severity:         VulnerabilitySeverity,
-    pub description:      String,
-    pub remediation:      String,
-    pub references:       Vec<String>,
+    pub severity: VulnerabilitySeverity,
+    pub description: String,
+    pub remediation: String,
+    pub references: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
@@ -62,18 +62,18 @@ impl VulnerabilitySeverity {
 
 #[derive(Debug, Clone)]
 pub struct SecurityPolicy {
-    pub block_critical:          bool,
-    pub block_high:              bool,
-    pub block_medium:            bool,
+    pub block_critical: bool,
+    pub block_high: bool,
+    pub block_medium: bool,
     pub allowed_vulnerabilities: Vec<String>,
 }
 
 impl Default for SecurityPolicy {
     fn default() -> Self {
         Self {
-            block_critical:          true,
-            block_high:              true,
-            block_medium:            false,
+            block_critical: true,
+            block_high: true,
+            block_medium: false,
             allowed_vulnerabilities: Vec::new(),
         }
     }
@@ -90,15 +90,18 @@ impl SecurityPolicy {
         }
     }
 
-    pub fn check_vulnerabilities(&self, vulnerabilities: &[VulnerabilityInfo]) -> Vec<VulnerabilityResult> {
+    pub fn check_vulnerabilities(
+        &self,
+        vulnerabilities: &[VulnerabilityInfo],
+    ) -> Vec<VulnerabilityResult> {
         vulnerabilities
             .iter()
             .map(|vuln| {
                 let compliance = self.check_vulnerability(vuln);
                 VulnerabilityResult {
                     vulnerability: vuln.clone(),
-                    status:        compliance,
-                    allowed:       self
+                    status: compliance,
+                    allowed: self
                         .allowed_vulnerabilities
                         .contains(&vuln.vulnerability_id),
                 }
@@ -110,8 +113,8 @@ impl SecurityPolicy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VulnerabilityResult {
     pub vulnerability: VulnerabilityInfo,
-    pub status:        SecurityCompliance,
-    pub allowed:       bool,
+    pub status: SecurityCompliance,
+    pub allowed: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

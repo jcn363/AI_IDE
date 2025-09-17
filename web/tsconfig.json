@@ -7,37 +7,21 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "ESNext.Promise", "ESNext.AsyncIterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "noEmit": true,
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2020",
-    "typeRoots": [
-      "./node_modules/@types"
-    ],
-    "types": [
-      "node"
-    ],
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["node", "@types/node"],
     "useDefineForClassFields": true
   },
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
-  "include": [
-    "src",
-    "src-tauri"
-  ]
+  "exclude": ["node_modules", "dist"],
+  "include": ["src", "src-tauri"]
 }

@@ -66,7 +66,7 @@ impl SIMDProcessor {
 
     /// Check if broad SIMD support is available
     pub fn has_simd(&self) -> bool {
-        self.capabilities.has_simd()
+        self.capabilities.has_simd
     }
 
     /// Get optimal vector size for the given data type
@@ -91,9 +91,9 @@ impl SIMDProcessor {
     {
         self.performance_monitor.start_operation("f32_vectorized");
 
-        let result = if self.capabilities.has_avx2() && lhs.len() >= 8 {
+        let result = if self.capabilities.has_avx2 && lhs.len() >= 8 {
             self.vectorized_f32x8_operations(lhs, rhs, operation)
-        } else if self.capabilities.has_sse() && lhs.len() >= 4 {
+        } else if self.capabilities.has_sse && lhs.len() >= 4 {
             self.vectorized_f32x4_operations(lhs, rhs, operation)
         } else {
             self.fallback_manager
@@ -116,7 +116,7 @@ impl SIMDProcessor {
         self.performance_monitor
             .start_operation("matrix_multiply_f32");
 
-        let result = if self.capabilities.has_acclerated_matrix_ops() {
+        let result = if self.capabilities.has_fma && self.capabilities.has_avx2 {
             self.vectorized_matrix_multiply(a, b, m, n, k)
         } else {
             self.fallback_manager
@@ -138,9 +138,9 @@ impl SIMDProcessor {
         self.performance_monitor
             .start_operation("distance_computation");
 
-        let result = if self.capabilities.has_avx512() && dimension % 16 == 0 {
+        let result = if self.capabilities.has_avx512f && dimension % 16 == 0 {
             self.avx512_distance_computation(query, database, dimension)
-        } else if self.capabilities.has_avx2() && dimension % 8 == 0 {
+        } else if self.capabilities.has_avx2 && dimension % 8 == 0 {
             self.avx2_distance_computation(query, database, dimension)
         } else {
             self.fallback_manager

@@ -8,13 +8,13 @@ use super::text_crdt::EditorOperation;
 #[derive(Debug, Clone, PartialEq)]
 pub struct OperationTransform {
     pub operation: EditorOperation,
-    pub context:   OperationContext,
+    pub context: OperationContext,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct OperationContext {
-    pub client_id:  String,
-    pub timestamp:  u64,
+    pub client_id: String,
+    pub timestamp: u64,
     pub depends_on: Vec<String>, // Operation IDs this operation depends on
     pub session_id: String,
 }
@@ -29,10 +29,10 @@ pub enum ConflictResolutionStrategy {
 
 #[derive(Debug, Clone)]
 pub struct OperationalTransformer {
-    client_id:          String,
-    session_id:         String,
+    client_id: String,
+    session_id: String,
     applied_operations: HashSet<String>,
-    conflict_strategy:  ConflictResolutionStrategy,
+    conflict_strategy: ConflictResolutionStrategy,
 }
 
 impl OperationalTransformer {
@@ -51,8 +51,8 @@ impl OperationalTransformer {
 
     pub fn transform_operation(&mut self, operation: EditorOperation) -> OperationTransform {
         let context = OperationContext {
-            client_id:  self.client_id.clone(),
-            timestamp:  std::time::SystemTime::now()
+            client_id: self.client_id.clone(),
+            timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_secs(),
@@ -83,8 +83,8 @@ impl OperationalTransformer {
                 },
             ) if pos1 == pos2 => Some(EditorOperation::Insert {
                 position: *pos1,
-                content:  format!("{}", content1),
-                op_id:    self.generate_operation_id(),
+                content: format!("{}", content1),
+                op_id: self.generate_operation_id(),
             }),
 
             // Insert and delete that don't conflict
@@ -107,11 +107,13 @@ impl OperationalTransformer {
                     // Need to adjust insertion position
                     let new_pos = *delete_pos;
                     match operation1 {
-                        EditorOperation::Insert { content, op_id, .. } => Some(EditorOperation::Insert {
-                            position: new_pos,
-                            content:  content.clone(),
-                            op_id:    op_id.clone(),
-                        }),
+                        EditorOperation::Insert { content, op_id, .. } => {
+                            Some(EditorOperation::Insert {
+                                position: new_pos,
+                                content: content.clone(),
+                                op_id: op_id.clone(),
+                            })
+                        }
                         _ => None,
                     }
                 }
@@ -150,22 +152,23 @@ impl OperationalTransformer {
 #[derive(Debug, Clone)]
 pub struct OTServer {
     pending_operations: Vec<OperationTransform>,
-    client_states:      std::collections::HashMap<String, u64>, // client_id -> last_applied_operation
-    operation_history:  Vec<OperationTransform>,
+    client_states: std::collections::HashMap<String, u64>, // client_id -> last_applied_operation
+    operation_history: Vec<OperationTransform>,
 }
 
 impl OTServer {
     pub fn new() -> Self {
         Self {
             pending_operations: Vec::new(),
-            client_states:      std::collections::HashMap::new(),
-            operation_history:  Vec::new(),
+            client_states: std::collections::HashMap::new(),
+            operation_history: Vec::new(),
         }
     }
 
     pub fn submit_operation(&mut self, transform: OperationTransform) -> bool {
         // Check if all dependencies are satisfied
-        let transformer = OperationalTransformer::new("server".to_string(), transform.context.session_id.clone());
+        let transformer =
+            OperationalTransformer::new("server".to_string(), transform.context.session_id.clone());
 
         if transformer.should_apply_operation(&transform.context) {
             let client_id = transform.context.client_id.clone();
@@ -202,12 +205,13 @@ mod tests {
 
     #[test]
     fn test_operational_transform() {
-        let mut transformer = OperationalTransformer::new("client1".to_string(), "session1".to_string());
+        let mut transformer =
+            OperationalTransformer::new("client1".to_string(), "session1".to_string());
 
         let operation = EditorOperation::Insert {
             position: 5,
-            content:  "test".to_string(),
-            op_id:    "op1".to_string(),
+            content: "test".to_string(),
+            op_id: "op1".to_string(),
         };
 
         let transform = transformer.transform_operation(operation);
@@ -218,18 +222,19 @@ mod tests {
 
     #[test]
     fn test_merge_concurrent_inserts() {
-        let mut transformer = OperationalTransformer::new("client1".to_string(), "session1".to_string());
+        let mut transformer =
+            OperationalTransformer::new("client1".to_string(), "session1".to_string());
 
         let op1 = EditorOperation::Insert {
             position: 5,
-            content:  "hello".to_string(),
-            op_id:    "op1".to_string(),
+            content: "hello".to_string(),
+            op_id: "op1".to_string(),
         };
 
         let op2 = EditorOperation::Insert {
             position: 5,
-            content:  "world".to_string(),
-            op_id:    "op2".to_string(),
+            content: "world".to_string(),
+            op_id: "op2".to_string(),
         };
 
         let merged = transformer.merge_operations(&op1, &op2);
@@ -243,12 +248,12 @@ mod tests {
         let transform = OperationTransform {
             operation: EditorOperation::Insert {
                 position: 5,
-                content:  "test".to_string(),
-                op_id:    "op1".to_string(),
+                content: "test".to_string(),
+                op_id: "op1".to_string(),
             },
-            context:   OperationContext {
-                client_id:  "client1".to_string(),
-                timestamp:  12345,
+            context: OperationContext {
+                client_id: "client1".to_string(),
+                timestamp: 12345,
                 depends_on: vec![],
                 session_id: "session1".to_string(),
             },

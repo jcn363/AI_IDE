@@ -237,8 +237,29 @@ pub struct ServiceResponse<T> {
     pub error_messages: Vec<String>,
 }
 
-impl Default for Default {};
-impl Default for PredictiveContext {};
+impl Default for PredictiveContext {
+    fn default() -> Self {
+        Self {
+            document_content: String::new(),
+            document_language: String::new(),
+            current_line: String::new(),
+            prefix_lines: Vec::new(),
+            suffix_lines: Vec::new(),
+            cursor_position: Position::default(),
+            ast_symbols: HashMap::new(),
+            imports: HashSet::new(),
+            function_definitions: HashMap::new(),
+            type_definitions: HashMap::new(),
+            variable_usage: HashMap::new(),
+            project_files: Vec::new(),
+            dependency_graph: HashMap::new(),
+            recent_changes: Vec::new(),
+            usage_patterns: HashMap::new(),
+            semantic_similarities: HashMap::new(),
+            confidence_scores: HashMap::new(),
+        }
+    }
+}
 
 impl Default for CompletionPrediction {
     fn default() -> Self {

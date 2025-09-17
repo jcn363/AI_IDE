@@ -1,0 +1,72 @@
+[package]
+name = "rust-ai-ide-integration"
+
+version = { workspace = true }
+edition = { workspace = true }
+authors = { workspace = true }
+description = "Integration Bridge between Collaboration and LSP Systems for Rust AI IDE"
+license = { workspace = true }
+rust-version = { workspace = true }
+publish = { workspace = true }
+repository = { workspace = true }
+
+[dependencies]
+# Core async and error handling dependencies from workspace
+tokio = { workspace = true }
+futures = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+log = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+toml = { workspace = true }
+async-trait = { workspace = true }
+uuid = { workspace = true }
+
+# LSP integration dependencies
+lsp-types = { workspace = true, features = ["proposed"] }
+lsp-server = "0.7.9"
+tower-lsp = "0.20.0"
+
+# Collaboration system dependencies
+rust-ai-ide-collaboration = { path = "../rust-ai-ide-collaboration" }
+rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+
+# Common and shared types
+rust-ai-ide-common = { path = "../rust-ai-ide-common" }
+rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+rust-ai-ide-types = { path = "../rust-ai-ide-types" }
+rust-ai-ide-shared-services = { path = "../rust-ai-ide-shared-services" }
+
+# AI integration for conflict resolution
+rust-ai-ide-ai = { path = "../rust-ai-ide-ai" }
+rust-ai-ide-ai-integration = { path = "../rust-ai-ide-ai-integration" }
+rust-ai-ide-ai-codegen = { path = "../rust-ai-ide-ai-codegen" }
+
+# Monitoring and performance
+rust-ai-ide-monitoring = { path = "../rust-ai-ide-monitoring" }
+rust-ai-ide-performance = { path = "../rust-ai-ide-performance" }
+
+# Security and validation
+rust-ai-ide-security = { path = "../rust-ai-ide-security" }
+
+# Performance and caching
+moka = { version = "0.12.10", features = ["future"] }
+parking_lot = { version = "0.12.4", features = ["serde"] }
+dashmap = { version = "6.1.0", features = ["serde"] }
+
+# Text rope for position calculations
+ropey = "1.6"
+
+# Event communication and synchronization
+tokio-util = { version = "0.7", features = ["codec"] }
+tokio-stream = { workspace = true }
+
+[features]
+default = ["lsp", "collaboration", "ai-conflict-resolution"]
+lsp = []
+collaboration = []
+ai-conflict-resolution = []
+tests = []

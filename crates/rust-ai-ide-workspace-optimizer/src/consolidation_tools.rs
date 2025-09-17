@@ -18,23 +18,23 @@ use crate::types::*;
 #[derive(Debug)]
 pub struct ConsolidationTools {
     /// Consolidation analysis cache
-    analysis_cache:        Arc<RwLock<Option<ConsolidationAnalysis>>>,
+    analysis_cache: Arc<RwLock<Option<ConsolidationAnalysis>>>,
     /// Consolidation history
     consolidation_history: Arc<RwLock<Vec<ConsolidationRecord>>>,
     /// Risk assessment engine
-    risk_assessor:         Arc<RwLock<RiskAssessor>>,
+    risk_assessor: Arc<RwLock<RiskAssessor>>,
     /// Impact analyzer
-    impact_analyzer:       Arc<RwLock<ImpactAnalyzer>>,
+    impact_analyzer: Arc<RwLock<ImpactAnalyzer>>,
 }
 
 impl ConsolidationTools {
     /// Create new consolidation tools
     pub fn new() -> Self {
         Self {
-            analysis_cache:        Arc::new(RwLock::new(None)),
+            analysis_cache: Arc::new(RwLock::new(None)),
             consolidation_history: Arc::new(RwLock::new(Vec::new())),
-            risk_assessor:         Arc::new(RwLock::new(RiskAssessor::new())),
-            impact_analyzer:       Arc::new(RwLock::new(ImpactAnalyzer::new())),
+            risk_assessor: Arc::new(RwLock::new(RiskAssessor::new())),
+            impact_analyzer: Arc::new(RwLock::new(ImpactAnalyzer::new())),
         }
     }
 
@@ -78,9 +78,9 @@ impl ConsolidationTools {
 
         // Cache the analysis
         let full_analysis = ConsolidationAnalysis {
-            recommendations:    recommendations.clone(),
+            recommendations: recommendations.clone(),
             analysis_timestamp: chrono::Utc::now(),
-            analyzed_crates:    analysis.analyzed_crates,
+            analyzed_crates: analysis.analyzed_crates,
         };
 
         {
@@ -133,7 +133,10 @@ impl ConsolidationTools {
     }
 
     /// Analyze consolidation impact
-    pub async fn analyze_impact(&self, consolidation: &CrateConsolidation) -> OptimizerResult<ConsolidationImpact> {
+    pub async fn analyze_impact(
+        &self,
+        consolidation: &CrateConsolidation,
+    ) -> OptimizerResult<ConsolidationImpact> {
         let impact_analyzer = self.impact_analyzer.read().await;
         impact_analyzer
             .analyze_consolidation_impact(consolidation)
@@ -173,12 +176,12 @@ impl ConsolidationTools {
         // For now, return mock analysis
 
         Ok(WorkspaceAnalysis {
-            analyzed_crates:    vec![
+            analyzed_crates: vec![
                 "rust-ai-ide-small-crate-1".to_string(),
                 "rust-ai-ide-small-crate-2".to_string(),
                 "rust-ai-ide-medium-crate".to_string(),
             ],
-            total_crates:       67,
+            total_crates: 67,
             analysis_timestamp: chrono::Utc::now(),
         })
     }
@@ -192,26 +195,26 @@ impl ConsolidationTools {
 
         // Example consolidation: combine small utility crates
         consolidations.push(CrateConsolidation {
-            primary_crate:          "rust-ai-ide-utils".to_string(),
-            merge_crates:           vec![
+            primary_crate: "rust-ai-ide-utils".to_string(),
+            merge_crates: vec![
                 "rust-ai-ide-small-utils-1".to_string(),
                 "rust-ai-ide-small-utils-2".to_string(),
             ],
             estimated_effort_hours: 8.0,
-            complexity_score:       25.0,
-            benefits:               "Reduces crate count and simplifies dependency management".to_string(),
+            complexity_score: 25.0,
+            benefits: "Reduces crate count and simplifies dependency management".to_string(),
         });
 
         // Example consolidation: combine similar AI crates
         consolidations.push(CrateConsolidation {
-            primary_crate:          "rust-ai-ide-ai-core".to_string(),
-            merge_crates:           vec![
+            primary_crate: "rust-ai-ide-ai-core".to_string(),
+            merge_crates: vec![
                 "rust-ai-ide-ai-basic".to_string(),
                 "rust-ai-ide-ai-helpers".to_string(),
             ],
             estimated_effort_hours: 12.0,
-            complexity_score:       40.0,
-            benefits:               "Improves AI functionality organization and reduces duplication".to_string(),
+            complexity_score: 40.0,
+            benefits: "Improves AI functionality organization and reduces duplication".to_string(),
         });
 
         Ok(consolidations)
@@ -226,18 +229,18 @@ impl ConsolidationTools {
 
         // AI feature optimization
         optimizations.push(FeatureOptimization {
-            crate_name:   "rust-ai-ide-ai".to_string(),
+            crate_name: "rust-ai-ide-ai".to_string(),
             feature_name: "heavy-ai".to_string(),
-            action:       FeatureAction::MakeOptional,
-            impact:       20.0,
+            action: FeatureAction::MakeOptional,
+            impact: 20.0,
         });
 
         // Security feature optimization
         optimizations.push(FeatureOptimization {
-            crate_name:   "rust-ai-ide-security".to_string(),
+            crate_name: "rust-ai-ide-security".to_string(),
             feature_name: "advanced-crypto".to_string(),
-            action:       FeatureAction::Split,
-            impact:       15.0,
+            action: FeatureAction::Split,
+            impact: 15.0,
         });
 
         Ok(optimizations)
@@ -252,13 +255,13 @@ impl ConsolidationTools {
 
         // Example dependency cleanup
         cleanup.push(DependencyCleanup {
-            crate_name:             "rust-ai-ide-example".to_string(),
+            crate_name: "rust-ai-ide-example".to_string(),
             dependencies_to_remove: vec![
                 "unused-dependency-1".to_string(),
                 "unused-dependency-2".to_string(),
             ],
             dependencies_to_update: vec!["outdated-dependency".to_string()],
-            estimated_impact:       5.0,
+            estimated_impact: 5.0,
         });
 
         Ok(cleanup)
@@ -305,9 +308,9 @@ impl ConsolidationTools {
         // and move/merge source code
 
         Ok(AppliedConsolidation {
-            consolidation:      _consolidation.clone(),
-            applied_at:         chrono::Utc::now(),
-            success:            true,
+            consolidation: _consolidation.clone(),
+            applied_at: chrono::Utc::now(),
+            success: true,
             issues_encountered: Vec::new(),
         })
     }
@@ -322,8 +325,8 @@ impl ConsolidationTools {
 
         Ok(AppliedFeatureOptimization {
             optimization: _optimization.clone(),
-            applied_at:   chrono::Utc::now(),
-            success:      true,
+            applied_at: chrono::Utc::now(),
+            success: true,
         })
     }
 
@@ -336,9 +339,9 @@ impl ConsolidationTools {
         // to remove/update dependencies
 
         Ok(AppliedDependencyCleanup {
-            cleanup:              _cleanup.clone(),
-            applied_at:           chrono::Utc::now(),
-            success:              true,
+            cleanup: _cleanup.clone(),
+            applied_at: chrono::Utc::now(),
+            success: true,
             dependencies_removed: _cleanup.dependencies_to_remove.len(),
             dependencies_updated: _cleanup.dependencies_to_update.len(),
         })
@@ -374,11 +377,14 @@ impl ConsolidationTools {
     }
 
     /// Record consolidation results in history
-    async fn record_consolidation_results(&self, results: &ConsolidationResults) -> OptimizerResult<()> {
+    async fn record_consolidation_results(
+        &self,
+        results: &ConsolidationResults,
+    ) -> OptimizerResult<()> {
         let record = ConsolidationRecord {
             timestamp: chrono::Utc::now(),
-            results:   results.clone(),
-            summary:   format!(
+            results: results.clone(),
+            summary: format!(
                 "Applied {} consolidations, {} feature optimizations, {} dependency cleanups",
                 results.applied_consolidations.len(),
                 results.applied_feature_optimizations.len(),
@@ -399,19 +405,28 @@ impl ConsolidationTools {
     }
 
     /// Check for breaking changes
-    async fn check_breaking_changes(&self, _consolidation: &CrateConsolidation) -> OptimizerResult<Vec<String>> {
+    async fn check_breaking_changes(
+        &self,
+        _consolidation: &CrateConsolidation,
+    ) -> OptimizerResult<Vec<String>> {
         // In a real implementation, this would analyze APIs for breaking changes
         Ok(Vec::new()) // No breaking changes detected
     }
 
     /// Check for new circular dependencies
-    async fn check_new_circular_deps(&self, _consolidation: &CrateConsolidation) -> OptimizerResult<Vec<String>> {
+    async fn check_new_circular_deps(
+        &self,
+        _consolidation: &CrateConsolidation,
+    ) -> OptimizerResult<Vec<String>> {
         // In a real implementation, this would check dependency graph
         Ok(Vec::new()) // No new circular dependencies
     }
 
     /// Check API compatibility
-    async fn check_api_compatibility(&self, _consolidation: &CrateConsolidation) -> OptimizerResult<Vec<String>> {
+    async fn check_api_compatibility(
+        &self,
+        _consolidation: &CrateConsolidation,
+    ) -> OptimizerResult<Vec<String>> {
         // In a real implementation, this would analyze API compatibility
         Ok(Vec::new()) // APIs are compatible
     }
@@ -427,9 +442,9 @@ impl Default for ConsolidationTools {
 #[derive(Debug, Clone)]
 pub struct WorkspaceAnalysis {
     /// Crates that were analyzed
-    pub analyzed_crates:    Vec<String>,
+    pub analyzed_crates: Vec<String>,
     /// Total number of crates in workspace
-    pub total_crates:       usize,
+    pub total_crates: usize,
     /// When analysis was performed
     pub analysis_timestamp: chrono::DateTime<chrono::Utc>,
 }
@@ -438,37 +453,37 @@ pub struct WorkspaceAnalysis {
 #[derive(Debug, Clone)]
 pub struct ConsolidationAnalysis {
     /// Generated recommendations
-    pub recommendations:    ConsolidationRecommendations,
+    pub recommendations: ConsolidationRecommendations,
     /// When analysis was performed
     pub analysis_timestamp: chrono::DateTime<chrono::Utc>,
     /// Crates that were analyzed
-    pub analyzed_crates:    Vec<String>,
+    pub analyzed_crates: Vec<String>,
 }
 
 /// Results of applying consolidation optimizations
 #[derive(Debug, Clone, Default)]
 pub struct ConsolidationResults {
     /// Applied crate consolidations
-    pub applied_consolidations:        Vec<AppliedConsolidation>,
+    pub applied_consolidations: Vec<AppliedConsolidation>,
     /// Applied feature optimizations
     pub applied_feature_optimizations: Vec<AppliedFeatureOptimization>,
     /// Applied dependency cleanup
-    pub applied_dependency_cleanup:    Vec<AppliedDependencyCleanup>,
+    pub applied_dependency_cleanup: Vec<AppliedDependencyCleanup>,
     /// Total time spent on consolidation
-    pub total_time_spent:              std::time::Duration,
+    pub total_time_spent: std::time::Duration,
     /// Success rate (0-100)
-    pub success_rate:                  f64,
+    pub success_rate: f64,
 }
 
 /// Applied crate consolidation record
 #[derive(Debug, Clone)]
 pub struct AppliedConsolidation {
     /// The consolidation that was applied
-    pub consolidation:      CrateConsolidation,
+    pub consolidation: CrateConsolidation,
     /// When it was applied
-    pub applied_at:         chrono::DateTime<chrono::Utc>,
+    pub applied_at: chrono::DateTime<chrono::Utc>,
     /// Whether it was successful
-    pub success:            bool,
+    pub success: bool,
     /// Issues encountered during application
     pub issues_encountered: Vec<String>,
 }
@@ -479,20 +494,20 @@ pub struct AppliedFeatureOptimization {
     /// The optimization that was applied
     pub optimization: FeatureOptimization,
     /// When it was applied
-    pub applied_at:   chrono::DateTime<chrono::Utc>,
+    pub applied_at: chrono::DateTime<chrono::Utc>,
     /// Whether it was successful
-    pub success:      bool,
+    pub success: bool,
 }
 
 /// Applied dependency cleanup record
 #[derive(Debug, Clone)]
 pub struct AppliedDependencyCleanup {
     /// The cleanup that was applied
-    pub cleanup:              DependencyCleanup,
+    pub cleanup: DependencyCleanup,
     /// When it was applied
-    pub applied_at:           chrono::DateTime<chrono::Utc>,
+    pub applied_at: chrono::DateTime<chrono::Utc>,
     /// Whether it was successful
-    pub success:              bool,
+    pub success: bool,
     /// Number of dependencies removed
     pub dependencies_removed: usize,
     /// Number of dependencies updated
@@ -548,13 +563,13 @@ impl ImpactAnalyzer {
 
         Ok(ConsolidationImpact {
             estimated_effort_hours: effort_impact,
-            complexity_score:       complexity_impact,
-            risk_level:             if complexity_impact > 20.0 {
+            complexity_score: complexity_impact,
+            risk_level: if complexity_impact > 20.0 {
                 ConsolidationRisk::High
             } else {
                 ConsolidationRisk::Medium
             },
-            benefits_description:   consolidation.benefits.clone(),
+            benefits_description: consolidation.benefits.clone(),
         })
     }
 }
@@ -565,22 +580,22 @@ pub struct ConsolidationImpact {
     /// Estimated effort in hours
     pub estimated_effort_hours: f64,
     /// Complexity score
-    pub complexity_score:       f64,
+    pub complexity_score: f64,
     /// Risk level
-    pub risk_level:             ConsolidationRisk,
+    pub risk_level: ConsolidationRisk,
     /// Benefits description
-    pub benefits_description:   String,
+    pub benefits_description: String,
 }
 
 /// Validation results for consolidation
 #[derive(Debug, Clone, Default)]
 pub struct ValidationResults {
     /// Whether consolidation is safe
-    pub is_safe:                  bool,
+    pub is_safe: bool,
     /// Breaking changes detected
-    pub breaking_changes:         Vec<String>,
+    pub breaking_changes: Vec<String>,
     /// New circular dependencies created
-    pub new_circular_deps:        Vec<String>,
+    pub new_circular_deps: Vec<String>,
     /// API compatibility issues
     pub api_compatibility_issues: Vec<String>,
 }
@@ -591,9 +606,9 @@ pub struct ConsolidationRecord {
     /// When consolidation was performed
     pub timestamp: chrono::DateTime<chrono::Utc>,
     /// Results of consolidation
-    pub results:   ConsolidationResults,
+    pub results: ConsolidationResults,
     /// Summary of changes
-    pub summary:   String,
+    pub summary: String,
 }
 
 #[cfg(test)]
@@ -621,11 +636,11 @@ mod tests {
     async fn test_validate_consolidation() {
         let tools = ConsolidationTools::new();
         let consolidation = CrateConsolidation {
-            primary_crate:          "test-crate".to_string(),
-            merge_crates:           vec!["merge-crate".to_string()],
+            primary_crate: "test-crate".to_string(),
+            merge_crates: vec!["merge-crate".to_string()],
             estimated_effort_hours: 5.0,
-            complexity_score:       30.0,
-            benefits:               "Test consolidation".to_string(),
+            complexity_score: 30.0,
+            benefits: "Test consolidation".to_string(),
         };
 
         let result = tools.validate_consolidation(&consolidation).await;

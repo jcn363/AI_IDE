@@ -23,6 +23,8 @@ tempfile = { workspace = true }
 tracing = { workspace = true }
 rayon = "1.8.0"
 proc-macro2 = "1.0.76"
+moka = "0.12.8"
+lazy_static = "1.4.0"
 
 # Common types shared across crates
 rust-ai-ide-common = { path = "../rust-ai-ide-common" }

@@ -11,9 +11,9 @@ use crate::errors::{IdeError, IdeResult};
 /// A string that has been validated and sanitized for general use
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SanitizedString {
-    inner:      Arc<str>,
+    inner: Arc<str>,
     max_length: usize,
-    sanitized:  bool,
+    sanitized: bool,
 }
 
 impl SanitizedString {
@@ -21,14 +21,14 @@ impl SanitizedString {
     pub fn new(input: &str, max_length: usize) -> IdeResult<Self> {
         if input.is_empty() {
             return Err(IdeError::Validation {
-                field:  "SanitizedString".to_string(),
+                field: "SanitizedString".to_string(),
                 reason: "Cannot create empty SanitizedString".to_string(),
             });
         }
 
         if input.len() > max_length {
             return Err(IdeError::Validation {
-                field:  "SanitizedString".to_string(),
+                field: "SanitizedString".to_string(),
                 reason: format!(
                     "Input length {} exceeds max length {}",
                     input.len(),
@@ -95,7 +95,7 @@ impl AsRef<str> for SanitizedString {
 /// A file path that has been validated for security
 #[derive(Debug, Clone)]
 pub struct SecurePath {
-    path:      PathBuf,
+    path: PathBuf,
     validated: bool,
 }
 
@@ -106,7 +106,7 @@ impl SecurePath {
 
         // Canonicalize to resolve any .. or . components
         let canonical_path = path_buf.canonicalize().map_err(|_| IdeError::Validation {
-            field:  "SecurePath".to_string(),
+            field: "SecurePath".to_string(),
             reason: format!(
                 "{}: Path cannot be canonicalized or does not exist",
                 operation
@@ -120,7 +120,7 @@ impl SecurePath {
         Self::validate_security_constraints(&canonical_path, operation)?;
 
         Ok(Self {
-            path:      canonical_path,
+            path: canonical_path,
             validated: true,
         })
     }
@@ -135,14 +135,14 @@ impl SecurePath {
                     let part_str = part.to_string_lossy();
                     if part_str == ".." || part_str.starts_with("..") {
                         return Err(IdeError::Validation {
-                            field:  "SecurePath".to_string(),
+                            field: "SecurePath".to_string(),
                             reason: "Path traversal detected".to_string(),
                         });
                     }
                     // Check for null bytes or other problematic characters
                     if part_str.chars().any(|c| c.is_control()) {
                         return Err(IdeError::Validation {
-                            field:  "SecurePath".to_string(),
+                            field: "SecurePath".to_string(),
                             reason: "Control characters detected in path".to_string(),
                         });
                     }
@@ -162,7 +162,7 @@ impl SecurePath {
             const MAX_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100MB
             if metadata.len() > MAX_FILE_SIZE {
                 return Err(IdeError::Validation {
-                    field:  "SecurePath".to_string(),
+                    field: "SecurePath".to_string(),
                     reason: format!(
                         "{}: File size exceeds limit ({}MB)",
                         operation,
@@ -200,7 +200,7 @@ impl AsRef<std::path::Path> for SecurePath {
 /// A validated command line argument
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SecureArg {
-    inner:     String,
+    inner: String,
     validated: bool,
 }
 
@@ -209,14 +209,14 @@ impl SecureArg {
     pub fn new(arg: &str) -> IdeResult<Self> {
         if arg.is_empty() {
             return Err(IdeError::Validation {
-                field:  "SecureArg".to_string(),
+                field: "SecureArg".to_string(),
                 reason: "Command arguments cannot be empty".to_string(),
             });
         }
 
         if arg.len() > 2048 {
             return Err(IdeError::Validation {
-                field:  "SecureArg".to_string(),
+                field: "SecureArg".to_string(),
                 reason: "Command argument too long".to_string(),
             });
         }
@@ -224,7 +224,7 @@ impl SecureArg {
         let sanitized = Self::sanitize_arg(arg)?;
 
         Ok(Self {
-            inner:     sanitized,
+            inner: sanitized,
             validated: true,
         })
     }
@@ -259,8 +259,8 @@ impl SecureArg {
 /// A validated command string for shell execution
 #[derive(Debug, Clone)]
 pub struct SecureCommand {
-    command:   SanitizedString,
-    args:      Vec<SecureArg>,
+    command: SanitizedString,
+    args: Vec<SecureArg>,
     validated: bool,
 }
 
@@ -268,11 +268,12 @@ impl SecureCommand {
     /// Create a new secure command with arguments
     pub fn new(command: &str, args: Vec<&str>) -> IdeResult<Self> {
         let secure_command = SanitizedString::new(command, 256)?;
-        let secure_args: IdeResult<Vec<SecureArg>> = args.iter().map(|arg| SecureArg::new(arg)).collect();
+        let secure_args: IdeResult<Vec<SecureArg>> =
+            args.iter().map(|arg| SecureArg::new(arg)).collect();
 
         Ok(Self {
-            command:   secure_command,
-            args:      secure_args?,
+            command: secure_command,
+            args: secure_args?,
             validated: true,
         })
     }
@@ -289,15 +290,17 @@ impl SecureCommand {
 
     /// Check if the command is fully validated
     pub fn is_validated(&self) -> bool {
-        self.validated && self.command.is_sanitized() && self.args.iter().all(|arg| arg.is_validated())
+        self.validated
+            && self.command.is_sanitized()
+            && self.args.iter().all(|arg| arg.is_validated())
     }
 }
 
 /// A validated regular expression pattern
 #[derive(Debug, Clone)]
 pub struct SecureRegex {
-    pattern:   String,
-    compiled:  regex::Regex,
+    pattern: String,
+    compiled: regex::Regex,
     validated: bool,
 }
 
@@ -306,14 +309,14 @@ impl SecureRegex {
     pub fn new(pattern: &str) -> IdeResult<Self> {
         if pattern.is_empty() {
             return Err(IdeError::Validation {
-                field:  "SecureRegex".to_string(),
+                field: "SecureRegex".to_string(),
                 reason: "Regex pattern cannot be empty".to_string(),
             });
         }
 
         if pattern.len() > 1024 {
             return Err(IdeError::Validation {
-                field:  "SecureRegex".to_string(),
+                field: "SecureRegex".to_string(),
                 reason: "Regex pattern too long".to_string(),
             });
         }
@@ -322,7 +325,7 @@ impl SecureRegex {
         Self::validate_regex_pattern(pattern)?;
 
         let compiled = regex::Regex::new(pattern).map_err(|e| IdeError::Validation {
-            field:  "SecureRegex".to_string(),
+            field: "SecureRegex".to_string(),
             reason: format!("Invalid regex pattern: {}", e),
         })?;
 
@@ -338,7 +341,7 @@ impl SecureRegex {
         // Check for catastrophic backtracking patterns
         if pattern.contains(".*+") || pattern.contains(".+?") {
             return Err(IdeError::Validation {
-                field:  "SecureRegex".to_string(),
+                field: "SecureRegex".to_string(),
                 reason: "Potentially inefficient regex pattern detected".to_string(),
             });
         }

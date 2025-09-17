@@ -11,7 +11,11 @@ use crate::types::{AIProvider, ModelInfo, ModelSize, Quantization};
 #[async_trait::async_trait]
 pub trait ModelLoaderTrait {
     /// Load a model from the specified path
-    async fn load_model(&self, model_path: &Path, config: &ModelLoadConfig) -> Result<ModelHandle, ModelLoadError>;
+    async fn load_model(
+        &self,
+        model_path: &Path,
+        config: &ModelLoadConfig,
+    ) -> Result<ModelHandle, ModelLoadError>;
 
     /// Check if a model is available for loading
     async fn is_available(&self, model_path: &Path) -> bool;
@@ -27,12 +31,12 @@ pub trait ModelLoaderTrait {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelLoadConfig {
-    pub quantization:    Option<Quantization>,
-    pub lora_adapters:   Vec<String>,
+    pub quantization: Option<Quantization>,
+    pub lora_adapters: Vec<String>,
     pub memory_limit_mb: Option<u64>,
-    pub device:          ModelDevice,
-    pub lazy_loading:    bool,
-    pub enable_cache:    bool,
+    pub device: ModelDevice,
+    pub lazy_loading: bool,
+    pub enable_cache: bool,
 }
 
 // Model device specification
@@ -49,23 +53,23 @@ pub enum ModelDevice {
 #[serde(rename_all = "camelCase")]
 pub struct ModelCapabilities {
     pub supported_quantization: Vec<Quantization>,
-    pub min_memory_mb:          u64,
-    pub recommended_memory_mb:  u64,
-    pub supports_lora:          bool,
-    pub max_context_length:     u32,
-    pub supported_languages:    Vec<String>,
+    pub min_memory_mb: u64,
+    pub recommended_memory_mb: u64,
+    pub supports_lora: bool,
+    pub max_context_length: u32,
+    pub supported_languages: Vec<String>,
 }
 
 /// Handle to a loaded model
 #[derive(Debug, Clone)]
 pub struct ModelHandle {
-    pub model_id:        String,
-    pub model_path:      PathBuf,
-    pub config:          ModelLoadConfig,
-    pub loaded_at:       std::time::SystemTime,
+    pub model_id: String,
+    pub model_path: PathBuf,
+    pub config: ModelLoadConfig,
+    pub loaded_at: std::time::SystemTime,
     pub memory_usage_mb: u64,
     /// Internal model reference (would be specific to inference framework)
-    pub model:           Arc<RwLock<Option<ModelData>>>,
+    pub model: Arc<RwLock<Option<ModelData>>>,
 }
 
 #[derive(Debug)]
@@ -125,7 +129,7 @@ impl CodeLlamaLoader {
 
         if available_memory < required_memory {
             return Err(ModelLoadError::InsufficientMemory {
-                required:  required_memory,
+                required: required_memory,
                 available: available_memory,
             });
         }
@@ -152,7 +156,11 @@ impl CodeLlamaLoader {
     }
 
     /// Estimate memory requirement for a CodeLlama model
-    fn estimate_memory_requirement(&self, _model_path: &Path, config: &ModelLoadConfig) -> Result<u64, ModelLoadError> {
+    fn estimate_memory_requirement(
+        &self,
+        _model_path: &Path,
+        config: &ModelLoadConfig,
+    ) -> Result<u64, ModelLoadError> {
         // Base memory for model weights
         let base_memory_mb = match config.quantization {
             Some(Quantization::INT4) => 2000, // Approximate for 7B parameter model
@@ -170,7 +178,11 @@ impl CodeLlamaLoader {
 
 #[async_trait::async_trait]
 impl ModelLoaderTrait for CodeLlamaLoader {
-    async fn load_model(&self, model_path: &Path, config: &ModelLoadConfig) -> Result<ModelHandle, ModelLoadError> {
+    async fn load_model(
+        &self,
+        model_path: &Path,
+        config: &ModelLoadConfig,
+    ) -> Result<ModelHandle, ModelLoadError> {
         self.specialize_for_rust_loading(model_path, config).await
     }
 
@@ -192,18 +204,24 @@ impl ModelLoaderTrait for CodeLlamaLoader {
             model_size,
             quantization,
             lora_adapters,
-            memory_usage_mb: self.estimate_memory_requirement(model_path, &ModelLoadConfig {
-                quantization,
-                lora_adapters: vec![],
-                memory_limit_mb: None,
-                device: ModelDevice::Auto,
-                lazy_loading: false,
-                enable_cache: true,
-            })?,
+            memory_usage_mb: self.estimate_memory_requirement(
+                model_path,
+                &ModelLoadConfig {
+                    quantization,
+                    lora_adapters: vec![],
+                    memory_limit_mb: None,
+                    device: ModelDevice::Auto,
+                    lazy_loading: false,
+                    enable_cache: true,
+                },
+            )?,
         })
     }
 
-    async fn validate_model(&self, _model_path: &Path) -> Result<ModelCapabilities, ModelLoadError> {
+    async fn validate_model(
+        &self,
+        _model_path: &Path,
+    ) -> Result<ModelCapabilities, ModelLoadError> {
         // Validate CodeLlama support
         let available_memory = get_available_memory_mb();
 
@@ -214,11 +232,11 @@ impl ModelLoaderTrait for CodeLlamaLoader {
                 Quantization::INT8,
                 Quantization::GPTQ,
             ],
-            min_memory_mb:          2000,
-            recommended_memory_mb:  available_memory.min(8000),
-            supports_lora:          true,
-            max_context_length:     4096,
-            supported_languages:    vec![
+            min_memory_mb: 2000,
+            recommended_memory_mb: available_memory.min(8000),
+            supports_lora: true,
+            max_context_length: 4096,
+            supported_languages: vec![
                 "rust".to_string(),
                 "python".to_string(),
                 "javascript".to_string(),
@@ -256,7 +274,7 @@ impl StarCoderLoader {
 
         if available_memory < required_memory {
             return Err(ModelLoadError::InsufficientMemory {
-                required:  required_memory,
+                required: required_memory,
                 available: available_memory,
             });
         }
@@ -282,7 +300,11 @@ impl StarCoderLoader {
     }
 
     /// Estimate memory requirement for a StarCoder model
-    fn estimate_memory_requirement(&self, _model_path: &Path, config: &ModelLoadConfig) -> Result<u64, ModelLoadError> {
+    fn estimate_memory_requirement(
+        &self,
+        _model_path: &Path,
+        config: &ModelLoadConfig,
+    ) -> Result<u64, ModelLoadError> {
         // Base memory for model weights
         let base_memory_mb = match config.quantization {
             Some(Quantization::INT4) => 3000, // StarCoder models typically larger
@@ -300,7 +322,11 @@ impl StarCoderLoader {
 
 #[async_trait::async_trait]
 impl ModelLoaderTrait for StarCoderLoader {
-    async fn load_model(&self, model_path: &Path, config: &ModelLoadConfig) -> Result<ModelHandle, ModelLoadError> {
+    async fn load_model(
+        &self,
+        model_path: &Path,
+        config: &ModelLoadConfig,
+    ) -> Result<ModelHandle, ModelLoadError> {
         self.specialize_for_rust_filling(model_path, config).await
     }
 
@@ -322,27 +348,37 @@ impl ModelLoaderTrait for StarCoderLoader {
             model_size,
             quantization,
             lora_adapters,
-            memory_usage_mb: self.estimate_memory_requirement(model_path, &ModelLoadConfig {
-                quantization,
-                lora_adapters: vec![],
-                memory_limit_mb: None,
-                device: ModelDevice::Auto,
-                lazy_loading: false,
-                enable_cache: true,
-            })?,
+            memory_usage_mb: self.estimate_memory_requirement(
+                model_path,
+                &ModelLoadConfig {
+                    quantization,
+                    lora_adapters: vec![],
+                    memory_limit_mb: None,
+                    device: ModelDevice::Auto,
+                    lazy_loading: false,
+                    enable_cache: true,
+                },
+            )?,
         })
     }
 
-    async fn validate_model(&self, _model_path: &Path) -> Result<ModelCapabilities, ModelLoadError> {
+    async fn validate_model(
+        &self,
+        _model_path: &Path,
+    ) -> Result<ModelCapabilities, ModelLoadError> {
         let available_memory = get_available_memory_mb();
 
         Ok(ModelCapabilities {
-            supported_quantization: vec![Quantization::None, Quantization::INT4, Quantization::INT8],
-            min_memory_mb:          3000,
-            recommended_memory_mb:  available_memory.min(12000),
-            supports_lora:          true,
-            max_context_length:     8192,
-            supported_languages:    vec![
+            supported_quantization: vec![
+                Quantization::None,
+                Quantization::INT4,
+                Quantization::INT8,
+            ],
+            min_memory_mb: 3000,
+            recommended_memory_mb: available_memory.min(12000),
+            supports_lora: true,
+            max_context_length: 8192,
+            supported_languages: vec![
                 "rust".to_string(),
                 "python".to_string(),
                 "javascript".to_string(),
@@ -412,7 +448,8 @@ impl ModelRegistry {
         let mut health = HashMap::new();
 
         for (id, handle) in models.iter() {
-            let model_health = if handle.loaded_at.elapsed().unwrap_or_default() < std::time::Duration::from_secs(3600)
+            let model_health = if handle.loaded_at.elapsed().unwrap_or_default()
+                < std::time::Duration::from_secs(3600)
             {
                 ModelHealth::Good
             } else {
@@ -458,7 +495,7 @@ fn detect_quantization(_model_path: &Path) -> Option<Quantization> {
 pub struct ModelLoader {
     pub code_llama_loader: CodeLlamaLoader,
     pub star_coder_loader: StarCoderLoader,
-    pub registry:          Arc<ModelRegistry>,
+    pub registry: Arc<ModelRegistry>,
 }
 
 impl ModelLoader {
@@ -480,8 +517,12 @@ impl ModelLoader {
         config: &ModelLoadConfig,
     ) -> Result<ModelHandle, ModelLoadError> {
         match provider {
-            AIProvider::CodeLlamaRust { .. } => self.code_llama_loader.load_model(model_path, config).await,
-            AIProvider::StarCoderRust { .. } => self.star_coder_loader.load_model(model_path, config).await,
+            AIProvider::CodeLlamaRust { .. } => {
+                self.code_llama_loader.load_model(model_path, config).await
+            }
+            AIProvider::StarCoderRust { .. } => {
+                self.star_coder_loader.load_model(model_path, config).await
+            }
             _ => Err(ModelLoadError::UnsupportedFormat {
                 format: "Unsupported provider for model loading".to_string(),
             }),

@@ -313,7 +313,7 @@ impl ErrorHandler {
     }
 
     /// Generate recovery suggestions for an error
-    fn generate_recovery_suggestions(&self, error: &RefactoringError, context: &ErrorContext) -> Vec<String> {
+    fn generate_recovery_suggestions(&self, error: &RefactoringError, _context: &ErrorContext) -> Vec<String> {
         match error {
             RefactoringError::SafetyViolation { risk_level, .. } => {
                 vec![

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 // Cursor position in the document
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CursorPosition {
-    pub line:   usize,
+    pub line: usize,
     pub column: usize,
     pub offset: usize, // Absolute character offset from document start
 }
@@ -48,11 +48,11 @@ impl CursorPosition {
 // Cursor synchronization event
 #[derive(Debug, Clone)]
 pub struct CursorSync {
-    pub client_id:       String,
-    pub position:        CursorPosition,
+    pub client_id: String,
+    pub position: CursorPosition,
     pub selection_start: Option<CursorPosition>,
-    pub selection_end:   Option<CursorPosition>,
-    pub timestamp:       u64,
+    pub selection_end: Option<CursorPosition>,
+    pub timestamp: u64,
 }
 
 impl CursorSync {
@@ -103,14 +103,14 @@ impl CursorSync {
 // Cursor synchronization manager
 #[derive(Debug)]
 pub struct CursorSyncManager {
-    client_cursors:      HashMap<String, CursorSync>,
+    client_cursors: HashMap<String, CursorSync>,
     document_operations: Vec<DocumentOperation>,
 }
 
 impl CursorSyncManager {
     pub fn new() -> Self {
         Self {
-            client_cursors:      HashMap::new(),
+            client_cursors: HashMap::new(),
             document_operations: Vec::new(),
         }
     }
@@ -154,7 +154,11 @@ impl CursorSyncManager {
         self.document_operations.clear();
     }
 
-    pub fn get_nearby_cursors(&self, position: CursorPosition, distance: usize) -> Vec<&CursorSync> {
+    pub fn get_nearby_cursors(
+        &self,
+        position: CursorPosition,
+        distance: usize,
+    ) -> Vec<&CursorSync> {
         self.client_cursors
             .values()
             .filter(|cursor_sync| {
@@ -169,11 +173,16 @@ impl CursorSyncManager {
             .collect()
     }
 
-    pub fn find_cursors_in_selection(&self, start: CursorPosition, end: CursorPosition) -> Vec<&CursorSync> {
+    pub fn find_cursors_in_selection(
+        &self,
+        start: CursorPosition,
+        end: CursorPosition,
+    ) -> Vec<&CursorSync> {
         self.client_cursors
             .values()
             .filter(|cursor_sync| {
-                cursor_sync.position.offset >= start.offset && cursor_sync.position.offset <= end.offset
+                cursor_sync.position.offset >= start.offset
+                    && cursor_sync.position.offset <= end.offset
             })
             .collect()
     }

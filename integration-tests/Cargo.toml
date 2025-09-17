@@ -64,7 +64,6 @@ rust-ai-ide-performance = { path = "../crates/rust-ai-ide-performance" }
 rust-ai-ide-core-metrics = { path = "../crates/rust-ai-ide-core-metrics" }
 
 # Core utilities
-filesystem = { workspace = true }
 tempfile = { workspace = true }
 tracing = { workspace = true }
 

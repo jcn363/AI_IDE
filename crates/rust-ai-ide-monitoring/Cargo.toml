@@ -26,6 +26,12 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 
+# Pattern matching and analysis
+regex = { workspace = true }
+
+# Performance analysis
+rust-ai-ide-performance = { workspace = true }
+
 # File system and system utilities
 fs-err = { workspace = true }
 walkdir = { workspace = true }

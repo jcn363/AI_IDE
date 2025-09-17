@@ -11,11 +11,11 @@ use crate::types::*;
 
 #[derive(Clone)]
 pub struct VisualizationManager {
-    pub scoring_engine:        Arc<RwLock<InteractiveScoring>>,
-    pub benchmark_engine:      Arc<RwLock<BenchmarkingSystem>>,
+    pub scoring_engine: Arc<RwLock<InteractiveScoring>>,
+    pub benchmark_engine: Arc<RwLock<BenchmarkingSystem>>,
     pub customization_manager: Arc<RwLock<ScoringCustomization>>,
-    pub drill_down_analyzer:   Arc<RwLock<ComponentAnalyzer>>,
-    pub interpretive_engine:   Arc<RwLock<AnalyticsInterpreter>>,
+    pub drill_down_analyzer: Arc<RwLock<ComponentAnalyzer>>,
+    pub interpretive_engine: Arc<RwLock<AnalyticsInterpreter>>,
 }
 
 #[derive(Clone)]
@@ -32,11 +32,11 @@ pub struct AnalyticsInterpreter;
 impl VisualizationManager {
     pub async fn new(_config: Arc<RwLock<DashboardConfiguration>>) -> VisualizationManager {
         VisualizationManager {
-            scoring_engine:        Arc::new(RwLock::new(InteractiveScoring)),
-            benchmark_engine:      Arc::new(RwLock::new(BenchmarkingSystem)),
+            scoring_engine: Arc::new(RwLock::new(InteractiveScoring)),
+            benchmark_engine: Arc::new(RwLock::new(BenchmarkingSystem)),
             customization_manager: Arc::new(RwLock::new(ScoringCustomization)),
-            drill_down_analyzer:   Arc::new(RwLock::new(ComponentAnalyzer)),
-            interpretive_engine:   Arc::new(RwLock::new(AnalyticsInterpreter)),
+            drill_down_analyzer: Arc::new(RwLock::new(ComponentAnalyzer)),
+            interpretive_engine: Arc::new(RwLock::new(AnalyticsInterpreter)),
         }
     }
 

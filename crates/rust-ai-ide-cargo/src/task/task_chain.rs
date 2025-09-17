@@ -16,11 +16,11 @@ use crate::task::TaskStatus;
 
 /// Represents a chain of tasks to be executed
 pub struct TaskChain {
-    id:                 String,
-    tasks:              Vec<CargoTask>,
-    strategy:           ExecutionStrategy,
-    results:            Arc<RwLock<Vec<TaskResult>>>,
-    status:             Arc<RwLock<TaskStatus>>,
+    id: String,
+    tasks: Vec<CargoTask>,
+    strategy: ExecutionStrategy,
+    results: Arc<RwLock<Vec<TaskResult>>>,
+    status: Arc<RwLock<TaskStatus>>,
     current_task_index: Arc<RwLock<usize>>,
 }
 
@@ -191,11 +191,11 @@ mod tests {
 
     fn create_test_task(command: &str) -> CargoTask {
         CargoTask {
-            command:     command.to_string(),
-            args:        vec![],
+            command: command.to_string(),
+            args: vec![],
             working_dir: std::env::current_dir().unwrap(),
-            release:     false,
-            env:         vec![],
+            release: false,
+            env: vec![],
         }
     }
 

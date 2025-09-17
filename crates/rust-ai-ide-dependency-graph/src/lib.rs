@@ -28,8 +28,8 @@ pub use cache::{
     SharedDependencyGraph as CachedDependencyGraph,
 };
 pub use conflict_analyzer::{
-    ComprehensiveConflictAnalyzer, ConflictAnalyzer, ConflictStats, ConstraintInfo, ImpactAnalysis, ResolutionPlan,
-    RiskLevel, VersionConflict as AnalyzerVersionConflict,
+    AIConflictMetadata, AISuggestion, AISuggestionType, AIConflictConfig, ComprehensiveConflictAnalyzer, ConflictAnalyzer,
+    ConflictStats, ConstraintInfo, ImpactAnalysis, ResolutionPlan, RiskLevel, VersionConflict as AnalyzerVersionConflict,
 };
 pub use error::{DependencyError, DependencyResult, ErrorAggregator, ErrorSuggestion};
 pub use graph::{

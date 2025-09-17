@@ -7,7 +7,8 @@ use tokio::fs;
 
 use crate::interfaces::{Plugin, PluginCapabilities, PluginContext, PluginError, PluginMetadata};
 use crate::plugin_context::{
-    Diagnostic, EditorInterface, FileSystemInterface, LspInterface, NotificationInterface, SettingsInterface,
+    Diagnostic, EditorInterface, FileSystemInterface, LspInterface, NotificationInterface,
+    SettingsInterface,
 };
 use crate::registry::PluginRegistry;
 
@@ -22,11 +23,11 @@ impl PluginLoader {
     pub fn new(_registry: &mut PluginRegistry) -> Self {
         // For now, create a stub context - this would be injected from the IDE
         let plugin_context = PluginContext {
-            file_system:   Arc::new(StubFileSystem),
-            lsp_service:   Arc::new(StubLspService),
-            editor:        Arc::new(StubEditor),
+            file_system: Arc::new(StubFileSystem),
+            lsp_service: Arc::new(StubLspService),
+            editor: Arc::new(StubEditor),
             notifications: Arc::new(StubNotifications),
-            settings:      Arc::new(StubSettings),
+            settings: Arc::new(StubSettings),
         };
 
         Self { plugin_context }
@@ -58,7 +59,10 @@ impl PluginLoader {
 
     /// Loads a plugin from a specific file path.
     /// Supports loading plugins as shared libraries (.so/.dll/.dylib) or script-based plugins.
-    pub async fn load_plugin_from_file(&self, file_path: impl AsRef<Path>) -> Result<(), PluginError> {
+    pub async fn load_plugin_from_file(
+        &self,
+        file_path: impl AsRef<Path>,
+    ) -> Result<(), PluginError> {
         let path = file_path.as_ref();
         if !path.exists() {
             return Err(PluginError::Other(format!(
@@ -210,7 +214,11 @@ impl FileSystemInterface for StubFileSystem {
         Err("Stub implementation".into())
     }
 
-    async fn write_file(&self, _path: &str, _content: &str) -> Result<(), Box<dyn std::error::Error>> {
+    async fn write_file(
+        &self,
+        _path: &str,
+        _content: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         Err("Stub implementation".into())
     }
 
@@ -226,11 +234,21 @@ impl FileSystemInterface for StubFileSystem {
 struct StubLspService;
 #[async_trait::async_trait]
 impl LspInterface for StubLspService {
-    async fn goto_definition(&self, _uri: &str, _line: u32, _col: u32) -> Result<(), Box<dyn std::error::Error>> {
+    async fn goto_definition(
+        &self,
+        _uri: &str,
+        _line: u32,
+        _col: u32,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         Err("Stub implementation".into())
     }
 
-    async fn hover_info(&self, _uri: &str, _line: u32, _col: u32) -> Result<String, Box<dyn std::error::Error>> {
+    async fn hover_info(
+        &self,
+        _uri: &str,
+        _line: u32,
+        _col: u32,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         Err("Stub implementation".into())
     }
 
@@ -284,7 +302,11 @@ impl SettingsInterface for StubSettings {
         Err("Stub implementation".into())
     }
 
-    async fn set_setting(&self, _key: &str, _value: &str) -> Result<(), Box<dyn std::error::Error>> {
+    async fn set_setting(
+        &self,
+        _key: &str,
+        _value: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         Err("Stub implementation".into())
     }
 }
@@ -292,12 +314,12 @@ impl SettingsInterface for StubSettings {
 // Plugin configuration structure
 #[derive(serde::Deserialize)]
 struct PluginConfig {
-    id:          String,
-    name:        String,
-    version:     String,
-    author:      String,
+    id: String,
+    name: String,
+    version: String,
+    author: String,
     description: String,
-    commands:    Vec<String>,
+    commands: Vec<String>,
 }
 
 // Simple JSON-based plugin implementation

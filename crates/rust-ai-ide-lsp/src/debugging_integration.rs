@@ -506,8 +506,6 @@ impl Default for AIDebugConfig {
             background_analysis_enabled: true,
         }
     }
-}
-
 /// Root cause analyzer for error analysis and historical context
 pub struct RootCauseAnalyzer {
     semantic_engine: Option<semantic_inference::InferenceEngine>,

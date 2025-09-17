@@ -1,6 +1,8 @@
 //! Analysis engine for refactoring operations
 
 use async_trait::async_trait;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::types::*;
 
@@ -26,9 +28,10 @@ struct ImpactAssessment {
 }
 
 /// Analysis engine for refactoring operations
+#[derive(Clone)]
 pub struct RefactoringAnalysisEngine {
     /// Cache for analysis results to improve performance
-    analysis_cache: std::collections::HashMap<String, (RefactoringAnalysis, std::time::Instant)>,
+    analysis_cache: Arc<Mutex<std::collections::HashMap<String, (RefactoringAnalysis, std::time::Instant)>>>,
     /// Maximum cache age in seconds
     cache_max_age: u64,
 }
@@ -61,7 +64,7 @@ pub trait RefactoringAnalyzer {
 impl RefactoringAnalysisEngine {
     pub fn new() -> Self {
         RefactoringAnalysisEngine {
-            analysis_cache: std::collections::HashMap::new(),
+            analysis_cache: Arc::new(Mutex::new(std::collections::HashMap::new())),
             cache_max_age: 300, // 5 minutes
         }
     }
@@ -77,9 +80,12 @@ impl RefactoringAnalysisEngine {
 
         // Check cache first
         let cache_key = format!("{}:{:?}:{}", context.file_path, context.symbol_name, options.create_backup);
-        if let Some((cached_result, cache_time)) = self.analysis_cache.get(&cache_key) {
-            if cache_time.elapsed().as_secs() < self.cache_max_age {
-                return Ok(cached_result.clone());
+        {
+            let cache = self.analysis_cache.lock().await;
+            if let Some((cached_result, cache_time)) = cache.get(&cache_key) {
+                if cache_time.elapsed().as_secs() < self.cache_max_age {
+                    return Ok(cached_result.clone());
+                }
             }
         }
 
@@ -100,7 +106,10 @@ impl RefactoringAnalysisEngine {
         };
 
         // Cache the result
-        self.analysis_cache.insert(cache_key, (analysis.clone(), std::time::Instant::now()));
+        {
+            let mut cache = self.analysis_cache.lock().await;
+            cache.insert(cache_key, (analysis.clone(), std::time::Instant::now()));
+        }
 
         let elapsed = start_time.elapsed();
         if elapsed.as_millis() > 3000 {
@@ -117,7 +126,7 @@ impl RefactoringAnalysisEngine {
 
         // Parse the file to understand dependencies
         if let Ok(content) = std::fs::read_to_string(&context.file_path) {
-            let syntax = syn::parse_str::<syn::File>(&content)?;
+            if let Ok(syntax) = syn::parse_str::<syn::File>(&content) {
                 // Analyze imports and dependencies
                 for item in &syntax.items {
                     match item {
@@ -260,11 +269,11 @@ impl RefactoringAnalysisEngine {
             }
             syn::Expr::If(if_expr) => {
                 self.expr_contains_call(&if_expr.cond, target_ident) ||
-                self.expr_contains_call(&if_expr.then_branch, target_ident) ||
+                self.contains_function_call(&if_expr.then_branch, target_ident) ||
                 if_expr.else_branch.as_ref().map_or(false, |(_, expr)| self.expr_contains_call(expr, target_ident))
             }
-            syn::Expr::Block(block) => {
-                self.contains_function_call(&block.block, target_ident)
+            syn::Expr::Block(expr_block) => {
+                self.contains_function_call(&expr_block.block, target_ident)
             }
             _ => false,
         }

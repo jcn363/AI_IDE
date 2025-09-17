@@ -1,0 +1,161 @@
+# Consolidated Configuration File
+# This file replaces multiple separate configuration files to eliminate duplication
+# Previously: hakari.toml, hakari_config.toml, and project metadata from crates.json
+
+# ===============================
+# WORKSPACE CONFIGURATION
+# ===============================
+[workspace]
+resolver = "2"
+
+# ===============================
+# HAKARI/WORKSPACE-HACK CONFIG
+# ===============================
+[hakari]
+workspace-hack = "rust-ai-ide-workspace-hack"
+workspace-hack-version = "0.1.0"
+edition = "2021"
+
+unify-features = [
+    "default",
+    "std",
+    "alloc",
+    "derive",
+    "serde",
+]
+
+never-unify-features = [
+    "unstable",
+    "nightly",
+]
+
+exclude = []
+
+[hakari.output]
+include-readme = true
+verify-include = true
+verify = true
+verify-ci = true
+
+# Target platforms to support
+[hakari.platforms]
+linux = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]
+macos = ["x86_64-apple-darwin", "aarch64-apple-darwin"]
+windows = ["x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc"]
+wasm = ["wasm32-unknown-unknown", "wasm32-wasi"]
+
+# ===============================
+# CRATE METADATA
+# ===============================
+[crates.rust-ai-ide-core]
+features = ["full"]
+description = "Core functionality and utilities"
+status = "stable"
+
+[crates.rust-ai-ide-ai]
+features = ["full"]
+description = "AI-powered code assistance and analysis"
+status = "stable"
+
+[crates.rust-ai-ide-cargo]
+features = ["full"]
+description = "Cargo integration and build system"
+status = "stable"
+
+[crates.rust-ai-ide-lsp]
+features = ["server"]
+description = "Language Server Protocol"
+status = "stable"
+
+[crates.rust-ai-ide-debugger]
+features = ["full", "experimental"]
+description = "Debugging support"
+status = "in_progress"
+
+[crates.rust-ai-ide-plugins]
+features = ["full"]
+description = "Plugin system"
+status = "in_progress"
+
+[crates.rust-ai-ide-ui]
+features = ["full"]
+description = "User interface components"
+status = "stable"
+
+[crates.rust-ai-ide-workspace-hack]
+features = ["default"]
+description = "Workspace hack crate"
+status = "auto_generated"
+
+# ===============================
+# BUILD CONFIGURATION
+# ===============================
+[build]
+flags = ["--deny=warnings", "--deny=unused_imports"]
+
+[build.profile.release]
+lto = true
+
+# ===============================
+# INTEGRATION CONFIGURATION
+# ===============================
+[integrations]
+ci = true
+github_actions = true
+release_automation = true
+
+# ===============================
+# TOOL CONFIGURATION
+# ===============================
+[tools.clippy]
+enabled = true
+args = ["--deny=clippy::all", "--deny=warnings"]
+
+[tools.test]
+parallel = true
+timeout_seconds = 300
+
+# ===============================
+# DOCUMENTATION CONFIGURATION
+# ===============================
+[docs]
+auto_generate = true
+include_private = false
+format = ["html", "json"]
+
+# ===============================
+# PERFORMANCE CONFIGURATION
+# ===============================
+[performance]
+enable_profiling = true
+memory_leak_detection = false
+
+[performance.benchmarks]
+enable = true
+iterations = 10000
+timeout_seconds = 300
+profiles = ["debug", "release"]
+
+# ===============================
+# DEPLOYMENT CONFIGURATION
+# ===============================
+[deployment]
+linux = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"]
+macos = ["x86_64-apple-darwin", "aarch64-apple-darwin"]
+windows = ["x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc"]
+wasm = ["wasm32-unknown-unknown", "wasm32-wasi"]
+
+[deployment.packaging.tauri]
+create_deb = true
+create_rpm = false
+windows_wix = true
+create_dmg = true
+
+# ===============================
+# MONITORING CONFIGURATION
+# ===============================
+[monitoring]
+metrics = true
+log_level = "info"
+performance_monitoring = true
+error_tracking = true

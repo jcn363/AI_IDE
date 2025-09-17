@@ -1,0 +1,5 @@
+[hakari]
+package = 'rust-ai-ide-workspace-hack'
+workspace-hack = 'rust-ai-ide-workspace-hack'
+resolver = '2'
+output = 'workspace-hack/src/generated.rs'

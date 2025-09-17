@@ -8,6 +8,7 @@ use futures::future::join_all;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use sysinfo::{System, SystemExt};
 use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
 use tokio::task::{spawn, JoinHandle};
 use tokio::time::interval;
@@ -68,44 +69,97 @@ pub struct PoolStatistics {
     pub resource_pressure_score: f64,
 }
 
-/// Resource monitor structure
+/// Resource monitor structure with real system monitoring
 struct ResourceMonitor {
+    system: std::sync::Arc<std::sync::RwLock<System>>,
     cpu_usage: std::sync::atomic::AtomicU32,
     memory_available_mb: std::sync::atomic::AtomicU64,
     battery_level: std::sync::atomic::AtomicU32,
     last_update: std::sync::RwLock<std::time::Instant>,
+    refresh_interval: std::time::Duration,
 }
 
 impl ResourceMonitor {
     fn new() -> Self {
+        let mut system = System::new_all();
+        system.refresh_all();
+
         Self {
+            system: std::sync::Arc::new(std::sync::RwLock::new(system)),
             cpu_usage: std::sync::atomic::AtomicU32::new(0),
             memory_available_mb: std::sync::atomic::AtomicU64::new(0),
             battery_level: std::sync::atomic::AtomicU32::new(100),
             last_update: std::sync::RwLock::new(std::time::Instant::now()),
+            refresh_interval: std::time::Duration::from_secs(2), // Refresh every 2 seconds
         }
     }
 
     async fn update_metrics(&self) -> Result<(), LSPError> {
-        // Simulate resource monitoring (in real implementation, use sysinfo crate)
-        // CPU usage (0-100%)
-        let cpu = (chronodb::Utc::now().timestamp_nanos() % 100) as u32;
-        self.cpu_usage.store(cpu, std::sync::atomic::Ordering::Relaxed);
-
-        // Available memory (simulate decent amount)
-        let mem_mb = 8000 + (chronodb::Utc::now().timestamp_nanos() % 2000) as u64;
-        self.memory_available_mb.store(mem_mb, std::sync::atomic::Ordering::Relaxed);
-
-        // Battery level (simulate laptop on battery)
-        let battery = if std::time::Instant::now().duration_since(*self.last_update.read().await).as_secs() % 3600 < 1800 {
-            80 // On battery
-        } else {
-            100 // Plugged in
+        // Check if we need to refresh
+        let should_refresh = {
+            let last_update = self.last_update.read().unwrap();
+            last_update.elapsed() >= self.refresh_interval
         };
-        self.battery_level.store(battery, std::sync::atomic::Ordering::Relaxed);
 
-        *self.last_update.write().await = std::time::Instant::now();
+        if should_refresh {
+            // Refresh system information
+            {
+                let mut system = self.system.write().unwrap();
+                system.refresh_all();
+            }
+
+            let system = self.system.read().unwrap();
+
+            // Get real CPU usage
+            let cpu_usage = system.global_cpu_info().cpu_usage() as u32;
+            self.cpu_usage.store(cpu_usage, std::sync::atomic::Ordering::Relaxed);
+
+            // Get real memory information
+            let available_memory = system.available_memory() / 1_000_000; // Convert to MB
+            self.memory_available_mb.store(available_memory, std::sync::atomic::Ordering::Relaxed);
+
+            // Get battery information (if available)
+            let battery_level = self.detect_battery_level();
+            self.battery_level.store(battery_level, std::sync::atomic::Ordering::Relaxed);
+
+            // Update last update time
+            let mut last_update = self.last_update.write().unwrap();
+            *last_update = std::time::Instant::now();
+        }
+
         Ok(())
+    }
+
+    fn detect_battery_level(&self) -> u32 {
+        // Try to get battery information if available
+        // This is a simplified implementation - in a real system you might
+        // use platform-specific APIs or additional crates for better battery monitoring
+        #[cfg(target_os = "linux")]
+        {
+            // On Linux, we could try reading battery info from /sys/class/power_supply/
+            // For now, return a reasonable default
+            100
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            // On macOS, we could use ioreg or system_profiler
+            // For now, return a reasonable default
+            100
+        }
+
+        #[cfg(target_os = "windows")]
+        {
+            // On Windows, we could use Windows API
+            // For now, return a reasonable default
+            100
+        }
+
+        #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+        {
+            // For other platforms, assume always plugged in
+            100
+        }
     }
 
     fn should_throttle_background_tasks(&self) -> bool {
@@ -145,13 +199,13 @@ pub struct PoolRequest<P, R> {
 /// Server pool manager for multi-language LSP support
 pub struct LanguageServerPool {
     /// Active language servers mapped by language kind
-    servers: DashMap<LanguageServerKind, Vec<LanguageServerHandle>>,
+    servers: Arc<DashMap<LanguageServerKind, Vec<LanguageServerHandle>>>,
 
     /// Language detector for automatic routing
     detector: LanguageDetector,
 
     /// Server factories for creating language servers
-    factories: HashMap<String, Arc<dyn LanguageServerFactory>>,
+    factories: Arc<Mutex<HashMap<String, Box<dyn LanguageServerFactory + Send + Sync>>>>,
 
     /// Request routing channel
     request_sender: Option<
@@ -220,7 +274,7 @@ impl LanguageServerPool {
         Self {
             servers,
             detector: LanguageDetector::default(),
-            factories: HashMap::new(),
+            factories,
             request_sender: Some(tx),
             config,
             stats,
@@ -241,12 +295,12 @@ impl LanguageServerPool {
             // Note: This simplified approach may need adjustment based on your specific implementation
 
             // Start background request processing
-            let task_handle = spawn(Self::process_requests(receiver));
+            let task_handle = spawn(Self::process_requests(receiver, self.servers.clone(), self.config.clone(), self.stats.clone(), self.resource_monitor.clone(), self.factories.clone()));
             self.background_tasks.lock().await.push(task_handle);
 
             // Start pool maintenance
             let maintenance_handle = spawn(Self::pool_maintenance(
-                Arc::new(self.servers.clone()),
+                self.servers.clone(),
                 Arc::clone(&self.config),
                 Arc::clone(&self.stats),
             ));
@@ -264,14 +318,15 @@ impl LanguageServerPool {
         factory: F,
     ) -> Result<(), LSPError> {
         let factory_name = factory.factory_name().to_string();
-        if self.factories.contains_key(&factory_name) {
+        let mut factories_guard = futures::executor::block_on(self.factories.lock());
+        if factories_guard.contains_key(&factory_name) {
             return Err(LSPError::Other(format!(
                 "Factory '{}' already registered",
                 factory_name
             )));
         }
 
-        self.factories.insert(factory_name, Arc::new(factory));
+        factories_guard.insert(factory_name, Box::new(factory));
         Ok(())
     }
 
@@ -282,7 +337,8 @@ impl LanguageServerPool {
         config: LanguageServerConfig,
     ) -> Result<(), LSPError> {
         let factory_name = self.get_factory_name_for_language(&language)?;
-        let factory = self.factories.get(&factory_name).ok_or_else(|| {
+        let factories_guard = self.factories.lock().await;
+        let factory = factories_guard.get(&factory_name).ok_or_else(|| {
             LSPError::Other(format!("No factory found for language {:?}", language))
         })?;
 
@@ -374,9 +430,37 @@ impl LanguageServerPool {
         P: serde::Serialize + Send + Sync + 'static,
         R: serde::de::DeserializeOwned + Send + 'static,
     {
-        Err(LSPError::Other(
-            "Request pooling not yet implemented".to_string(),
-        ))
+        let (tx, rx) = oneshot::channel();
+
+        let params_boxed = Box::new(serde_json::to_value(_params).unwrap()) as Box<dyn std::any::Any + Send + Sync>;
+
+        let request = PoolRequest {
+            method: _method.to_string(),
+            params: params_boxed,
+            language_hint: _language_hint,
+            file_path: _file_path,
+            response_sender: tx,
+            _phantom: std::marker::PhantomData,
+        };
+
+        if let Some(sender) = &self.request_sender {
+            let _ = sender.send(request);
+        } else {
+            return Err(LSPError::Other("Request sender not available".to_string()));
+        }
+
+        let config = self.config.read().await;
+        let timeout_duration = Duration::from_millis(config.request_timeout_ms);
+
+        let result = tokio::time::timeout(timeout_duration, rx).await
+            .map_err(|_| LSPError::Other("Request timeout".to_string()))?
+            .map_err(|_| LSPError::Other("Request receiver dropped".to_string()))?;
+
+        let response_value = result?;
+        let response_json: Box<serde_json::Value> = response_value.downcast().map_err(|_| LSPError::Other("Failed to downcast response".to_string()))?;
+        let response: R = serde_json::from_value(*response_json).map_err(|e| LSPError::Other(format!("Failed to deserialize response: {}", e)))?;
+
+        Ok(response)
     }
 
     /// Get pool statistics
@@ -426,11 +510,99 @@ impl LanguageServerPool {
         status_vec
     }
 
+    /// Get load metrics for all servers
+    pub async fn get_server_load_metrics(&self) -> Vec<ServerLoadMetrics> {
+        let mut load_metrics = Vec::new();
+
+        for entry in self.servers.iter() {
+            let language = entry.key().clone();
+            let servers = entry.value();
+
+            for (index, server_handle) in servers.iter().enumerate() {
+                let server_wrapper = server_handle.read().await;
+                let server_id = format!("{}_{}", Self::language_to_string(&language), index);
+
+                let health_score = self.calculate_server_health_score(&server_wrapper).await;
+
+                load_metrics.push(ServerLoadMetrics {
+                    server_id,
+                    language: language.clone(),
+                    pending_requests: server_wrapper.metrics.pending_requests,
+                    response_time_ms: server_wrapper.metrics.average_response_time_ms,
+                    cpu_usage_percent: server_wrapper.metrics.cpu_usage_percent,
+                    memory_usage_percent: self.get_memory_usage_percent(&server_wrapper),
+                    request_rate: server_wrapper.metrics.requests_per_second,
+                    health_score,
+                    last_updated: std::time::Instant::now(),
+                });
+            }
+        }
+
+        load_metrics
+    }
+
+    /// Get current resource usage metrics from the system monitor
+    pub async fn get_resource_metrics(&self) -> Result<ResourceMetrics, LSPError> {
+        self.resource_monitor.update_metrics().await?;
+        Ok(self.resource_monitor.get_detailed_metrics())
+    }
+
+    /// Get load metrics for servers of a specific language
+    pub async fn get_language_load_metrics(&self, language: &LanguageServerKind) -> Vec<ServerLoadMetrics> {
+        let mut load_metrics = Vec::new();
+
+        if let Some(servers) = self.servers.get(language) {
+            for (index, server_handle) in servers.iter().enumerate() {
+                let server_wrapper = server_handle.read().await;
+                let server_id = format!("{}_{}", Self::language_to_string(language), index);
+
+                let health_score = self.calculate_server_health_score(&server_wrapper).await;
+
+                load_metrics.push(ServerLoadMetrics {
+                    server_id,
+                    language: language.clone(),
+                    pending_requests: server_wrapper.metrics.pending_requests,
+                    response_time_ms: server_wrapper.metrics.average_response_time_ms,
+                    cpu_usage_percent: server_wrapper.metrics.cpu_usage_percent,
+                    memory_usage_percent: self.get_memory_usage_percent(&server_wrapper),
+                    request_rate: server_wrapper.metrics.requests_per_second,
+                    health_score,
+                    last_updated: std::time::Instant::now(),
+                });
+            }
+        }
+
+        load_metrics
+    }
+
+    /// Select server for request based on load balancing
+    fn select_server_for_request(available_servers: &Vec<LanguageServerHandle>) -> usize {
+        // Simple load balancing: select server with least pending requests
+        let mut best_index = 0;
+        let mut min_pending = usize::MAX;
+
+        for (index, handle) in available_servers.iter().enumerate() {
+            if let Ok(wrapper) = handle.try_read() {
+                if wrapper.metrics.pending_requests < min_pending {
+                    min_pending = wrapper.metrics.pending_requests;
+                    best_index = index;
+                }
+            }
+        }
+
+        best_index
+    }
+
     /// Process requests from the request channel
     async fn process_requests(
         mut receiver: mpsc::UnboundedReceiver<
             PoolRequest<Box<dyn std::any::Any + Send + Sync>, Box<dyn std::any::Any + Send + Sync>>,
         >,
+        servers: Arc<DashMap<LanguageServerKind, Vec<LanguageServerHandle>>>,
+        config: Arc<RwLock<LanguageServerPoolConfig>>,
+        stats: Arc<RwLock<PoolStatistics>>,
+        resource_monitor: Arc<ResourceMonitor>,
+        factories: Arc<Mutex<HashMap<String, Box<dyn LanguageServerFactory + Send + Sync>>>>,
     ) {
         info!("Starting request processing loop");
 
@@ -448,15 +620,82 @@ impl LanguageServerPool {
 
             // Route request to appropriate server
             if let Some(language) = target_language {
-                // TODO: Route to actual server and handle response
                 debug!(
                     "Routing request for method '{}' to {:?}",
                     request.method, language
                 );
-                // For now, send back an error indicating implementation needed
-                let _ = request.response_sender.send(Err(LSPError::Other(
-                    "Server routing not yet implemented".to_string(),
-                )));
+
+                // Get available servers for this language
+                if let Some(servers) = servers.get(&language) {
+                    let mut available_servers = Vec::new();
+
+                    // Filter for healthy servers
+                    for server_handle in servers.iter() {
+                        if let Ok(server_wrapper) = server_handle.try_read() {
+                            if matches!(server_wrapper.health_status, ServerHealth::Healthy)
+                                && server_wrapper.server.is_initialized()
+                            {
+                                available_servers.push(server_handle.clone());
+                            }
+                        }
+                    }
+
+                    if !available_servers.is_empty() {
+                        // Select server based on load balancing strategy
+                        let selected_index = Self::select_server_for_request(&available_servers);
+                        let selected_handle = &available_servers[selected_index];
+
+                        debug!("Selected server {}_{} for request", Self::language_to_string(&language), selected_index);
+
+                        // Increment pending requests counter
+                        if let Ok(mut server_wrapper) = selected_handle.try_write() {
+                            server_wrapper.metrics.pending_requests += 1;
+                        }
+
+                        // Forward request to selected server
+                        let method_clone = request.method.clone();
+                        let params_clone = request.params.clone();
+                        let response_sender = request.response_sender;
+
+                        let handle_clone = selected_handle.clone();
+                        tokio::spawn(async move {
+                            // Send request to the selected language server
+                            let result = {
+                                let server_wrapper = handle_clone.read().await;
+                                server_wrapper.server.send_request(&method_clone, params_clone).await
+                            };
+
+                            // Update metrics after request completion
+                            if let Ok(mut server_wrapper) = handle_clone.try_write() {
+                                server_wrapper.metrics.pending_requests = server_wrapper.metrics.pending_requests.saturating_sub(1);
+                                server_wrapper.metrics.last_response_time = std::time::Instant::now();
+
+                                match &result {
+                                    Ok(_) => {
+                                        // Update success metrics
+                                        server_wrapper.metrics.requests_per_second += 1.0;
+                                    }
+                                    Err(_) => {
+                                        // Update error metrics
+                                        server_wrapper.metrics.error_rate += 0.01;
+                                        server_wrapper.metrics.error_rate = server_wrapper.metrics.error_rate.min(1.0);
+                                    }
+                                }
+                            }
+
+                            // Send response back to client
+                            let _ = response_sender.send(result);
+                        });
+                    } else {
+                        let _ = request.response_sender.send(Err(LSPError::Other(
+                            format!("No healthy servers available for language {:?}", language)
+                        )));
+                    }
+                } else {
+                    let _ = request.response_sender.send(Err(LSPError::Other(
+                        format!("No servers configured for language {:?}", language)
+                    )));
+                }
             } else {
                 let _ = request.response_sender.send(Err(LSPError::Other(
                     "Could not determine target language server".to_string(),
@@ -667,6 +906,95 @@ impl LanguageServerPool {
             None
         }
     }
+
+    /// Calculate health score for a server based on metrics
+    async fn calculate_server_health_score(&self, server_wrapper: &crate::language_server::LanguageServerWrapper) -> f64 {
+        let mut score = 1.0;
+
+        // Penalize for high pending requests
+        if server_wrapper.metrics.pending_requests > 10 {
+            score -= (server_wrapper.metrics.pending_requests as f64 - 10.0) * 0.05;
+        }
+
+        // Penalize for high CPU usage
+        if server_wrapper.metrics.cpu_usage_percent > 80.0 {
+            score -= (server_wrapper.metrics.cpu_usage_percent - 80.0) / 20.0;
+        }
+
+        // Penalize for high error rate
+        if server_wrapper.metrics.error_rate > 0.1 {
+            score -= server_wrapper.metrics.error_rate * 2.0;
+        }
+
+        // Penalize for slow response times
+        if server_wrapper.metrics.average_response_time_ms > 1000.0 {
+            score -= (server_wrapper.metrics.average_response_time_ms - 1000.0) / 2000.0;
+        }
+
+        // Penalize for low memory
+        if let Some(mem_mb) = server_wrapper.metrics.memory_usage_mb {
+            if mem_mb < 50.0 {
+                score -= (50.0 - mem_mb) / 50.0;
+            }
+        }
+
+        score.max(0.0).min(1.0)
+    }
+
+    /// Get memory usage percent for a server
+    fn get_memory_usage_percent(&self, server_wrapper: &crate::language_server::LanguageServerWrapper) -> f64 {
+        if let Some(mem_mb) = server_wrapper.metrics.memory_usage_mb {
+            // Assume 1GB is 100% for calculation
+            (mem_mb / 1000.0).min(1.0)
+        } else {
+            0.0
+        }
+    }
+
+    /// Convert language to string for server ID generation
+    fn language_to_string(language: &LanguageServerKind) -> String {
+        match language {
+            LanguageServerKind::Rust => "rust".to_string(),
+            LanguageServerKind::TypeScript => "typescript".to_string(),
+            LanguageServerKind::JavaScript => "javascript".to_string(),
+            LanguageServerKind::Html => "html".to_string(),
+            LanguageServerKind::Css => "css".to_string(),
+            LanguageServerKind::Sql => "sql".to_string(),
+            LanguageServerKind::Go => "go".to_string(),
+            LanguageServerKind::Custom(name) => name.clone(),
+        }
+    }
+}
+
+/// Detailed resource metrics for advanced monitoring
+#[derive(Debug, Clone)]
+pub struct ResourceMetrics {
+    pub cpu_usage_percent: f64,
+    pub memory_total_mb: f64,
+    pub memory_used_mb: f64,
+    pub memory_available_mb: f64,
+    pub disk_total_gb: f64,
+    pub disk_available_gb: f64,
+    pub load_average: sysinfo::LoadAvg,
+    pub process_count: u32,
+}
+
+impl ResourceMonitor {
+    /// Get detailed resource information for performance monitoring
+    pub fn get_detailed_metrics(&self) -> ResourceMetrics {
+        let system = self.system.read().unwrap();
+
+        ResourceMetrics {
+            cpu_usage_percent: system.global_cpu_info().cpu_usage() as f64,
+            memory_total_mb: (system.total_memory() / 1_000_000) as f64,
+            memory_used_mb: (system.used_memory() / 1_000_000) as f64,
+            memory_available_mb: (system.available_memory() / 1_000_000) as f64,
+            disk_total_gb: system.disks().iter().map(|d| d.total_space()).sum::<u64>() as f64 / 1_000_000_000.0,
+            disk_available_gb: system.disks().iter().map(|d| d.available_space()).sum::<u64>() as f64 / 1_000_000_000.0,
+            load_average: system.load_average(),
+            process_count: system.processes().len() as u32,
+        }
+    }
 }
 
 /// Server status information
@@ -677,6 +1005,20 @@ pub struct ServerStatus {
     pub metrics: ServerMetrics,
     pub initialized: bool,
     pub last_health_check: Duration,
+}
+
+/// Server load metrics for monitoring and load balancing
+#[derive(Debug, Clone)]
+pub struct ServerLoadMetrics {
+    pub server_id: String,
+    pub language: LanguageServerKind,
+    pub pending_requests: usize,
+    pub response_time_ms: f64,
+    pub cpu_usage_percent: f64,
+    pub memory_usage_percent: f64,
+    pub request_rate: f64,
+    pub health_score: f64,
+    pub last_updated: std::time::Instant,
 }
 
 impl Drop for LanguageServerPool {

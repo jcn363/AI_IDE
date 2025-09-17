@@ -89,6 +89,7 @@ refactor: simplify resource monitoring logic
 
 ### 4. Testing
 
+#### Unit Testing Requirements
 ```bash
 # Run all tests
 cargo test
@@ -101,6 +102,48 @@ cargo test --examples
 
 # Run integration tests
 cargo test --test integration_tests
+```
+
+#### Quality Gates (Enterprise Requirements)
+
+**Security Testing:**
+```bash
+# Automated security scanning (required before merge)
+cargo audit                    # Dependency vulnerability scan
+cargo deny check              # License compliance verification
+cargo geiger                  # Additional security analysis
+
+# Manual security review required for:
+# - New dependencies
+# - Network operations
+# - File system access
+# - Cryptographic operations
+```
+
+**Performance Benchmarking:**
+```bash
+# Performance regression testing (CI requirement)
+cargo bench                     # Micro-benchmarks
+./performance_baseline_runner  # Integration performance tests
+./scripts/run-performance-tests.js  # Full performance suite
+
+# Performance requirements:
+# - Cold startup: <2 seconds
+# - Memory usage: <2GB for 1M+ LOC workspaces
+# - Build time regression: <5% degradation allowed
+```
+
+**Code Quality Gates:**
+```bash
+# Code quality checks (all must pass)
+cargo +nightly clippy -- -D warnings  # Zero warnings policy
+cargo +nightly fmt --check          # Formatting compliance
+cargo test --doc                    # Documentation tests
+
+# Test coverage requirements:
+# - Unit tests: 90%+ coverage
+# - Integration tests: 85%+ coverage
+# - End-to-end tests: 80%+ coverage
 ```
 
 ### 5. Submit a Pull Request
@@ -243,10 +286,82 @@ mod tests {
         assert_eq!(registry.get_loaded_models().await.len(), 0);
     }
 
-    #[TOKIO::test]
+    #[tokio::test]
     async fn test_async_functionality() {
         let result = async_function().await;
         assert!(result.is_ok());
+    }
+}
+```
+
+### Enterprise Testing Requirements
+
+**Security Testing:**
+```rust
+#[cfg(test)]
+mod security_tests {
+    use rust_ai_ide_common::validation::TauriInputSanitizer;
+
+    #[test]
+    fn test_input_sanitization() {
+        let sanitizer = TauriInputSanitizer::new();
+        let malicious_input = "../../../etc/passwd";
+        let sanitized = sanitizer.sanitize_path(malicious_input);
+        assert!(sanitized.is_err()); // Should reject path traversal
+    }
+
+    #[test]
+    fn test_command_injection_prevention() {
+        let sanitizer = TauriInputSanitizer::new();
+        let malicious_cmd = "ls; rm -rf /";
+        let sanitized = sanitizer.sanitize_command(malicious_cmd);
+        assert!(sanitized.is_err()); // Should reject dangerous commands
+    }
+}
+```
+
+**Performance Testing:**
+```rust
+#[cfg(test)]
+mod performance_tests {
+    use tokio::time::{timeout, Duration};
+
+    #[tokio::test]
+    async fn test_startup_performance() {
+        let start = std::time::Instant::now();
+        let _app = initialize_application().await;
+        let elapsed = start.elapsed();
+
+        // Enterprise requirement: startup < 2 seconds
+        assert!(elapsed < Duration::from_secs(2));
+    }
+
+    #[tokio::test]
+    async fn test_memory_usage() {
+        let _app = initialize_application().await;
+        let memory_usage = get_current_memory_usage();
+
+        // Enterprise requirement: < 2GB for large workspaces
+        assert!(memory_usage < 2_000_000_000);
+    }
+}
+```
+
+**Integration Testing:**
+```rust
+#[cfg(test)]
+mod integration_tests {
+    use rust_ai_ide_testing::comprehensive_test_runner::ComprehensiveTestRunner;
+
+    #[tokio::test]
+    async fn test_full_ai_pipeline() {
+        let runner = ComprehensiveTestRunner::new();
+        let result = runner.run_ai_capability_validation().await;
+
+        // Enterprise requirements
+        assert!(result.code_completion_accuracy > 0.85);
+        assert!(result.security_scan_coverage > 0.95);
+        assert!(result.performance_regression < 0.05);
     }
 }
 ```
@@ -469,10 +584,99 @@ pub async fn load_model(&self, model_path: &str) -> Result<String>;
 
 ## 🔐 Security Considerations
 
-- Validate all file paths and URLs
-- Implement proper error handling (don't leak internal errors)
-- Use safe Rust practices (no unsafe code without thorough review)
-- Audit dependencies regularly with `cargo audit`
+### Enterprise Security Requirements
+
+**Input Validation (Mandatory):**
+```rust
+// Always use TauriInputSanitizer for user inputs
+use rust_ai_ide_common::validation::TauriInputSanitizer;
+
+#[tauri::command]
+async fn process_user_file(
+    path: String,
+    sanitizer: State<'_, TauriInputSanitizer>
+) -> Result<String, String> {
+    // Validate path before processing
+    let secure_path = sanitizer.validate_secure_path(&path)?;
+
+    // Process file safely
+    Ok(process_file(&secure_path).await?)
+}
+```
+
+**Security Testing Requirements:**
+- All new features require security review
+- Dependency updates trigger automated security scanning
+- No plain text secrets - use secure storage only
+- Command injection protection required for all shell operations
+- Path traversal validation for all file operations
+
+**Audit Logging (Required for sensitive operations):**
+```rust
+use rust_ai_ide_security::audit_logger::AuditLogger;
+
+#[tauri::command]
+async fn sensitive_operation(
+    audit_logger: State<'_, AuditLogger>
+) -> Result<(), String> {
+    // Log all sensitive operations
+    audit_logger.log_security_event("operation_started", &context).await?;
+
+    // Perform operation
+    let result = perform_sensitive_operation().await;
+
+    // Log completion
+    audit_logger.log_security_event("operation_completed", &result).await?;
+
+    Ok(())
+}
+```
+
+## 🚀 CI/CD Pipeline Requirements
+
+### Quality Gates
+
+**Pre-Merge Checks:**
+- ✅ Code compiles without errors
+- ✅ All tests pass (unit, integration, security)
+- ✅ Zero clippy warnings
+- ✅ Code formatted with rustfmt
+- ✅ Security scan passes
+- ✅ License compliance verified
+- ✅ Performance regression < 5%
+
+**Automated Testing Stages:**
+1. **Unit Tests**: < 10 minutes, 90%+ coverage
+2. **Integration Tests**: < 20 minutes, security validation
+3. **Performance Tests**: < 15 minutes, regression detection
+4. **Security Tests**: < 5 minutes, vulnerability scanning
+5. **E2E Tests**: < 30 minutes, full workflow validation
+
+### Deployment Pipeline
+
+**Environment Progression:**
+```mermaid
+graph LR
+    A[Development] --> B[Staging]
+    B --> C[Production]
+    A --> D[Security Review]
+    D --> B
+```
+
+**Deployment Requirements:**
+- Automated rollback on failure detection
+- Zero-downtime deployments
+- Configuration validation before deployment
+- Security scanning in all environments
+- Performance monitoring post-deployment
+
+### Release Process
+
+**Version Management:**
+- Semantic versioning (MAJOR.MINOR.PATCH)
+- Automated changelog generation
+- Security advisory coordination
+- Dependency update tracking
 
 ## 💡 Pro Tips
 

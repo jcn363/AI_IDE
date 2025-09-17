@@ -6,11 +6,13 @@
 pub mod generators;
 pub mod templates;
 pub mod code_analysis;
+pub mod cache;
 
 // Re-exports
 pub use generators::*;
 pub use templates::*;
 pub use code_analysis::*;
+pub use cache::*;
 
 use generators::{
     TestGenerator, DocumentationGenerator, BoilerplateGenerator,

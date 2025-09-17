@@ -4,7 +4,9 @@ use std::time::Duration;
 use reqwest::{Client as HttpClient, Method};
 // SIMD acceleration support
 #[cfg(feature = "simd")]
-use rust_ai_ide_simd::ai_operations::{ActivationType, SIMDAIInferenceOps, SIMDConfidenceScorer, SIMDEmbeddingSearch};
+use rust_ai_ide_simd::ai_operations::{
+    ActivationType, SIMDAIInferenceOps, SIMDConfidenceScorer, SIMDEmbeddingSearch,
+};
 #[cfg(feature = "simd")]
 use rust_ai_ide_simd::get_simd_processor;
 use serde::{Deserialize, Serialize};
@@ -32,8 +34,11 @@ pub trait InferenceEngine: Send + Sync {
     ) -> Result<CodeCompletionResult, InferenceError>;
 
     /// Perform code analysis using the model
-    async fn analyze_code(&mut self, code: &str, analysis_type: AnalysisType)
-        -> Result<AnalysisResult, InferenceError>;
+    async fn analyze_code(
+        &mut self,
+        code: &str,
+        analysis_type: AnalysisType,
+    ) -> Result<AnalysisResult, InferenceError>;
 
     /// Check if the engine is ready for inference
     async fn health_check(&self) -> Result<(), InferenceError>;
@@ -45,24 +50,24 @@ pub trait InferenceEngine: Send + Sync {
 /// Configuration for text generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationConfig {
-    pub max_tokens:        u32,
-    pub temperature:       f32,
-    pub top_p:             f32,
+    pub max_tokens: u32,
+    pub temperature: f32,
+    pub top_p: f32,
     pub frequency_penalty: f32,
-    pub presence_penalty:  f32,
-    pub stop_sequences:    Vec<String>,
-    pub echo:              bool,
-    pub stream:            bool,
+    pub presence_penalty: f32,
+    pub stop_sequences: Vec<String>,
+    pub echo: bool,
+    pub stream: bool,
 }
 
 /// Configuration for code completion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeCompletionConfig {
-    pub max_length:           u32,
-    pub context_lines:        u32,
-    pub use_fim:              bool, // Fill-in-the-middle for StarCoder
-    pub indentation:          String,
-    pub use_context_digest:   bool,
+    pub max_length: u32,
+    pub context_lines: u32,
+    pub use_fim: bool, // Fill-in-the-middle for StarCoder
+    pub indentation: String,
+    pub use_context_digest: bool,
     pub return_full_function: bool,
 }
 
@@ -80,47 +85,47 @@ pub enum AnalysisType {
 /// Result of text generation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationResult {
-    pub text:               String,
-    pub finish_reason:      String,
-    pub usage:              TokenUsage,
+    pub text: String,
+    pub finish_reason: String,
+    pub usage: TokenUsage,
     pub generation_time_ms: u64,
 }
 
 /// Result of code completion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CodeCompletionResult {
-    pub completion:       String,
+    pub completion: String,
     pub confidence_score: f32,
-    pub suggestions:      Option<Vec<String>>,
-    pub usage:            TokenUsage,
+    pub suggestions: Option<Vec<String>>,
+    pub usage: TokenUsage,
 }
 
 /// Result of code analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResult {
-    pub analysis:        String,
-    pub suggestions:     Vec<String>,
+    pub analysis: String,
+    pub suggestions: Vec<String>,
     pub severity_scores: Vec<f32>,
-    pub usage:           TokenUsage,
+    pub usage: TokenUsage,
 }
 
 /// Token usage statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenUsage {
-    pub prompt_tokens:     u32,
+    pub prompt_tokens: u32,
     pub completion_tokens: u32,
-    pub total_tokens:      u32,
+    pub total_tokens: u32,
 }
 
 /// Inference engine statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceStats {
-    pub total_requests:           u64,
-    pub successful_requests:      u64,
-    pub failed_requests:          u64,
+    pub total_requests: u64,
+    pub successful_requests: u64,
+    pub failed_requests: u64,
     pub average_response_time_ms: f64,
-    pub total_tokens_processed:   u64,
-    pub uptime_seconds:           u64,
+    pub total_tokens_processed: u64,
+    pub uptime_seconds: u64,
 }
 
 /// Errors that can occur during inference
@@ -148,10 +153,10 @@ pub enum InferenceError {
 
 /// Model manager for sophisticated model management and selection
 pub struct ModelManager {
-    pub available_models:   HashMap<String, ModelInfo>,
-    pub model_priorities:   HashMap<ModelSize, f32>,
+    pub available_models: HashMap<String, ModelInfo>,
+    pub model_priorities: HashMap<ModelSize, f32>,
     pub task_model_mapping: HashMap<String, Vec<String>>,
-    pub current_model:      Option<String>,
+    pub current_model: Option<String>,
 }
 
 impl ModelManager {
@@ -167,20 +172,29 @@ impl ModelManager {
         model_priorities.insert(ModelSize::XLarge, 1.0);
 
         // Task to model mapping for optimal selection
-        task_model_mapping.insert("code_completion".to_string(), vec![
-            "code_llama_small".to_string(),
-            "star_coder_small".to_string(),
-            "code_llama_medium".to_string(),
-        ]);
-        task_model_mapping.insert("code_analysis".to_string(), vec![
-            "code_llama_large".to_string(),
-            "code_llama_xlarge".to_string(),
-        ]);
-        task_model_mapping.insert("text_generation".to_string(), vec![
-            "code_llama_medium".to_string(),
-            "code_llama_large".to_string(),
-            "star_coder_medium".to_string(),
-        ]);
+        task_model_mapping.insert(
+            "code_completion".to_string(),
+            vec![
+                "code_llama_small".to_string(),
+                "star_coder_small".to_string(),
+                "code_llama_medium".to_string(),
+            ],
+        );
+        task_model_mapping.insert(
+            "code_analysis".to_string(),
+            vec![
+                "code_llama_large".to_string(),
+                "code_llama_xlarge".to_string(),
+            ],
+        );
+        task_model_mapping.insert(
+            "text_generation".to_string(),
+            vec![
+                "code_llama_medium".to_string(),
+                "code_llama_large".to_string(),
+                "star_coder_medium".to_string(),
+            ],
+        );
 
         Self {
             available_models,
@@ -233,27 +247,30 @@ impl ModelManager {
 
 /// Local inference engine for running models locally with sophisticated model management
 pub struct LocalInferenceEngine {
-    pub client:           HttpClient,
-    pub base_url:         String,
-    pub model_name:       String,
-    pub model_info:       ModelInfo,
+    pub client: HttpClient,
+    pub base_url: String,
+    pub model_name: String,
+    pub model_info: ModelInfo,
     pub prompt_templates: PromptTemplates,
-    pub cache:            InferenceCache,
-    pub retry_config:     RetryConfig,
-    pub request_timeout:  Duration,
-    pub model_manager:    ModelManager,
+    pub cache: InferenceCache,
+    pub retry_config: RetryConfig,
+    pub request_timeout: Duration,
+    pub model_manager: ModelManager,
 }
 
 /// HTTP client for communicating with inference servers
 pub struct ModelClient {
-    pub client:          HttpClient,
-    pub base_url:        String,
-    pub api_key:         Option<String>,
+    pub client: HttpClient,
+    pub base_url: String,
+    pub api_key: Option<String>,
     pub request_timeout: Duration,
 }
 
 impl ModelClient {
-    pub fn new(base_url: &str, api_key: Option<String>) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(
+        base_url: &str,
+        api_key: Option<String>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(Self {
             client: HttpClient::builder()
                 .timeout(Duration::from_secs(30))
@@ -266,10 +283,14 @@ impl ModelClient {
     }
 
     /// Send HTTP request to inference server
-    pub async fn send_request(&self, request: InferenceRequest) -> Result<InferenceResponse, InferenceError> {
-        let _request_json = serde_json::to_string(&request).map_err(|e| InferenceError::ParseError {
-            reason: e.to_string(),
-        })?;
+    pub async fn send_request(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResponse, InferenceError> {
+        let _request_json =
+            serde_json::to_string(&request).map_err(|e| InferenceError::ParseError {
+                reason: e.to_string(),
+            })?;
 
         let mut http_request = self
             .client
@@ -295,12 +316,13 @@ impl ModelClient {
             });
         }
 
-        let response_json: InferenceResponse = response
-            .json()
-            .await
-            .map_err(|e| InferenceError::ParseError {
-                reason: e.to_string(),
-            })?;
+        let response_json: InferenceResponse =
+            response
+                .json()
+                .await
+                .map_err(|e| InferenceError::ParseError {
+                    reason: e.to_string(),
+                })?;
 
         Ok(response_json)
     }
@@ -308,8 +330,8 @@ impl ModelClient {
 
 /// Cache for inference results to improve performance
 pub struct InferenceCache {
-    pub entries:     HashMap<String, CacheEntry>,
-    pub max_size:    usize,
+    pub entries: HashMap<String, CacheEntry>,
+    pub max_size: usize,
     pub ttl_seconds: u64,
 }
 
@@ -341,15 +363,18 @@ impl InferenceCache {
             }
         }
 
-        self.entries.insert(key, CacheEntry {
-            response,
-            cached_at: std::time::SystemTime::now(),
-        });
+        self.entries.insert(
+            key,
+            CacheEntry {
+                response,
+                cached_at: std::time::SystemTime::now(),
+            },
+        );
     }
 }
 
 pub struct CacheEntry {
-    pub response:  InferenceResponse,
+    pub response: InferenceResponse,
     pub cached_at: std::time::SystemTime,
 }
 
@@ -362,16 +387,16 @@ impl CacheEntry {
 /// Retry configuration for failed requests
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RetryConfig {
-    pub max_retries:        u32,
-    pub initial_delay_ms:   u64,
+    pub max_retries: u32,
+    pub initial_delay_ms: u64,
     pub backoff_multiplier: f32,
 }
 
 impl Default for RetryConfig {
     fn default() -> Self {
         Self {
-            max_retries:        3,
-            initial_delay_ms:   1000,
+            max_retries: 3,
+            initial_delay_ms: 1000,
             backoff_multiplier: 2.0,
         }
     }
@@ -381,7 +406,7 @@ impl Default for RetryConfig {
 pub struct PromptTemplates {
     pub code_llama_templates: HashMap<String, String>,
     pub star_coder_templates: HashMap<String, String>,
-    pub general_templates:    HashMap<String, String>,
+    pub general_templates: HashMap<String, String>,
 }
 
 impl Default for PromptTemplates {
@@ -456,35 +481,39 @@ impl PromptTemplates {
 /// HTTP request format for inference servers
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceRequest {
-    pub model:       String,
-    pub prompt:      String,
-    pub max_tokens:  u32,
+    pub model: String,
+    pub prompt: String,
+    pub max_tokens: u32,
     pub temperature: f32,
-    pub stream:      bool,
-    pub stop:        Option<Vec<String>>,
+    pub stream: bool,
+    pub stop: Option<Vec<String>>,
 }
 
 /// HTTP response format from inference servers
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceResponse {
-    pub id:      String,
-    pub object:  String,
+    pub id: String,
+    pub object: String,
     pub created: u64,
-    pub model:   String,
+    pub model: String,
     pub choices: Vec<Choice>,
-    pub usage:   TokenUsage,
+    pub usage: TokenUsage,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Choice {
-    pub text:          String,
-    pub index:         u32,
+    pub text: String,
+    pub index: u32,
     pub finish_reason: String,
 }
 
 impl LocalInferenceEngine {
     /// Create new local inference engine
-    pub async fn new(provider: &AIProvider, base_url: &str, model_name: &str) -> Result<Self, InferenceError> {
+    pub async fn new(
+        provider: &AIProvider,
+        base_url: &str,
+        model_name: &str,
+    ) -> Result<Self, InferenceError> {
         let client = HttpClient::builder()
             .timeout(Duration::from_secs(60))
             .build()
@@ -493,30 +522,31 @@ impl LocalInferenceEngine {
         // Get default model info
         let model_info = match provider {
             AIProvider::CodeLlamaRust { model_size, .. } => ModelInfo {
-                model_path:      std::path::PathBuf::from(format!("code_llama_{:?}", model_size)),
-                model_size:      *model_size,
-                quantization:    Some(Quantization::INT4),
-                lora_adapters:   vec![],
+                model_path: std::path::PathBuf::from(format!("code_llama_{:?}", model_size)),
+                model_size: *model_size,
+                quantization: Some(Quantization::INT4),
+                lora_adapters: vec![],
                 memory_usage_mb: 4000,
             },
             AIProvider::StarCoderRust { model_size, .. } => ModelInfo {
-                model_path:      std::path::PathBuf::from(format!("star_coder_{:?}", model_size)),
-                model_size:      *model_size,
-                quantization:    Some(Quantization::INT4),
-                lora_adapters:   vec![],
+                model_path: std::path::PathBuf::from(format!("star_coder_{:?}", model_size)),
+                model_size: *model_size,
+                quantization: Some(Quantization::INT4),
+                lora_adapters: vec![],
                 memory_usage_mb: 6000,
             },
             AIProvider::Local { model_path, .. } => ModelInfo {
-                model_path:      std::path::PathBuf::from(model_path),
-                model_size:      ModelSize::Medium, // Default for local models
-                quantization:    None,              // Local models typically don't have quantization specified
-                lora_adapters:   vec![],
+                model_path: std::path::PathBuf::from(model_path),
+                model_size: ModelSize::Medium, // Default for local models
+                quantization: None, // Local models typically don't have quantization specified
+                lora_adapters: vec![],
                 memory_usage_mb: 2000, // Reasonable default for local models
             },
-            _ =>
+            _ => {
                 return Err(InferenceError::ModelNotLoaded {
                     model_id: "Unsupported provider".to_string(),
-                }),
+                })
+            }
         };
 
         Ok(Self {
@@ -544,7 +574,7 @@ impl InferenceEngine for LocalInferenceEngine {
         let cache_key = format!("text_{}_{}", self.model_name, hash_prompt(prompt));
         if let Some(cached) = self.cache.get(&cache_key) {
             return Ok(GenerationResult {
-                text:               cached
+                text: cached
                     .choices
                     .first()
                     .ok_or(InferenceError::ParseError {
@@ -552,7 +582,7 @@ impl InferenceEngine for LocalInferenceEngine {
                     })?
                     .text
                     .clone(),
-                finish_reason:      cached
+                finish_reason: cached
                     .choices
                     .first()
                     .ok_or(InferenceError::ParseError {
@@ -560,18 +590,18 @@ impl InferenceEngine for LocalInferenceEngine {
                     })?
                     .finish_reason
                     .clone(),
-                usage:              cached.usage.clone(),
+                usage: cached.usage.clone(),
                 generation_time_ms: 0,
             });
         }
 
         let request = InferenceRequest {
-            model:       self.model_name.clone(),
-            prompt:      prompt.to_string(),
-            max_tokens:  config.max_tokens,
+            model: self.model_name.clone(),
+            prompt: prompt.to_string(),
+            max_tokens: config.max_tokens,
             temperature: config.temperature,
-            stream:      config.stream,
-            stop:        if config.stop_sequences.is_empty() {
+            stream: config.stream,
+            stop: if config.stop_sequences.is_empty() {
                 None
             } else {
                 Some(config.stop_sequences.clone())
@@ -649,27 +679,28 @@ impl InferenceEngine for LocalInferenceEngine {
         };
 
         let generation_config = GenerationConfig {
-            max_tokens:        config.max_length,
-            temperature:       0.2,
-            top_p:             0.9,
+            max_tokens: config.max_length,
+            temperature: 0.2,
+            top_p: 0.9,
             frequency_penalty: 0.0,
-            presence_penalty:  0.0,
-            stop_sequences:    vec![
+            presence_penalty: 0.0,
+            stop_sequences: vec![
                 "\nfn ".to_string(),
                 "\nstruct ".to_string(),
                 "\nimpl ".to_string(),
                 "\nmod ".to_string(),
                 "\n}\n".to_string(),
             ],
-            echo:              false,
-            stream:            false,
+            echo: false,
+            stream: false,
         };
 
         let result = self.generate_text(&prompt, &generation_config).await?;
 
         // Calculate confidence based on multiple factors with SIMD optimization
         #[cfg(feature = "simd")]
-        let confidence_score = self.simd_compute_confidence_score(context, suggestion_quality_factors(&result.text));
+        let confidence_score =
+            self.simd_compute_confidence_score(context, suggestion_quality_factors(&result.text));
 
         #[cfg(not(feature = "simd"))]
         let confidence_score = {
@@ -733,14 +764,14 @@ impl InferenceEngine for LocalInferenceEngine {
         };
 
         let config = GenerationConfig {
-            max_tokens:        500,
-            temperature:       0.7,
-            top_p:             0.9,
+            max_tokens: 500,
+            temperature: 0.7,
+            top_p: 0.9,
             frequency_penalty: 0.3,
-            presence_penalty:  0.0,
-            stop_sequences:    vec![],
-            echo:              false,
-            stream:            false,
+            presence_penalty: 0.0,
+            stop_sequences: vec![],
+            echo: false,
+            stream: false,
         };
 
         let result = self.generate_text(&prompt, &config).await?;
@@ -763,12 +794,12 @@ impl InferenceEngine for LocalInferenceEngine {
     async fn health_check(&self) -> Result<(), InferenceError> {
         // Simple health check - try to communicate with server
         let request = InferenceRequest {
-            model:       self.model_name.clone(),
-            prompt:      "test".to_string(),
-            max_tokens:  1,
+            model: self.model_name.clone(),
+            prompt: "test".to_string(),
+            max_tokens: 1,
             temperature: 0.0,
-            stream:      false,
-            stop:        None,
+            stream: false,
+            stop: None,
         };
 
         self.send_with_retry(request).await?;
@@ -778,12 +809,12 @@ impl InferenceEngine for LocalInferenceEngine {
     async fn get_stats(&self) -> Result<InferenceStats, InferenceError> {
         // Placeholder implementation
         Ok(InferenceStats {
-            total_requests:           0,
-            successful_requests:      0,
-            failed_requests:          0,
+            total_requests: 0,
+            successful_requests: 0,
+            failed_requests: 0,
             average_response_time_ms: 0.0,
-            total_tokens_processed:   0,
-            uptime_seconds:           0,
+            total_tokens_processed: 0,
+            uptime_seconds: 0,
         })
     }
 }
@@ -791,7 +822,11 @@ impl InferenceEngine for LocalInferenceEngine {
 impl LocalInferenceEngine {
     /// SIMD-accelerated confidence score computation
     #[cfg(feature = "simd")]
-    fn simd_compute_confidence_score(&self, context: &str, quality_factors: (f32, f32, f32)) -> f32 {
+    fn simd_compute_confidence_score(
+        &self,
+        context: &str,
+        quality_factors: (f32, f32, f32),
+    ) -> f32 {
         // Prepare factors array for SIMD processing
         let factors = [
             0.75,                                         // base_confidence
@@ -879,13 +914,15 @@ impl LocalInferenceEngine {
 
                 // Use SIMD for Euclidean distance calculation
                 match self.simd_cosine_similarity(query_embedding, db_embedding) {
-                    Ok(similarity) =>
+                    Ok(similarity) => {
                         if similarity >= similarity_threshold {
                             similarities.push((i, similarity));
-                        },
+                        }
+                    }
                     Err(_) => {
                         // Fallback to non-SIMD similarity calculation
-                        let similarity = self.scalar_cosine_similarity(query_embedding, db_embedding);
+                        let similarity =
+                            self.scalar_cosine_similarity(query_embedding, db_embedding);
                         if similarity >= similarity_threshold {
                             similarities.push((i, similarity));
                         }
@@ -971,9 +1008,9 @@ impl LocalInferenceEngine {
                             suggestions,
                             severity_scores: vec![1.0, 2.0, 3.0],
                             usage: TokenUsage {
-                                prompt_tokens:     code.len() as u32 / 4,
+                                prompt_tokens: code.len() as u32 / 4,
                                 completion_tokens: 100,
-                                total_tokens:      code.len() as u32 / 4 + 100,
+                                total_tokens: code.len() as u32 / 4 + 100,
                             },
                         });
                     }
@@ -1003,9 +1040,9 @@ impl LocalInferenceEngine {
                     suggestions: vec!["Basic analysis".to_string()],
                     severity_scores: vec![1.0],
                     usage: TokenUsage {
-                        prompt_tokens:     code.len() as u32 / 4,
+                        prompt_tokens: code.len() as u32 / 4,
                         completion_tokens: 50,
-                        total_tokens:      code.len() as u32 / 4 + 50,
+                        total_tokens: code.len() as u32 / 4 + 50,
                     },
                 });
             }
@@ -1022,13 +1059,17 @@ impl LocalInferenceEngine {
         let chars: Vec<char> = code.chars().collect();
         let bracket_score = chars.iter().filter(|&&c| c == '{' || c == '}').count() as f32 * 0.1;
         let semicolon_score = chars.iter().filter(|&&c| c == ';').count() as f32 * 0.05;
-        let function_score = chars.windows(3).filter(|w| w == &['f', 'n', ' ']).count() as f32 * 0.2;
+        let function_score =
+            chars.windows(3).filter(|w| w == &['f', 'n', ' ']).count() as f32 * 0.2;
 
         (bracket_score + semicolon_score + function_score).min(1.0)
     }
 
     /// Send request with retry logic
-    async fn send_with_retry(&self, request: InferenceRequest) -> Result<InferenceResponse, InferenceError> {
+    async fn send_with_retry(
+        &self,
+        request: InferenceRequest,
+    ) -> Result<InferenceResponse, InferenceError> {
         for attempt in 0..self.retry_config.max_retries {
             match self.send_request(&request).await {
                 Ok(response) => return Ok(response),
@@ -1050,7 +1091,10 @@ impl LocalInferenceEngine {
     }
 
     /// Send single inference request
-    async fn send_request(&self, request: &InferenceRequest) -> Result<InferenceResponse, InferenceError> {
+    async fn send_request(
+        &self,
+        request: &InferenceRequest,
+    ) -> Result<InferenceResponse, InferenceError> {
         let http_request = self
             .client
             .post(format!("{}/completions", self.base_url))
@@ -1071,12 +1115,13 @@ impl LocalInferenceEngine {
             });
         }
 
-        let response_json: InferenceResponse = response
-            .json()
-            .await
-            .map_err(|e| InferenceError::ParseError {
-                reason: e.to_string(),
-            })?;
+        let response_json: InferenceResponse =
+            response
+                .json()
+                .await
+                .map_err(|e| InferenceError::ParseError {
+                    reason: e.to_string(),
+                })?;
 
         Ok(response_json)
     }
@@ -1138,11 +1183,11 @@ mod tests {
     #[tokio::test]
     async fn test_codegen_config_creation() {
         let config = CodeCompletionConfig {
-            max_length:           100,
-            context_lines:        5,
-            use_fim:              true,
-            indentation:          "    ".to_string(),
-            use_context_digest:   false,
+            max_length: 100,
+            context_lines: 5,
+            use_fim: true,
+            indentation: "    ".to_string(),
+            use_context_digest: false,
             return_full_function: false,
         };
 
@@ -1157,14 +1202,14 @@ mod tests {
     #[tokio::test]
     async fn test_generation_config_defaults() {
         let config = GenerationConfig {
-            max_tokens:        100,
-            temperature:       0.7,
-            top_p:             0.9,
+            max_tokens: 100,
+            temperature: 0.7,
+            top_p: 0.9,
             frequency_penalty: 0.0,
-            presence_penalty:  0.0,
-            stop_sequences:    vec!["END".to_string()],
-            echo:              false,
-            stream:            false,
+            presence_penalty: 0.0,
+            stop_sequences: vec!["END".to_string()],
+            echo: false,
+            stream: false,
         };
 
         assert_eq!(config.max_tokens, 100);
@@ -1191,19 +1236,19 @@ mod tests {
         let mut cache = InferenceCache::new(10, 3600);
 
         let response = InferenceResponse {
-            id:      "test_id".to_string(),
-            object:  "completion".to_string(),
+            id: "test_id".to_string(),
+            object: "completion".to_string(),
             created: 1234567890,
-            model:   "test_model".to_string(),
+            model: "test_model".to_string(),
             choices: vec![Choice {
-                text:          "test completion".to_string(),
-                index:         0,
+                text: "test completion".to_string(),
+                index: 0,
                 finish_reason: "stop".to_string(),
             }],
-            usage:   TokenUsage {
-                prompt_tokens:     10,
+            usage: TokenUsage {
+                prompt_tokens: 10,
                 completion_tokens: 5,
-                total_tokens:      15,
+                total_tokens: 15,
             },
         };
 
@@ -1223,19 +1268,19 @@ mod tests {
     #[tokio::test]
     async fn test_cache_entry_expiration() {
         let response = InferenceResponse {
-            id:      "test_id".to_string(),
-            object:  "completion".to_string(),
+            id: "test_id".to_string(),
+            object: "completion".to_string(),
             created: 1234567890,
-            model:   "test_model".to_string(),
+            model: "test_model".to_string(),
             choices: vec![Choice {
-                text:          "test completion".to_string(),
-                index:         0,
+                text: "test completion".to_string(),
+                index: 0,
                 finish_reason: "stop".to_string(),
             }],
-            usage:   TokenUsage {
-                prompt_tokens:     10,
+            usage: TokenUsage {
+                prompt_tokens: 10,
                 completion_tokens: 5,
-                total_tokens:      15,
+                total_tokens: 15,
             },
         };
 
@@ -1264,9 +1309,9 @@ mod tests {
     #[tokio::test]
     async fn test_token_usage_calculation() {
         let usage = TokenUsage {
-            prompt_tokens:     100,
+            prompt_tokens: 100,
             completion_tokens: 50,
-            total_tokens:      150,
+            total_tokens: 150,
         };
 
         assert_eq!(usage.prompt_tokens, 100);
@@ -1277,12 +1322,12 @@ mod tests {
     #[tokio::test]
     async fn test_inference_stats_initialization() {
         let stats = InferenceStats {
-            total_requests:           0,
-            successful_requests:      0,
-            failed_requests:          0,
+            total_requests: 0,
+            successful_requests: 0,
+            failed_requests: 0,
             average_response_time_ms: 0.0,
-            total_tokens_processed:   0,
-            uptime_seconds:           0,
+            total_tokens_processed: 0,
+            uptime_seconds: 0,
         };
 
         assert_eq!(stats.total_requests, 0);
@@ -1314,10 +1359,10 @@ mod tests {
     #[tokio::test]
     async fn test_model_info_creation() {
         let model_info = ModelInfo {
-            model_path:      std::path::PathBuf::from("/path/to/model"),
-            model_size:      ModelSize::Medium,
-            quantization:    Some(Quantization::INT4),
-            lora_adapters:   vec!["adapter1".to_string()],
+            model_path: std::path::PathBuf::from("/path/to/model"),
+            model_size: ModelSize::Medium,
+            quantization: Some(Quantization::INT4),
+            lora_adapters: vec!["adapter1".to_string()],
             memory_usage_mb: 2048,
         };
 
@@ -1334,9 +1379,9 @@ mod tests {
     #[tokio::test]
     async fn test_generation_result_creation() {
         let usage = TokenUsage {
-            prompt_tokens:     10,
+            prompt_tokens: 10,
             completion_tokens: 5,
-            total_tokens:      15,
+            total_tokens: 15,
         };
 
         let result = GenerationResult {
@@ -1357,9 +1402,9 @@ mod tests {
     #[tokio::test]
     async fn test_code_completion_result() {
         let usage = TokenUsage {
-            prompt_tokens:     20,
+            prompt_tokens: 20,
             completion_tokens: 10,
-            total_tokens:      30,
+            total_tokens: 30,
         };
 
         let suggestions = vec!["suggestion1".to_string(), "suggestion2".to_string()];

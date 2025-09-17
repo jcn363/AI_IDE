@@ -1,7 +1,6 @@
 //! Core types used throughout the debugger
 
 use serde::{Deserialize, Serialize};
-use super::thread_debugging::ThreadDebuggerEvent;
 use std::collections::HashMap;
 use super::performance_profiling::PerformanceProfileEvent;
 use super::memory_profiling::MemoryProfileEvent;
@@ -232,3 +231,4 @@ impl Default for DebuggerConfig {
             stop_at_entry: true,
         }
     }
+}

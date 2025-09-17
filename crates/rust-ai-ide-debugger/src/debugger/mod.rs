@@ -25,15 +25,13 @@ pub mod memory_profiling;
 pub mod performance_profiling;
 pub mod types;
 pub mod ui;
-use crate::debugger::memory_profiling::{MemoryProfiler, Allocation, HeapStatistics, LeakClassification, HeapVisualization};
-use crate::debugger::performance_profiling::PerformanceProfiler;
+// Submodule imports
+use crate::debugger::memory_profiling::{MemoryProfiler, Allocation, HeapStatistics, LeakClassification, HeapVisualization, LeakType};
+use crate::debugger::performance_profiling::{PerformanceProfiler, BottleneckAnalysis};
 use crate::debugger::thread_debugging::{ThreadDebugger, ThreadState, DeadlockInfo};
 
-pub use thread_debugging::ThreadDebugger;
 pub use backend::DebuggerBackendTrait;
-pub use performance_profiling::PerformanceProfiler;
 pub use breakpoints::BreakpointManager;
-pub use memory_profiling::MemoryProfiler;
 pub use cache::DebuggerCache;
 pub use commands::*;
 pub use execution::DebuggerBackend;
@@ -60,16 +58,10 @@ pub use ui::DebuggerUI;
 ///
 /// # #[tokio::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// let (event_tx, _) = mpsc::unbounded_channel();
-/// let config = DebuggerConfig::default();
-/// let mut debugger = Debugger::new();
-/// debugger.start_session(config, event_tx).await?;
-    /// Advanced thread debugger for async/await code
-    thread_debugger: ThreadDebugger,
-    /// Advanced memory profiler for comprehensive profiling
-    /// Advanced performance profiler for CPU profiling, bottleneck detection, and flame graphs
-    performance_profiler: PerformanceProfiler,
-    memory_profiler: MemoryProfiler,
+/// # let (event_tx, _) = mpsc::unbounded_channel();
+/// # let config = DebuggerConfig::default();
+/// # let mut debugger = Debugger::new();
+/// # debugger.start_session(config, event_tx).await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -79,6 +71,26 @@ pub struct Debugger {
 
     /// Breakpoint manager
     breakpoints: BreakpointManager,
+
+    /// Event sender for debugger events
+    event_sender: Option<mpsc::UnboundedSender<DebuggerEvent>>,
+
+    /// Individual event senders for specialized profilers
+    memory_event_sender: Option<mpsc::UnboundedSender<crate::debugger::memory_profiling::MemoryProfileEvent>>,
+    performance_event_sender: Option<mpsc::UnboundedSender<crate::debugger::performance_profiling::PerformanceProfileEvent>>,
+    thread_event_sender: Option<mpsc::UnboundedSender<crate::debugger::thread_debugging::ThreadDebuggerEvent>>,
+
+    /// Debugger configuration
+    config: DebuggerConfig,
+
+    /// Thread debugger for async/await code
+    thread_debugger: ThreadDebugger,
+
+    /// Memory profiler for comprehensive memory analysis
+    memory_profiler: MemoryProfiler,
+
+    /// Performance profiler for CPU profiling and bottleneck detection
+    performance_profiler: PerformanceProfiler,
 
     /// Expression manager for watch expressions
     expressions: ExpressionManager,
@@ -92,13 +104,8 @@ pub struct Debugger {
     /// Debugger process stdin
     stdin: Option<ChildStdin>,
 
-    /// Channel for sending debugger events
-    event_sender: Option<mpsc::UnboundedSender<DebuggerEvent>>,
-
     /// Next breakpoint ID
     next_breakpoint_id: u32,
-    /// Debugger configuration
-    config: DebuggerConfig,
     /// Call stack
     call_stack: Vec<StackFrame>,
     /// Current frame index
@@ -128,6 +135,9 @@ impl Debugger {
             process: None,
             stdin: None,
             event_sender: None,
+            memory_event_sender: None,
+            performance_event_sender: None,
+            thread_event_sender: None,
             next_breakpoint_id: 1,
             config: DebuggerConfig::default(),
             call_stack: Vec::new(),
@@ -172,9 +182,11 @@ impl Debugger {
         self.event_sender = Some(event_sender.clone());
 
         // Update event senders for specialized profilers
-        if let Some(ref mut md) = &mut self.memory_profiler { md.event_sender = Some(event_sender.clone()); }
-        if let Some(ref mut pd) = &mut self.performance_profiler { pd.event_sender = Some(event_sender); }
-        if let Some(ref mut td) = &mut self.thread_debugger { td.event_sender = Some(event_sender.clone()); }
+        // For now, we'll skip setting these until we implement proper event translation
+        // TODO: Implement event translation from generic DebuggerEvent to specific profiler events
+        self.memory_profiler.event_sender = None; // Skip for now to avoid type mismatch
+        self.performance_profiler.event_sender = None; // Skip for now to avoid type mismatch
+        self.thread_debugger.event_sender = None; // Skip for now to avoid type mismatch
 
         // Send initial state event
         self.send_event(DebuggerEvent::StateChanged(DebuggerState::Initializing {

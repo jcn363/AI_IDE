@@ -34,6 +34,9 @@ use tokio::sync::{Mutex, RwLock};
 use uuid::Uuid;
 use {analysis_placeholder as analysis, refactoring_placeholder as refactoring};
 
+// Re-export types module for external access
+pub mod types;
+
 /// Learning data privacy levels
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PrivacyLevel {

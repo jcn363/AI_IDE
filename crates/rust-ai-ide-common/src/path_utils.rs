@@ -38,7 +38,9 @@ pub fn relative_path_from<P: AsRef<Path>, Q: AsRef<Path>>(base: P, target: Q) ->
     let mut target_components: Vec<_> = target.components().collect();
 
     // Remove common prefix
-    while let (Some(base_comp), Some(target_comp)) = (base_components.first(), target_components.first()) {
+    while let (Some(base_comp), Some(target_comp)) =
+        (base_components.first(), target_components.first())
+    {
         if base_comp == target_comp {
             base_components.remove(0);
             target_components.remove(0);

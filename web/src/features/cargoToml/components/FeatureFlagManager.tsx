@@ -3,15 +3,15 @@ import {
   Alert,
   Button,
   Card,
+  Form,
+  Input,
+  Modal,
   Space,
   Switch,
   Table,
   Tag,
   Tooltip,
   Typography,
-  Modal,
-  Form,
-  Input,
   message,
 } from 'antd';
 import { DeleteOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons';
@@ -44,6 +44,8 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
   onChange,
   className = '',
 }) => {
+  const [isAddFeatureModalVisible, setIsAddFeatureModalVisible] = useState(false);
+  const [isAddingFeature, setIsAddingFeature] = useState(false);
   const [showUnused, setShowUnused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [featuresState, setFeaturesState] = useState<{
@@ -51,8 +53,15 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
     suggestions: string[];
   }>({ features: [], suggestions: [] });
 
-  const [isAddFeatureModalOpen, setIsAddFeatureModalOpen] = useState(false);
   const [form] = Form.useForm();
+
+  // Form field types
+  interface FeatureFormValues {
+    name: string;
+    description: string;
+    enabled: boolean;
+    default: boolean;
+  }
 
   const { features, suggestions } = featuresState;
 
@@ -92,7 +101,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
   const dataSource = useMemo<FeatureRow[]>(() => {
     const featuresMap = (Array.isArray(features) ? features : []).reduce(
       (acc, f) => (f?.name ? { ...acc, [f.name]: f } : acc),
-      {} as Record<string, FeatureUsage>
+      {} as Record<string, FeatureUsage>,
     );
 
     return Object.entries(manifest.features || {})
@@ -168,7 +177,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
     // Remove from default features
     if (updatedManifest.package.defaultFeatures) {
       const defaultFeatures = updatedManifest.package.defaultFeatures.filter(
-        (f: string) => f !== name
+        (f: string) => f !== name,
       );
       updatedManifest.package.defaultFeatures =
         defaultFeatures.length > 0 ? defaultFeatures : undefined;
@@ -200,7 +209,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
       dataIndex: 'usedBy',
       key: 'usedBy',
       render: (usedBy: string[]) =>
-        usedBy.length > 0 ? (
+        (usedBy.length > 0 ? (
           <Space size={[0, 4]} wrap>
             {usedBy.map((dep) => (
               <Tag key={dep} color="geekblue">
@@ -210,7 +219,7 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
           </Space>
         ) : (
           <Text type="secondary">Not used by any dependency</Text>
-        ),
+        )),
     },
     {
       title: 'Status',
@@ -253,8 +262,8 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => {
-              // TODO: Implement add feature dialog
-              console.log('Add feature');
+              form.resetFields();
+              setIsAddFeatureModalVisible(true);
             }}
           >
             Add Feature
@@ -317,6 +326,115 @@ export const FeatureFlagManager: React.FC<FeatureFlagManagerProps> = ({
           opacity: 1;
         }
       `}</style>
+
+      {/* Add Feature Modal */}
+      <Modal
+        title="Add New Feature Flag"
+        open={isAddFeatureModalVisible}
+        onCancel={() => setIsAddFeatureModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsAddFeatureModalVisible(false)}>
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={isAddingFeature}
+            onClick={async () => {
+              try {
+                const values = await form.validateFields();
+                setIsAddingFeature(true);
+
+                // Update the manifest with the new feature
+                const updatedManifest = { ...manifest };
+                if (!updatedManifest.features) {
+                  updatedManifest.features = {};
+                }
+
+                // Add the new feature
+                updatedManifest.features[values.name] = [];
+
+                // If this is a default feature, add it to default features
+                if (values.default) {
+                  if (!updatedManifest.features.default) {
+                    updatedManifest.features.default = [];
+                  }
+                  updatedManifest.features.default.push(values.name);
+                }
+
+                // Update the manifest
+                onChange(updatedManifest);
+
+                // Show success message
+                message.success(`Feature "${values.name}" added successfully`);
+
+                // Close the modal
+                setIsAddFeatureModalVisible(false);
+              } catch (error) {
+                console.error('Error adding feature:', error);
+                message.error('Failed to add feature. Please check the form and try again.');
+              } finally {
+                setIsAddingFeature(false);
+              }
+            }}
+          >
+            Add Feature
+          </Button>,
+        ]}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ enabled: true, default: false }}
+        >
+          <Form.Item
+            name="name"
+            label="Feature Name"
+            rules={[
+              { required: true, message: 'Please enter a feature name' },
+              {
+                pattern: /^[a-z0-9_-]+$/,
+                message: 'Feature name can only contain lowercase letters, numbers, underscores, and hyphens',
+              },
+              {
+                validator: (_, value) => {
+                  if (manifest.features?.[value] !== undefined) {
+                    return Promise.reject(new Error('A feature with this name already exists'));
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <Input placeholder="e.g., serde, tokio-runtime, wasm-bindgen" />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Description"
+            rules={[{ required: true, message: 'Please enter a description' }]}
+          >
+            <Input.TextArea rows={2} placeholder="Describe what this feature enables" />
+          </Form.Item>
+
+          <Form.Item
+            name="enabled"
+            label="Enabled by Default"
+            valuePropName="checked"
+          >
+            <Switch />
+          </Form.Item>
+
+          <Form.Item
+            name="default"
+            label="Include in Default Features"
+            valuePropName="checked"
+            help="If enabled, this feature will be included when the 'default' feature is enabled"
+          >
+            <Switch />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

@@ -228,7 +228,7 @@ pub struct MemoryProfiler {
     /// Fragmentation analysis data
     fragmentation_data: FragmentationAnalysis,
     /// Event sender for integration
-    event_sender:       Option<mpsc::UnboundedSender<MemoryProfileEvent>>,
+    pub event_sender:       Option<mpsc::UnboundedSender<MemoryProfileEvent>>,
     /// Profiling start time
     start_time:         Instant,
     /// Leaked addresses
@@ -381,9 +381,9 @@ impl MemoryProfiler {
         for allocation in &self.allocation_history {
             if allocation.deallocated_at.is_none() && !self.leaked_addresses.contains(&allocation.address) {
                 let allocation_time =
-                    Duration::from_millis(self.start_time.elapsed().as_millis() - allocation.allocated_at as u128);
+                    Duration::from_millis((self.start_time.elapsed().as_millis() - allocation.allocated_at as u128).try_into().unwrap());
                 let leak_duration =
-                    Duration::from_millis(self.start_time.elapsed().as_millis() - now.elapsed().as_millis());
+                    Duration::from_millis((self.start_time.elapsed().as_millis() - now.elapsed().as_millis()).try_into().unwrap());
 
                 // Simple heuristic: if allocation has lived longer than 5 minutes, consider it suspicious
                 if leak_duration > Duration::from_secs(300) {
@@ -392,7 +392,7 @@ impl MemoryProfiler {
 
                     let classification = LeakClassification {
                         address: allocation.address,
-                        leak_type,
+                        leak_type: leak_type.clone(),
                         size: allocation.size,
                         leak_duration,
                         allocation_stack: allocation.allocation_stack.clone(),
@@ -407,7 +407,7 @@ impl MemoryProfiler {
                         .insert(allocation.address, LeakCandidate {
                             allocation:     allocation.clone(),
                             detection_time: now,
-                            classification: leak_type,
+                            classification: leak_type.clone(),
                         });
                 }
             }
@@ -420,9 +420,9 @@ impl MemoryProfiler {
     fn classify_leak(&self, allocation: &Allocation, lifetime: &Duration) -> LeakType {
         // Simple classification logic - in a real implementation, this would use more sophisticated
         // analysis
-        if lifetime > Duration::from_secs(3600) {
+        if *lifetime > Duration::from_secs(3600) {
             // Very long-lived allocation that's still reachable
-            LeakType::ProbablyLost
+            LeakType::PossiblyLost
         } else if allocation.thread_id.is_some() {
             // Thread-local allocation that wasn't cleaned up
             LeakType::DefinitelyLost

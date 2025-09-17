@@ -92,7 +92,10 @@ pub fn with_error_context(error: RustAIError, context: EnhancedContext) -> RustA
 }
 
 /// Convert Result with automatic error enhancement
-pub async fn with_result_context<F, Fut, T, E>(operation: String, future: F) -> Result<T, RustAIError>
+pub async fn with_result_context<F, Fut, T, E>(
+    operation: String,
+    future: F,
+) -> Result<T, RustAIError>
 where
     F: FnOnce() -> Fut,
     Fut: std::future::Future<Output = Result<T, E>>,
@@ -117,7 +120,9 @@ pub fn http_status_to_error(status_code: u16, message: String) -> RustAIError {
             "Rate limit exceeded: {} (retry after: 60s)",
             message
         )),
-        500..=599 => RustAIError::ServiceUnavailable(format!("Server error ({}) {}", status_code, message)),
+        500..=599 => {
+            RustAIError::ServiceUnavailable(format!("Server error ({}) {}", status_code, message))
+        }
         _ => RustAIError::InternalError(format!(
             "HTTP_{}: HTTP error ({}) {}",
             status_code, status_code, message
@@ -128,11 +133,15 @@ pub fn http_status_to_error(status_code: u16, message: String) -> RustAIError {
 /// Convert std::io::Error with path context
 pub fn io_error_with_path(error: std::io::Error, path: &str) -> RustAIError {
     match error.kind() {
-        std::io::ErrorKind::NotFound => RustAIError::Path(PathError::new(format!("Not found: {}", path))),
-        std::io::ErrorKind::PermissionDenied =>
-            RustAIError::Path(PathError::new(format!("Permission denied: {}", path))),
-        std::io::ErrorKind::AlreadyExists =>
-            RustAIError::InternalError(format!("ALREADY_EXISTS: Path already exists: {}", path)),
+        std::io::ErrorKind::NotFound => {
+            RustAIError::Path(PathError::new(format!("Not found: {}", path)))
+        }
+        std::io::ErrorKind::PermissionDenied => {
+            RustAIError::Path(PathError::new(format!("Permission denied: {}", path)))
+        }
+        std::io::ErrorKind::AlreadyExists => {
+            RustAIError::InternalError(format!("ALREADY_EXISTS: Path already exists: {}", path))
+        }
         std::io::ErrorKind::TimedOut => RustAIError::Timeout(format!("I/O timeout on: {}", path)),
         _ => RustAIError::Io(IoError::new(format!("Read error for {}: {}", path, error))),
     }
@@ -143,7 +152,11 @@ pub mod operations {
     use super::*;
 
     /// Convert filesystem operation results
-    pub fn fs_result<T>(result: Result<T, std::io::Error>, operation: &str, path: &str) -> Result<T, RustAIError> {
+    pub fn fs_result<T>(
+        result: Result<T, std::io::Error>,
+        operation: &str,
+        path: &str,
+    ) -> Result<T, RustAIError> {
         result.map_err(|e| {
             let context = EnhancedContext {
                 operation: operation.to_string(),
@@ -156,7 +169,10 @@ pub mod operations {
 
     /// Convert network operation results
     #[cfg(feature = "web")]
-    pub fn network_result<T>(result: Result<T, reqwest::Error>, operation: &str) -> Result<T, RustAIError> {
+    pub fn network_result<T>(
+        result: Result<T, reqwest::Error>,
+        operation: &str,
+    ) -> Result<T, RustAIError> {
         result.map_err(|e| {
             let context = EnhancedContext {
                 operation: operation.to_string(),
@@ -171,7 +187,10 @@ pub mod operations {
 
     /// Convert serialization operation results
     #[cfg(feature = "serde")]
-    pub fn serde_result<T>(result: Result<T, serde_json::Error>, operation: &str) -> Result<T, RustAIError> {
+    pub fn serde_result<T>(
+        result: Result<T, serde_json::Error>,
+        operation: &str,
+    ) -> Result<T, RustAIError> {
         result.map_err(|e| {
             let context = EnhancedContext {
                 operation: operation.to_string(),
@@ -227,7 +246,8 @@ mod tests {
 
     #[test]
     fn test_result_extension() {
-        let result: Result<i32, std::io::Error> = Err(std::io::Error::new(std::io::ErrorKind::NotFound, "test"));
+        let result: Result<i32, std::io::Error> =
+            Err(std::io::Error::new(std::io::ErrorKind::NotFound, "test"));
         let rustai_result = result.into_rustai_result();
 
         assert!(matches!(rustai_result, Err(RustAIError::InternalError(_))));

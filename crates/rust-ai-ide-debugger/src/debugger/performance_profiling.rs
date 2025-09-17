@@ -34,7 +34,7 @@ pub struct FunctionCall {
     /// Total CPU time consumed by this function and its children
     pub total_cpu_time: Option<u64>,
     /// Child function calls
-    pub children:       Vec<Arc<FunctionCall>>,
+    pub children:       Vec<Box<FunctionCall>>,
     /// Parent call (for navigation)
     pub parent:         Option<String>,
 }
@@ -212,13 +212,13 @@ pub enum PerformanceProfileEvent {
 /// Advanced performance profiler
 pub struct PerformanceProfiler {
     /// Function call tree (root node)
-    call_tree:           Option<Arc<FunctionCall>>,
+    call_tree:           Option<Box<FunctionCall>>,
     /// CPU samples collected
     cpu_samples:         Vec<CpuSample>,
     /// Active function calls being tracked
-    active_calls:        HashMap<String, Arc<FunctionCall>>,
+    active_calls:        HashMap<String, Box<FunctionCall>>,
     /// Event sender for integration
-    event_sender:        Option<mpsc::UnboundedSender<PerformanceProfileEvent>>,
+    pub event_sender:        Option<mpsc::UnboundedSender<PerformanceProfileEvent>>,
     /// Profiling session start time
     profiling_start:     Instant,
     /// Current profiling session ID
@@ -332,7 +332,7 @@ impl PerformanceProfiler {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let start_time = self.profiling_start.elapsed().as_micros() as u64;
 
-        let call = Arc::new(FunctionCall {
+        let call = Box::new(FunctionCall {
             name: function_name.clone(),
             location,
             start_time,
@@ -342,7 +342,7 @@ impl PerformanceProfiler {
             self_cpu_time: 0,
             total_cpu_time: None,
             children: Vec::new(),
-            parent: self.active_calls.get("main").map(|c| c.name.clone()), // Simplified parent tracking
+            parent: self.active_calls.get("main").as_ref().map(|c| c.name.clone()), // Simplified parent tracking
         });
 
         self.active_calls
@@ -368,11 +368,8 @@ impl PerformanceProfiler {
 
     /// Track function call end
     pub fn end_function_call(&mut self, function_name: String) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        if let Some(call_arc) = self.active_calls.remove(&function_name) {
-            let mut call = Arc::try_unwrap(call_arc).unwrap_or_else(|_| {
-                // If Arc has multiple references, create a new instance
-                (*call_arc).clone()
-            });
+        if let Some(call_box) = self.active_calls.remove(&function_name) {
+            let mut call = *call_box;
 
             call.end_time = Some(self.profiling_start.elapsed().as_micros() as u64);
             let total_time = call.end_time.unwrap() - call.start_time;
@@ -660,7 +657,7 @@ impl PerformanceProfiler {
 
     /// Export profiling data to JSON string
     pub fn export_to_json(&self) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-        let export_data = HashMap::new(); // Would contain all profiling data
+        let export_data: HashMap<String, serde_json::Value> = HashMap::new(); // Would contain all profiling data
         serde_json::to_string(&export_data).map_err(|e| e.into())
     }
 

@@ -10,7 +10,7 @@ use crate::types::HealthCheckResult;
 #[derive(Debug)]
 pub struct HealthMonitor {
     service_registry: Arc<ServiceRegistry>,
-    is_monitoring:    Arc<Mutex<bool>>,
+    is_monitoring: Arc<Mutex<bool>>,
 }
 
 impl HealthMonitor {
@@ -52,12 +52,12 @@ impl HealthMonitor {
     pub async fn check_service_health(&self, _service_id: &str) -> HealthCheckResult {
         // Placeholder implementation
         HealthCheckResult {
-            service_id:       _service_id.to_string(),
-            status:           crate::types::ServiceStatus::Ready,
-            message:          Some("Health check passed".to_string()),
+            service_id: _service_id.to_string(),
+            status: crate::types::ServiceStatus::Ready,
+            message: Some("Health check passed".to_string()),
             response_time_ms: 10,
-            last_check:       chrono::Utc::now(),
-            next_check:       chrono::Utc::now() + chrono::Duration::seconds(30),
+            last_check: chrono::Utc::now(),
+            next_check: chrono::Utc::now() + chrono::Duration::seconds(30),
         }
     }
 }

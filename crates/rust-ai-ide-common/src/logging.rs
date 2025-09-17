@@ -34,23 +34,23 @@ pub trait UnifiedLogger: Send + Sync {
 /// Structured log context for contextual information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogContext {
-    pub operation:  String,
-    pub user_id:    Option<String>,
+    pub operation: String,
+    pub user_id: Option<String>,
     pub session_id: Option<String>,
     pub request_id: Option<String>,
-    pub component:  String,
-    pub metadata:   HashMap<String, serde_json::Value>,
+    pub component: String,
+    pub metadata: HashMap<String, serde_json::Value>,
 }
 
 impl Default for LogContext {
     fn default() -> Self {
         Self {
-            operation:  "unknown".to_string(),
-            user_id:    None,
+            operation: "unknown".to_string(),
+            user_id: None,
             session_id: None,
             request_id: None,
-            component:  "rust-ai-ide".to_string(),
-            metadata:   HashMap::new(),
+            component: "rust-ai-ide".to_string(),
+            metadata: HashMap::new(),
         }
     }
 }
@@ -69,7 +69,11 @@ impl LogContext {
         self
     }
 
-    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(mut self, key: K, value: V) -> Self {
+    pub fn with_metadata<K: Into<String>, V: Into<serde_json::Value>>(
+        mut self,
+        key: K,
+        value: V,
+    ) -> Self {
         self.metadata.insert(key.into(), value.into());
         self
     }
@@ -106,10 +110,10 @@ impl std::fmt::Display for LogLevel {
 /// Structured log entry with timestamp and context
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEntry {
-    pub timestamp:     u64,
-    pub level:         LogLevel,
-    pub message:       String,
-    pub context:       LogContext,
+    pub timestamp: u64,
+    pub level: LogLevel,
+    pub message: String,
+    pub context: LogContext,
     pub error_details: Option<String>,
 }
 
@@ -136,7 +140,7 @@ impl LogEntry {
 /// Thread-safe logging manager with unified interface
 #[derive(Debug)]
 pub struct LoggingManager {
-    sinks:   Arc<RwLock<Vec<LogSinkEnum>>>,
+    sinks: Arc<RwLock<Vec<LogSinkEnum>>>,
     context: RwLock<LogContext>,
     metrics: Arc<BasicMetricsCollector>,
 }
@@ -144,7 +148,7 @@ pub struct LoggingManager {
 impl Clone for LoggingManager {
     fn clone(&self) -> Self {
         Self {
-            sinks:   Arc::clone(&self.sinks),
+            sinks: Arc::clone(&self.sinks),
             context: RwLock::new(self.context.try_read().unwrap().clone()),
             metrics: Arc::clone(&self.metrics),
         }
@@ -164,7 +168,7 @@ impl UnifiedLogger for Arc<LoggingManager> {
 
     fn child(&self, additional_context: LogContext) -> LoggingGuard {
         LoggingGuard {
-            manager:      Arc::clone(self),
+            manager: Arc::clone(self),
             base_context: additional_context,
         }
     }
@@ -179,7 +183,7 @@ impl Default for LoggingManager {
 impl LoggingManager {
     pub fn new() -> Self {
         Self {
-            sinks:   Arc::new(RwLock::new(Vec::new())),
+            sinks: Arc::new(RwLock::new(Vec::new())),
             context: RwLock::new(LogContext::default()),
             metrics: Arc::new(BasicMetricsCollector::new()),
         }
@@ -215,9 +219,16 @@ impl LoggingManager {
         self
     }
 
-    pub async fn log(&self, level: LogLevel, message: &str, context: Option<LogContext>) -> Result<(), LoggingError> {
+    pub async fn log(
+        &self,
+        level: LogLevel,
+        message: &str,
+        context: Option<LogContext>,
+    ) -> Result<(), LoggingError> {
         let context = context.unwrap_or_else(|| {
-            tokio::task::block_in_place(|| futures::executor::block_on(async { self.context.read().await.clone() }))
+            tokio::task::block_in_place(|| {
+                futures::executor::block_on(async { self.context.read().await.clone() })
+            })
         });
 
         let entry = LogEntry::new(level, message, context);
@@ -253,7 +264,7 @@ impl LoggingManager {
 
     pub fn child(&self, additional_context: LogContext) -> LoggingGuard {
         LoggingGuard {
-            manager:      Arc::new((*self).clone()),
+            manager: Arc::new((*self).clone()),
             base_context: additional_context,
         }
     }
@@ -274,12 +285,17 @@ impl LoggingManager {
 
 /// Guard for logging with additional context
 pub struct LoggingGuard {
-    manager:      Arc<LoggingManager>,
+    manager: Arc<LoggingManager>,
     base_context: LogContext,
 }
 
 impl LoggingGuard {
-    pub async fn log(&self, level: LogLevel, message: &str, context: Option<LogContext>) -> Result<(), LoggingError> {
+    pub async fn log(
+        &self,
+        level: LogLevel,
+        message: &str,
+        context: Option<LogContext>,
+    ) -> Result<(), LoggingError> {
         let context = match context {
             Some(mut ctx) => {
                 ctx.operation = format!("{}.{}", self.base_context.operation, ctx.operation);
@@ -359,7 +375,7 @@ impl LogSink for LogSinkEnum {
 // Console sink for development logging
 #[derive(Debug)]
 pub struct ConsoleSink {
-    formatted:       bool,
+    formatted: bool,
     max_line_length: usize,
 }
 
@@ -373,7 +389,7 @@ impl ConsoleSink {
 
     pub fn with_line_limit(limit: usize) -> Self {
         Self {
-            formatted:       true,
+            formatted: true,
             max_line_length: limit,
         }
     }
@@ -391,7 +407,11 @@ impl LogSink for ConsoleSink {
         if self.formatted {
             println!(
                 "[{}] {} [{}] {} - {}",
-                entry.timestamp, entry.level, entry.context.component, entry.context.operation, message
+                entry.timestamp,
+                entry.level,
+                entry.context.component,
+                entry.context.operation,
+                message
             );
         } else {
             let mut entry_json = entry.clone();
@@ -406,25 +426,28 @@ impl LogSink for ConsoleSink {
 /// File sink for persistent logging (PHASE 2 enhancement)
 #[derive(Debug)]
 pub struct FileSink {
-    file_path:          std::path::PathBuf,
-    max_file_size_mb:   u64,
-    rotation_files:     usize,
-    current_file_size:  u64,
+    file_path: std::path::PathBuf,
+    max_file_size_mb: u64,
+    rotation_files: usize,
+    current_file_size: u64,
     current_file_index: usize,
 }
 
 impl FileSink {
     pub fn new(file_path: impl Into<std::path::PathBuf>) -> Self {
         Self {
-            file_path:          file_path.into(),
-            max_file_size_mb:   10, // 10MB default
-            rotation_files:     5,
-            current_file_size:  0,
+            file_path: file_path.into(),
+            max_file_size_mb: 10, // 10MB default
+            rotation_files: 5,
+            current_file_size: 0,
             current_file_index: 0,
         }
     }
 
-    pub fn with_rotation(max_size_mb: u64, rotation_files: usize) -> impl Fn(std::path::PathBuf) -> Self {
+    pub fn with_rotation(
+        max_size_mb: u64,
+        rotation_files: usize,
+    ) -> impl Fn(std::path::PathBuf) -> Self {
         move |path: std::path::PathBuf| Self {
             file_path: path,
             max_file_size_mb: max_size_mb,
@@ -456,10 +479,10 @@ impl FileSink {
 impl LogSink for FileSink {
     async fn log(&self, entry: &LogEntry) -> Result<(), LoggingError> {
         let mut sink = FileSink {
-            file_path:          self.file_path.clone(),
-            max_file_size_mb:   self.max_file_size_mb,
-            rotation_files:     self.rotation_files,
-            current_file_size:  self.current_file_size,
+            file_path: self.file_path.clone(),
+            max_file_size_mb: self.max_file_size_mb,
+            rotation_files: self.rotation_files,
+            current_file_size: self.current_file_size,
             current_file_index: self.current_file_index,
         };
 
@@ -467,12 +490,20 @@ impl LogSink for FileSink {
             sink.rotate_file()?;
             format!(
                 "[{}] {} [{}] {} - {}\n",
-                entry.timestamp, entry.level, entry.context.component, entry.context.operation, entry.message
+                entry.timestamp,
+                entry.level,
+                entry.context.component,
+                entry.context.operation,
+                entry.message
             )
         } else {
             format!(
                 "[{}] {} [{}] {} - {}\n",
-                entry.timestamp, entry.level, entry.context.component, entry.context.operation, entry.message
+                entry.timestamp,
+                entry.level,
+                entry.context.component,
+                entry.context.operation,
+                entry.message
             )
         };
 
@@ -483,9 +514,9 @@ impl LogSink for FileSink {
         /// Production deployment integration utilities
         pub mod production {
             use super::{
-                get_logger, init_logging, Arc, ConsoleSink, Deserialize, ExternalServiceSink, FileSink, HashMap,
-                LogContext, LogLevel, LogSink, LogSinkEnum, LoggingError, RwLock, Serialize, SystemTime, UnifiedLogger,
-                UNIX_EPOCH,
+                get_logger, init_logging, Arc, ConsoleSink, Deserialize, ExternalServiceSink,
+                FileSink, HashMap, LogContext, LogLevel, LogSink, LogSinkEnum, LoggingError,
+                RwLock, Serialize, SystemTime, UnifiedLogger, UNIX_EPOCH,
             };
 
             /// Production-optimized logging setup with all sinks (PHASE 4 - Future feature)
@@ -526,14 +557,14 @@ impl LogSink for FileSink {
             #[allow(dead_code)]
             pub struct HealthChecker {
                 failing_checks: dashmap::DashMap<String, String>,
-                last_check:     Arc<RwLock<u64>>,
+                last_check: Arc<RwLock<u64>>,
             }
 
             impl HealthChecker {
                 pub fn new() -> Self {
                     Self {
                         failing_checks: dashmap::DashMap::new(),
-                        last_check:     Arc::new(RwLock::new(0)),
+                        last_check: Arc::new(RwLock::new(0)),
                     }
                 }
 
@@ -640,9 +671,9 @@ impl LogSink for FileSink {
             #[allow(dead_code)]
             pub struct HealthStatus {
                 pub overall_healthy: bool,
-                pub checks:          Vec<(String, HealthCheck)>,
-                pub timestamp:       i64,
-                pub failing_checks:  HashMap<String, String>,
+                pub checks: Vec<(String, HealthCheck)>,
+                pub timestamp: i64,
+                pub failing_checks: HashMap<String, String>,
             }
 
             /// Alert system for critical issues (PHASE 4 - Future feature)
@@ -654,11 +685,11 @@ impl LogSink for FileSink {
             #[derive(Clone, Debug, Serialize, Deserialize)]
             #[allow(dead_code)]
             pub struct Alert {
-                pub level:     AlertLevel,
-                pub title:     String,
-                pub message:   String,
+                pub level: AlertLevel,
+                pub title: String,
+                pub message: String,
                 pub timestamp: u64,
-                pub resolved:  bool,
+                pub resolved: bool,
             }
 
             #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -771,20 +802,20 @@ impl LogSink for FileSink {
 /// External service sink for production monitoring (PHASE 2 enhancement)
 #[derive(Debug)]
 pub struct ExternalServiceSink {
-    endpoint_url:   String,
-    api_key:        Option<String>,
-    batch_size:     usize,
-    buffer:         Arc<RwLock<Vec<LogEntry>>>,
+    endpoint_url: String,
+    api_key: Option<String>,
+    batch_size: usize,
+    buffer: Arc<RwLock<Vec<LogEntry>>>,
     flush_interval: std::time::Duration,
 }
 
 impl ExternalServiceSink {
     pub fn new(endpoint_url: impl Into<String>) -> Self {
         Self {
-            endpoint_url:   endpoint_url.into(),
-            api_key:        None,
-            batch_size:     10,
-            buffer:         Arc::new(RwLock::new(Vec::new())),
+            endpoint_url: endpoint_url.into(),
+            api_key: None,
+            batch_size: 10,
+            buffer: Arc::new(RwLock::new(Vec::new())),
             flush_interval: std::time::Duration::from_secs(30),
         }
     }
@@ -856,13 +887,13 @@ impl LogSink for ExternalServiceSink {
 /// Enhanced metrics collection system with performance monitoring
 #[derive(Debug)]
 pub struct BasicMetricsCollector {
-    log_counts:        Arc<dashmap::DashMap<LogLevel, u64>>,
-    error_counts:      Arc<dashmap::DashMap<String, u64>>,
+    log_counts: Arc<dashmap::DashMap<LogLevel, u64>>,
+    error_counts: Arc<dashmap::DashMap<String, u64>>,
     operation_metrics: Arc<dashmap::DashMap<String, PerformanceMetrics>>,
-    counters:          Arc<dashmap::DashMap<String, u64>>,
-    gauges:            Arc<dashmap::DashMap<String, f64>>,
-    histograms:        Arc<dashmap::DashMap<String, Vec<f64>>>,
-    start_time:        u64,
+    counters: Arc<dashmap::DashMap<String, u64>>,
+    gauges: Arc<dashmap::DashMap<String, f64>>,
+    histograms: Arc<dashmap::DashMap<String, Vec<f64>>>,
+    start_time: u64,
 }
 
 impl Default for BasicMetricsCollector {
@@ -874,13 +905,13 @@ impl Default for BasicMetricsCollector {
 impl BasicMetricsCollector {
     pub fn new() -> Self {
         Self {
-            log_counts:        Arc::new(dashmap::DashMap::new()),
-            error_counts:      Arc::new(dashmap::DashMap::new()),
+            log_counts: Arc::new(dashmap::DashMap::new()),
+            error_counts: Arc::new(dashmap::DashMap::new()),
             operation_metrics: Arc::new(dashmap::DashMap::new()),
-            counters:          Arc::new(dashmap::DashMap::new()),
-            gauges:            Arc::new(dashmap::DashMap::new()),
-            histograms:        Arc::new(dashmap::DashMap::new()),
-            start_time:        SystemTime::now()
+            counters: Arc::new(dashmap::DashMap::new()),
+            gauges: Arc::new(dashmap::DashMap::new()),
+            histograms: Arc::new(dashmap::DashMap::new()),
+            start_time: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default()
                 .as_millis() as u64,
@@ -971,8 +1002,8 @@ impl BasicMetricsCollector {
 /// Performance timer for operation tracking
 pub struct OperationTimer {
     operation_name: String,
-    start_time:     u64,
-    collector:      Option<Arc<dashmap::DashMap<String, u64>>>,
+    start_time: u64,
+    collector: Option<Arc<dashmap::DashMap<String, u64>>>,
 }
 
 impl OperationTimer {
@@ -1014,7 +1045,9 @@ pub enum LoggingError {
 
 /// Global logging manager instance using thread-safe singleton
 static LOGGING_MANAGER: once_cell::sync::Lazy<Arc<LoggingManager>> =
-    once_cell::sync::Lazy::new(|| Arc::new(LoggingManager::new().with_console_sink(ConsoleSink::new(true))));
+    once_cell::sync::Lazy::new(|| {
+        Arc::new(LoggingManager::new().with_console_sink(ConsoleSink::new(true)))
+    });
 
 /// Convenience macro for structured logging
 #[macro_export]
@@ -1112,7 +1145,10 @@ pub async fn log_ide_error(
 
 /// ===== PHASE 3 ENHANCEMENTS =====
 /// Performance monitoring integration for async operations
-pub async fn instrument_async_operation<T, F>(operation_name: &str, operation: F) -> Result<T, LoggingError>
+pub async fn instrument_async_operation<T, F>(
+    operation_name: &str,
+    operation: F,
+) -> Result<T, LoggingError>
 where
     F: std::future::Future<Output = Result<T, LoggingError>>,
 {
@@ -1124,13 +1160,13 @@ where
 
 /// Configuration-driven logging setup
 pub struct LoggingConfiguration {
-    pub level:             LogLevel,
-    pub format:            LogFormat,
-    pub sinks:             Vec<LogSinkType>,
-    pub metrics_enabled:   bool,
-    pub file_path:         Option<std::path::PathBuf>,
+    pub level: LogLevel,
+    pub format: LogFormat,
+    pub sinks: Vec<LogSinkType>,
+    pub metrics_enabled: bool,
+    pub file_path: Option<std::path::PathBuf>,
     pub external_endpoint: Option<String>,
-    pub external_api_key:  Option<String>,
+    pub external_api_key: Option<String>,
 }
 
 #[derive(Clone)]
@@ -1146,13 +1182,13 @@ pub enum LogSinkType {
         formatted: bool,
     },
     File {
-        path:        std::path::PathBuf,
+        path: std::path::PathBuf,
         max_size_mb: u64,
-        rotation:    usize,
+        rotation: usize,
     },
     External {
-        endpoint:   String,
-        api_key:    Option<String>,
+        endpoint: String,
+        api_key: Option<String>,
         batch_size: usize,
     },
 }
@@ -1221,9 +1257,11 @@ pub mod tauri_integration {
 /// Example of comprehensive logging setup
 pub async fn example_logging_setup() -> Result<(), LoggingError> {
     // Initialize with console sink for development
-    init_logging(true, LogLevel::Info, vec![LogSinkEnum::Console(
-        ConsoleSink::new(true),
-    )])
+    init_logging(
+        true,
+        LogLevel::Info,
+        vec![LogSinkEnum::Console(ConsoleSink::new(true))],
+    )
     .await?;
 
     // Get logger instance
@@ -1285,52 +1323,52 @@ pub mod monitoring_dashboard {
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct DashboardSnapshot {
-        pub timestamp:          u64,
-        pub log_statistics:     LogStatistics,
-        pub error_breakdown:    HashMap<String, u64>,
-        pub system_metrics:     SystemMetrics,
-        pub active_alerts:      Vec<AlertInfo>,
+        pub timestamp: u64,
+        pub log_statistics: LogStatistics,
+        pub error_breakdown: HashMap<String, u64>,
+        pub system_metrics: SystemMetrics,
+        pub active_alerts: Vec<AlertInfo>,
         pub performance_trends: PerformanceTrends,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct LogStatistics {
-        pub total_logs:        u64,
-        pub logs_by_level:     HashMap<String, u64>,
-        pub logs_per_minute:   f64,
+        pub total_logs: u64,
+        pub logs_by_level: HashMap<String, u64>,
+        pub logs_per_minute: f64,
         pub errors_per_minute: f64,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct SystemMetrics {
-        pub memory_usage_mb:    f64,
-        pub cpu_usage_percent:  f64,
-        pub uptime_seconds:     u64,
+        pub memory_usage_mb: f64,
+        pub cpu_usage_percent: f64,
+        pub uptime_seconds: u64,
         pub active_connections: usize,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct AlertInfo {
-        pub id:            usize,
-        pub level:         AlertLevel,
-        pub title:         String,
-        pub message:       String,
+        pub id: usize,
+        pub level: AlertLevel,
+        pub title: String,
+        pub message: String,
         pub since_minutes: f64,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct PerformanceTrends {
         pub average_response_time_ms: f64,
-        pub error_rate_percentage:    f64,
-        pub success_rate_percentage:  f64,
-        pub recent_spikes:            Vec<PerformanceSpike>,
+        pub error_rate_percentage: f64,
+        pub success_rate_percentage: f64,
+        pub recent_spikes: Vec<PerformanceSpike>,
     }
 
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct PerformanceSpike {
-        pub timestamp:          u64,
-        pub operation:          String,
-        pub duration_ms:        f64,
+        pub timestamp: u64,
+        pub operation: String,
+        pub duration_ms: f64,
         pub threshold_exceeded: bool,
     }
 
@@ -1351,9 +1389,9 @@ pub mod monitoring_dashboard {
 
         // Generate system metrics placeholder
         let system_metrics = SystemMetrics {
-            memory_usage_mb:    256.0, // Placeholder - would integrate with system monitoring
-            cpu_usage_percent:  35.0,
-            uptime_seconds:     timestamp / 1000,
+            memory_usage_mb: 256.0, // Placeholder - would integrate with system monitoring
+            cpu_usage_percent: 35.0,
+            uptime_seconds: timestamp / 1000,
             active_connections: 0, // Placeholder
         };
 
@@ -1363,9 +1401,11 @@ pub mod monitoring_dashboard {
         // Placeholder for performance trends
         let performance_trends = PerformanceTrends {
             average_response_time_ms: 45.0,
-            error_rate_percentage:    (total_errors as f64 / total_logs as f64 * 100.0).max(0.0),
-            success_rate_percentage:  ((total_logs - total_errors) as f64 / total_logs as f64 * 100.0).max(0.0),
-            recent_spikes:            Vec::new(),
+            error_rate_percentage: (total_errors as f64 / total_logs as f64 * 100.0).max(0.0),
+            success_rate_percentage: ((total_logs - total_errors) as f64 / total_logs as f64
+                * 100.0)
+                .max(0.0),
+            recent_spikes: Vec::new(),
         };
 
         Ok(DashboardSnapshot {
@@ -1392,9 +1432,9 @@ mod tests {
     pub async fn test_logging_setup() -> Result<(), Box<dyn std::error::Error>> {
         // Create test configuration
         let config = LoggingConfiguration {
-            level:           LogLevel::Debug,
-            format:          LogFormat::Console,
-            sinks:           vec![LogSinkType::Console { formatted: true }],
+            level: LogLevel::Debug,
+            format: LogFormat::Console,
+            sinks: vec![LogSinkType::Console { formatted: true }],
             metrics_enabled: true,
         };
 
@@ -1430,11 +1470,12 @@ mod tests {
         println!("Logging benchmark: {:.1} ops/sec", ops_per_sec);
 
         // Test instrumented operation
-        let test_result: Result<(), LoggingError> = instrument_async_operation("benchmark_test", async {
-            tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-            Ok(())
-        })
-        .await?;
+        let test_result: Result<(), LoggingError> =
+            instrument_async_operation("benchmark_test", async {
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+                Ok(())
+            })
+            .await?;
 
         assert!(test_result.is_ok());
         Ok(())
@@ -1443,7 +1484,8 @@ mod tests {
     /// Error handling tests
     pub async fn test_error_handling() -> Result<(), Box<dyn std::error::Error>> {
         // Test IDError integration
-        let test_error = crate::errors::IdeError::Resource(MSG_FILE_ALREADY_EXISTS.get_subtable().collect());
+        let test_error =
+            crate::errors::IdeError::Resource(MSG_FILE_ALREADY_EXISTS.get_subtable().collect());
         log_ide_error(&test_error, "test_operation", None).await?;
 
         // Verify metrics were updated

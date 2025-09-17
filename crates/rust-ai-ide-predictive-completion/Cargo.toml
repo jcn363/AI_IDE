@@ -36,7 +36,7 @@ tree-sitter-rust = "0.24.0"
 dashmap = "6.1.0"
 
 # Metrics and monitoring
-prometheus = "0.13"
+prometheus = "0.14.0"
 lazy_static = "1.5"
 
 # LSP integration

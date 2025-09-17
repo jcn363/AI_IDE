@@ -37,12 +37,12 @@ impl DebtPredictor {
     /// Create a new debt predictor with the given configuration
     pub async fn new(config: &MaintenanceConfig) -> MaintenanceResult<Self> {
         Ok(Self {
-            historical_analyzer:   HistoricalDebtAnalyzer::new(config),
-            trend_predictor:       DebtTrendPredictor::new(config),
+            historical_analyzer: HistoricalDebtAnalyzer::new(config),
+            trend_predictor: DebtTrendPredictor::new(config),
             intervention_detector: InterventionDetector::new(config),
             cost_benefit_analyzer: CostBenefitAnalyzer::new(config),
-            forecasting_engine:    MLForecastingEngine::new(config)?,
-            config:                config.clone(),
+            forecasting_engine: MLForecastingEngine::new(config)?,
+            config: config.clone(),
         })
     }
 
@@ -89,7 +89,8 @@ impl DebtPredictor {
                 .unwrap()
         });
 
-        let confidence_score = self.calculate_forecast_confidence(&projected_debt, &historical_analysis);
+        let confidence_score =
+            self.calculate_forecast_confidence(&projected_debt, &historical_analysis);
 
         Ok(DebtForecast {
             projected_debt,
@@ -160,13 +161,15 @@ impl DebtPredictor {
                 {
                     if let Some(prev_type_data) = prev_measurement.debt_by_type.get(&debt_type) {
                         // Calculate weekly growth rate
-                        let days_diff = (measurement.timestamp.timestamp() - prev_measurement.timestamp.timestamp())
+                        let days_diff = (measurement.timestamp.timestamp()
+                            - prev_measurement.timestamp.timestamp())
                             as f64
                             / 86400.0;
                         let weeks_diff = days_diff / 7.0;
 
                         if weeks_diff > 0.0 {
-                            let severity_growth = type_data.avg_severity - prev_type_data.avg_severity;
+                            let severity_growth =
+                                type_data.avg_severity - prev_type_data.avg_severity;
                             let growth_rate = severity_growth / weeks_diff;
                             growth_rates.push(growth_rate);
                         }
@@ -195,9 +198,10 @@ impl DebtPredictor {
         // High change frequency risk
         if debt_item.tags.contains(&"frequently-changed".to_string()) {
             risk_factors.push(RiskFactor {
-                factor_type:     RiskType::ChangeFrequency,
-                score:           0.8,
-                description:     "File is frequently modified, increasing debt accumulation risk".to_string(),
+                factor_type: RiskType::ChangeFrequency,
+                score: 0.8,
+                description: "File is frequently modified, increasing debt accumulation risk"
+                    .to_string(),
                 activation_time: Utc::now(),
             });
         }
@@ -207,9 +211,9 @@ impl DebtPredictor {
         if age_weeks > 52.0 * 2.0 {
             // 2 years old
             risk_factors.push(RiskFactor {
-                factor_type:     RiskType::TechnologyObsolescence,
-                score:           (age_weeks / (52.0 * 5.0)).min(1.0), // Max out at 5 years
-                description:     "Debt item is old and may become harder to address".to_string(),
+                factor_type: RiskType::TechnologyObsolescence,
+                score: (age_weeks / (52.0 * 5.0)).min(1.0), // Max out at 5 years
+                description: "Debt item is old and may become harder to address".to_string(),
                 activation_time: Utc::now() + Duration::weeks(4), // Activate in 4 weeks
             });
         }
@@ -218,9 +222,9 @@ impl DebtPredictor {
         if let Some(latest_severity) = trajectory.last().map(|p| p.severity) {
             if latest_severity > 0.7 {
                 risk_factors.push(RiskFactor {
-                    factor_type:     RiskType::ComplexityGrowth,
-                    score:           (latest_severity - 0.7) * 2.0, // Scale to 0.0-1.0
-                    description:     "Debt severity is high, may grow exponentially".to_string(),
+                    factor_type: RiskType::ComplexityGrowth,
+                    score: (latest_severity - 0.7) * 2.0, // Scale to 0.0-1.0
+                    description: "Debt severity is high, may grow exponentially".to_string(),
                     activation_time: Utc::now() + Duration::weeks(2),
                 });
             }
@@ -244,8 +248,10 @@ impl DebtPredictor {
 
                 if current.severity < threshold && next.severity >= threshold {
                     // Linear interpolation to find crossing point
-                    let progress = (threshold - current.severity) / (next.severity - current.severity);
-                    let crossing_time = current.timestamp + (next.timestamp - current.timestamp) * progress;
+                    let progress =
+                        (threshold - current.severity) / (next.severity - current.severity);
+                    let crossing_time =
+                        current.timestamp + (next.timestamp - current.timestamp) * progress;
                     crossings.push(crossing_time);
                 }
             }
@@ -324,15 +330,15 @@ impl DebtPredictor {
 #[derive(Debug)]
 pub struct HistoricalAnalysis {
     pub historical_measurements: Vec<HistoricalMeasurement>,
-    pub average_growth_rate:     f64,
-    pub volatility_measure:      f64,
+    pub average_growth_rate: f64,
+    pub volatility_measure: f64,
 }
 
 /// Historical measurement with debt type breakdown
 #[derive(Debug)]
 pub struct HistoricalMeasurement {
-    pub timestamp:    DateTime<Utc>,
-    pub total_debt:   f64,
+    pub timestamp: DateTime<Utc>,
+    pub total_debt: f64,
     pub debt_by_type: HashMap<DebtType, DebtTypeStats>,
 }
 
@@ -357,7 +363,10 @@ impl HistoricalDebtAnalyzer {
         }
     }
 
-    pub async fn analyze_historical_trends(&self, context: &AnalysisContext) -> MaintenanceResult<HistoricalAnalysis> {
+    pub async fn analyze_historical_trends(
+        &self,
+        context: &AnalysisContext,
+    ) -> MaintenanceResult<HistoricalAnalysis> {
         let mut measurements = Vec::new();
 
         // Convert analysis context measurements to structured format
@@ -401,8 +410,8 @@ impl HistoricalDebtAnalyzer {
 
         Ok(HistoricalAnalysis {
             historical_measurements: measurements,
-            average_growth_rate:     avg_growth,
-            volatility_measure:      volatility,
+            average_growth_rate: avg_growth,
+            volatility_measure: volatility,
         })
     }
 
@@ -417,11 +426,13 @@ impl HistoricalDebtAnalyzer {
             let current = &window[0];
             let previous = &window[1];
 
-            let days_diff = (current.timestamp.timestamp() - previous.timestamp.timestamp()) as f64 / 86400.0;
+            let days_diff =
+                (current.timestamp.timestamp() - previous.timestamp.timestamp()) as f64 / 86400.0;
             let weeks_diff = days_diff / 7.0;
 
             if weeks_diff > 0.0 && previous.total_debt > 0.0 {
-                let growth_rate = (current.total_debt - previous.total_debt) / previous.total_debt / weeks_diff;
+                let growth_rate =
+                    (current.total_debt - previous.total_debt) / previous.total_debt / weeks_diff;
                 growth_rates.push(growth_rate);
             }
         }
@@ -475,7 +486,8 @@ impl DebtTrendPredictor {
             let severity = start_severity * (1.0 + growth_rate).powi(week as i32);
 
             // Impact grows somewhat slower than severity
-            let maintainability_impact = debt_item.maintainability_impact * (1.0 + growth_rate * 0.8).powi(week as i32);
+            let maintainability_impact =
+                debt_item.maintainability_impact * (1.0 + growth_rate * 0.8).powi(week as i32);
 
             // Confidence interval reduces with time
             let confidence_factor = (-week as f64 / horizon_weeks as f64).exp();
@@ -551,10 +563,10 @@ impl InterventionDetector {
         // Add timeline-based budget thresholds
         for week in &self.config.forecast_horizons {
             thresholds.push(Threshold {
-                threshold_type:    ThresholdType::Timeline,
-                value:             *week as f64,
+                threshold_type: ThresholdType::Timeline,
+                value: *week as f64,
                 expected_crossing: Utc::now() + Duration::weeks(*week as i64),
-                consequences:      format!("Timeline threshold at {} weeks", week),
+                consequences: format!("Timeline threshold at {} weeks", week),
             });
         }
 
@@ -580,7 +592,8 @@ impl InterventionDetector {
             if current.severity < threshold && next.severity >= threshold {
                 // Linear interpolation
                 let progress = (threshold - current.severity) / (next.severity - current.severity);
-                let crossing_time = current.timestamp + (next.timestamp - current.timestamp) * progress;
+                let crossing_time =
+                    current.timestamp + (next.timestamp - current.timestamp) * progress;
                 return Some(crossing_time);
             }
         }
@@ -609,10 +622,10 @@ impl CostBenefitAnalyzer {
     ) -> MaintenanceResult<CostBenefitResult> {
         // This would implement detailed cost-benefit calculations
         Ok(CostBenefitResult {
-            net_benefit:          0.0,
+            net_benefit: 0.0,
             payback_period_weeks: 12,
             risk_adjusted_return: 0.25,
-            recommended_action:   "Delay intervention".to_string(),
+            recommended_action: "Delay intervention".to_string(),
         })
     }
 }
@@ -646,18 +659,18 @@ impl MLForecastingEngine {
 // Additional helper types
 #[derive(Debug)]
 pub struct MaintenanceStrategy {
-    pub name:           String,
-    pub cost:           f64,
+    pub name: String,
+    pub cost: f64,
     pub timeline_weeks: u32,
-    pub risk_level:     RiskLevel,
+    pub risk_level: RiskLevel,
 }
 
 #[derive(Debug)]
 pub struct CostBenefitResult {
-    pub net_benefit:          f64,
+    pub net_benefit: f64,
     pub payback_period_weeks: u32,
     pub risk_adjusted_return: f64,
-    pub recommended_action:   String,
+    pub recommended_action: String,
 }
 
 #[cfg(test)]
@@ -678,14 +691,15 @@ mod tests {
 
         // Test with minimal context
         let context = AnalysisContext {
-            current_debt_items:      vec![],
+            current_debt_items: vec![],
             historical_measurements: vec![],
-            recent_refactorings:     vec![],
-            dependency_graph:        HashMap::new(),
+            recent_refactorings: vec![],
+            dependency_graph: HashMap::new(),
         };
 
         // Should handle empty data gracefully
-        let result = tokio::spawn(async move { analyzer.analyze_historical_trends(&context).await });
+        let result =
+            tokio::spawn(async move { analyzer.analyze_historical_trends(&context).await });
         // Note: In actual test, we'd need to await and assert
     }
 }

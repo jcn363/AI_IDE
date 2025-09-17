@@ -163,7 +163,7 @@ pub mod mocks {
     // Reusable shared test utilities - may be used across crates
     pub struct MockFileSystem {
         files: HashMap<PathBuf, Vec<u8>>,
-        root:  PathBuf,
+        root: PathBuf,
     }
 
     impl MockFileSystem {
@@ -229,8 +229,8 @@ pub mod mocks {
     /// Mock network response builder
     // Reusable shared test utilities - may be used across crates
     pub struct MockHttpResponse {
-        status:  u16,
-        body:    Vec<u8>,
+        status: u16,
+        body: Vec<u8>,
         headers: HashMap<String, String>,
     }
 
@@ -512,7 +512,7 @@ pub mod performance {
     /// Simple performance timer
     // Reusable shared test utilities - may be used across crates
     pub struct PerformanceTimer {
-        name:  String,
+        name: String,
         start: Instant,
     }
 
@@ -520,7 +520,7 @@ pub mod performance {
         /// Start timing a named operation
         pub fn start(name: &str) -> Self {
             PerformanceTimer {
-                name:  name.to_string(),
+                name: name.to_string(),
                 start: Instant::now(),
             }
         }
@@ -541,8 +541,8 @@ pub mod performance {
     /// Benchmark runner for repeated operations
     // Reusable shared test utilities - may be used across crates
     pub struct BenchmarkRunner {
-        iterations:  usize,
-        setup_fn:    Option<Box<dyn Fn()>>,
+        iterations: usize,
+        setup_fn: Option<Box<dyn Fn()>>,
         teardown_fn: Option<Box<dyn Fn()>>,
     }
 

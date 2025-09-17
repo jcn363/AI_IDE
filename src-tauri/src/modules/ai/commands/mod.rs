@@ -66,7 +66,9 @@ use crate::utils;
 /// # Errors
 /// Returns error if AI system status cannot be determined
 #[tauri::command]
-pub async fn ai_system_health(ai_service_state: tauri::State<'_, AIServiceState>) -> Result<AISystemHealth, String> {
+pub async fn ai_system_health(
+    ai_service_state: tauri::State<'_, AIServiceState>,
+) -> Result<AISystemHealth, String> {
     log::info!("Checking AI system health");
 
     let _ai_service = match utils::get_or_create_ai_service(&ai_service_state).await {
@@ -77,33 +79,33 @@ pub async fn ai_system_health(ai_service_state: tauri::State<'_, AIServiceState>
         Err(e) => {
             log::error!("AI service unavailable: {}", e);
             return Ok(AISystemHealth {
-                overall_status:    SystemStatus::Unhealthy,
+                overall_status: SystemStatus::Unhealthy,
                 service_available: false,
-                registry_size:     0,
-                active_jobs:       0,
-                last_error:        Some(e),
+                registry_size: 0,
+                active_jobs: 0,
+                last_error: Some(e),
             });
         }
     };
 
     // In a real implementation, this would check actual system components
     Ok(AISystemHealth {
-        overall_status:    SystemStatus::Healthy,
+        overall_status: SystemStatus::Healthy,
         service_available: true,
-        registry_size:     5, // Placeholder
-        active_jobs:       2, // Placeholder
-        last_error:        None,
+        registry_size: 5, // Placeholder
+        active_jobs: 2,   // Placeholder
+        last_error: None,
     })
 }
 
 /// AI system health information
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct AISystemHealth {
-    pub overall_status:    SystemStatus,
+    pub overall_status: SystemStatus,
     pub service_available: bool,
-    pub registry_size:     usize,
-    pub active_jobs:       usize,
-    pub last_error:        Option<String>,
+    pub registry_size: usize,
+    pub active_jobs: usize,
+    pub last_error: Option<String>,
 }
 
 /// System status indicator

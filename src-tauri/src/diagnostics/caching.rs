@@ -14,8 +14,8 @@ use crate::infra::EventBus;
 
 /// Unified diagnostic cache using rust-ai-ide-cache with collaboration support
 pub struct DiagnosticCache {
-    inner:                  Arc<RwLock<InMemoryCache<String, CompilerDiagnosticsResult>>>,
-    event_bus:              Arc<EventBus>,
+    inner: Arc<RwLock<InMemoryCache<String, CompilerDiagnosticsResult>>>,
+    event_bus: Arc<EventBus>,
     collaboration_sessions: Arc<RwLock<HashMap<String, Vec<String>>>>, // session_id -> diagnostic_keys
 }
 
@@ -190,7 +190,7 @@ impl DiagnosticCache {
 
 /// Unified explanation cache using rust-ai-ide-cache with collaboration support
 pub struct ExplanationCache {
-    inner:     Arc<RwLock<InMemoryCache<String, ErrorCodeExplanation>>>,
+    inner: Arc<RwLock<InMemoryCache<String, ErrorCodeExplanation>>>,
     event_bus: Arc<EventBus>,
 }
 
@@ -239,7 +239,9 @@ impl ExplanationCache {
                 Some(tokio::time::Duration::from_secs(ttl_seconds)),
             )
             .await
-            .map_err(|e| IDEError::Cache(format!("Failed to insert into explanation cache: {}", e)))?;
+            .map_err(|e| {
+                IDEError::Cache(format!("Failed to insert into explanation cache: {}", e))
+            })?;
 
         // Emit cache update event
         let event_data = serde_json::json!({
@@ -279,18 +281,18 @@ impl ExplanationCache {
 /// Real-time diagnostic stream
 #[derive(Debug)]
 pub struct DiagnosticStream {
-    pub id:             String,
+    pub id: String,
     pub workspace_path: String,
-    pub is_active:      bool,
-    pub last_update:    SystemTime,
-    pub subscribers:    Vec<String>, // Frontend connection IDs
+    pub is_active: bool,
+    pub last_update: SystemTime,
+    pub subscribers: Vec<String>, // Frontend connection IDs
 }
 
 /// Error code explanation request
 #[derive(Debug, serde::Deserialize)]
 pub struct ErrorCodeExplanationRequest {
-    pub error_code:        String,
-    pub use_cache:         bool,
+    pub error_code: String,
+    pub use_cache: bool,
     pub cache_ttl_seconds: Option<u64>,
 }
 
@@ -298,15 +300,15 @@ pub struct ErrorCodeExplanationRequest {
 #[derive(Debug, serde::Deserialize)]
 pub struct DocumentationLookupRequest {
     pub error_code: Option<String>,
-    pub keyword:    Option<String>,
-    pub context:    Option<String>,
+    pub keyword: Option<String>,
+    pub context: Option<String>,
 }
 
 /// Real-time diagnostics subscription request
 #[derive(Debug, serde::Deserialize)]
 pub struct DiagnosticStreamRequest {
-    pub workspace_path:                String,
-    pub subscriber_id:                 String,
+    pub workspace_path: String,
+    pub subscriber_id: String,
     pub auto_refresh_interval_seconds: Option<u64>,
 }
 
@@ -316,13 +318,13 @@ pub use rust_ai_ide_cache::CacheStats as CacheStatistics;
 /// Enhanced diagnostic cache statistics combining multiple caches with collaboration metrics
 #[derive(Debug, serde::Serialize)]
 pub struct EnhancedCacheStatistics {
-    pub diagnostic_cache:              CacheStatistics,
-    pub explanation_cache:             CacheStatistics,
-    pub total_cache_size:              usize,
-    pub diagnostic_cache_hit_ratio:    f32,
-    pub explanation_cache_hit_ratio:   f32,
+    pub diagnostic_cache: CacheStatistics,
+    pub explanation_cache: CacheStatistics,
+    pub total_cache_size: usize,
+    pub diagnostic_cache_hit_ratio: f32,
+    pub explanation_cache_hit_ratio: f32,
     pub collaboration_sessions_active: usize,
-    pub total_collaboration_keys:      usize,
-    pub collaboration_merge_count:     u64,
-    pub collaboration_conflict_count:  u64,
+    pub total_collaboration_keys: usize,
+    pub collaboration_merge_count: u64,
+    pub collaboration_conflict_count: u64,
 }

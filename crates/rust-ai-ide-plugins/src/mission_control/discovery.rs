@@ -15,11 +15,11 @@ use crate::interfaces::{plugin_error, PluginError};
 #[derive(Debug, Clone)]
 pub struct DiscoveryConfig {
     /// Directories to scan for plugins
-    pub scan_paths:      Vec<PathBuf>,
+    pub scan_paths: Vec<PathBuf>,
     /// File patterns to look for
-    pub file_patterns:   Vec<String>,
+    pub file_patterns: Vec<String>,
     /// Maximum depth for directory scanning
-    pub max_depth:       usize,
+    pub max_depth: usize,
     /// Follow symbolic links
     pub follow_symlinks: bool,
 }
@@ -27,7 +27,7 @@ pub struct DiscoveryConfig {
 impl Default for DiscoveryConfig {
     fn default() -> Self {
         Self {
-            scan_paths:      vec![
+            scan_paths: vec![
                 dirs::home_dir()
                     .map(|d| d.join(".rust-ai-ide").join("plugins"))
                     .unwrap_or_default(),
@@ -36,13 +36,13 @@ impl Default for DiscoveryConfig {
                     .unwrap_or_default(),
                 PathBuf::from("./plugins"),
             ],
-            file_patterns:   vec![
+            file_patterns: vec![
                 "plugin.json".to_string(),
                 "plugin.toml".to_string(),
                 "plugin.yaml".to_string(),
                 "plugin.yml".to_string(),
             ],
-            max_depth:       3,
+            max_depth: 3,
             follow_symlinks: false,
         }
     }
@@ -50,7 +50,7 @@ impl Default for DiscoveryConfig {
 
 /// Advanced plugin discovery system
 pub struct PluginDiscovery {
-    config:             DiscoveryConfig,
+    config: DiscoveryConfig,
     discovered_plugins: tokio::sync::RwLock<HashSet<String>>,
 }
 
@@ -82,12 +82,13 @@ impl PluginDiscovery {
         for path in &self.config.scan_paths {
             if path.exists() {
                 match self.scan_directory(path).await {
-                    Ok(plugins) =>
+                    Ok(plugins) => {
                         for plugin_id in plugins {
                             if discovered.insert(plugin_id.clone()) {
                                 all_plugins.push(plugin_id);
                             }
-                        },
+                        }
+                    }
                     Err(e) => {
                         eprintln!("Failed to scan directory {}: {:?}", path.display(), e);
                     }

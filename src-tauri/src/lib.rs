@@ -56,6 +56,15 @@ use crate::command_templates::{CommandConfig, execute_command, acquire_service_a
 // Import search service
 use crate::commands::search::SearchService;
 
+// Import collaboration services
+use rust_ai_ide_collaboration::{
+    CollaborationService,
+    websocket::CollaborationWebSocketServer,
+    session_management::SessionManager,
+    performance_monitoring::CollaborationPerformanceMonitor,
+    commands::*,
+};
+
 // Cache size constants
 const DIAGNOSTIC_CACHE_SIZE: usize = 1000;
 const EXPLANATION_CACHE_SIZE: usize = 500;
@@ -308,6 +317,9 @@ pub fn run() {
         .manage(Arc::new(DashMap::<String, serde_json::Value>::new()))
         .manage(LearningSystemState::default())
         .manage(RefactoringEngineState::default())
+        .manage(Arc::new(RwLock::new(CollaborationService::new())))
+        .manage(Arc::new(RwLock::new(SessionManager::new())))
+        .manage(Arc::new(RwLock::new(CollaborationPerformanceMonitor::new(Default::default()))))
         .manage(DiagnosticCacheState::new(Arc::new(tokio::sync::RwLock::new(
             DiagnosticCache::new(DIAGNOSTIC_CACHE_SIZE)
         ))))
@@ -352,12 +364,26 @@ pub fn run() {
                 lifecycle_manager.run_lifecycle(&app).await
             });
 
-            // Add command handlers
-            // Note: Command handlers should be registered here, but startup logic moved to lifecycle modules
-            init_commands(&app_handle).map_err(|e| {
-                eprintln!("Failed to initialize command handlers: {}", e);
-                e
-            })?;
+            // Initialize collaboration services
+            {
+                let collab_service = app.state::<Arc<RwLock<CollaborationService>>>();
+                let session_manager = app.state::<Arc<RwLock<SessionManager>>>();
+                let performance_monitor = app.state::<Arc<RwLock<CollaborationPerformanceMonitor>>>();
+
+                // Start performance monitoring
+                {
+                    let monitor = performance_monitor.inner().clone();
+                    let monitor_clone = monitor.clone();
+                    tauri::async_runtime::spawn(async move {
+                        monitor_clone.start_monitoring().await;
+                    });
+                }
+
+                log::info!("Collaboration services initialized successfully");
+            }
+
+            // Collaboration commands are registered in the invoke_handler
+            // Additional command initialization can be added here if needed
 
             // Spawn a task to monitor lifecycle completion
             tauri::async_runtime::spawn(async move {
@@ -609,6 +635,18 @@ pub fn run() {
             commands::search::find_references,
             commands::search::get_navigation_history,
             commands::search::get_search_history,
+            // Collaboration Commands
+            start_collaboration_session,
+            join_collaboration_session,
+            leave_collaboration_session,
+            apply_collaboration_operation,
+            get_collaboration_session_state,
+            get_collaboration_performance_metrics,
+            get_collaboration_metrics_history,
+            resolve_collaboration_conflicts,
+            get_active_collaboration_sessions,
+            end_collaboration_session,
+            get_session_participants,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

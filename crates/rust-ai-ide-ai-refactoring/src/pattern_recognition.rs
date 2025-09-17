@@ -81,7 +81,7 @@ impl PatternConversionOperation {
     fn analyze_function_patterns(&self, block: &syn::Block) -> Vec<PatternMatch> {
         let mut patterns = Vec::new();
 
-        for (i, stmt) in block.stmts.iter().enumerate() {
+        for (_i, stmt) in block.stmts.iter().enumerate() {
             match stmt {
                 syn::Stmt::Expr(expr, _) =>
                     if let Some(pattern) = self.detect_pattern_in_expr(expr) {
@@ -258,7 +258,7 @@ impl PatternConversionOperation {
         &self,
         pattern: &PatternMatch,
         conversion: &ConversionOption,
-        syntax: &syn::File,
+        _syntax: &syn::File,
     ) -> Vec<CodeChange> {
         // For now, return a placeholder change
         // In full implementation, would generate actual AST transformations
@@ -285,7 +285,7 @@ impl RefactoringOperation for PatternConversionOperation {
     async fn execute(
         &self,
         context: &RefactoringContext,
-        options: &RefactoringOptions,
+        _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         println!("Advanced pattern conversion operation executing");
 
@@ -424,7 +424,7 @@ impl RefactoringOperation for BatchPatternConversionOperation {
     async fn execute(
         &self,
         context: &RefactoringContext,
-        options: &RefactoringOptions,
+        _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         println!("Batch pattern conversion operation executing");
 
@@ -473,7 +473,7 @@ impl RefactoringOperation for BatchPatternConversionOperation {
                         let changes = PatternConversionOperation.apply_conversion(&pattern, &best_conversion, &syntax);
 
                         // Update file paths in changes
-                        let mut file_changes = changes
+                        let file_changes = changes
                             .into_iter()
                             .map(|mut change| {
                                 change.file_path = file_path.clone();
@@ -560,7 +560,7 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
     async fn execute(
         &self,
         context: &RefactoringContext,
-        options: &RefactoringOptions,
+        _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         println!("Replace conditionals operation executing");
 
@@ -568,7 +568,7 @@ impl RefactoringOperation for ReplaceConditionalsOperation {
 
         // Read and parse file
         let content = fs::read_to_string(file_path)?;
-        let mut syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
+        let syntax: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         // Find conditional statements that can be replaced
         let conditionals = self.find_replaceable_conditionals(&syntax)?;
@@ -724,7 +724,7 @@ impl ReplaceConditionalsOperation {
     fn scan_function_for_conditionals(&self, block: &syn::Block) -> Vec<ConditionalMatch> {
         let mut matches = Vec::new();
 
-        for (i, stmt) in block.stmts.iter().enumerate() {
+        for (_i, stmt) in block.stmts.iter().enumerate() {
             match stmt {
                 syn::Stmt::Expr(expr, _) =>
                     if let Some(conditional_match) = self.analyze_conditional_expr(expr) {
@@ -806,7 +806,7 @@ impl ReplaceConditionalsOperation {
                 ConditionalAlternative {
                     replacement_type: "match expression".to_string(),
                     confidence: 0.8,
-                    benefits: vec!![
+                    benefits: vec![
                         "More concise".to_string(),
                         "Better exhaustiveness checking".to_string(),
                     ],
@@ -850,7 +850,7 @@ impl ReplaceConditionalsOperation {
         &self,
         conditional: &ConditionalMatch,
         alternative: &ConditionalAlternative,
-        syntax: &syn::File,
+        _syntax: &syn::File,
     ) -> Vec<CodeChange> {
         vec![CodeChange {
             file_path:   "/target/file.rs".to_string(),

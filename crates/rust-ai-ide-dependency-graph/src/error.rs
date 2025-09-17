@@ -7,9 +7,9 @@ use std::fmt;
 pub enum DependencyError {
     /// Version conflict detected between dependencies
     VersionConflict {
-        package:           String,
+        package: String,
         required_versions: Vec<String>,
-        source_packages:   Vec<String>,
+        source_packages: Vec<String>,
     },
 
     /// Circular dependency detected in the graph
@@ -104,9 +104,9 @@ pub type DependencyResult<T> = Result<T, DependencyError>;
 
 /// Error recovery suggestions
 pub struct ErrorSuggestion {
-    pub error_type:  String,
+    pub error_type: String,
     pub suggestions: Vec<String>,
-    pub confidence:  f32,
+    pub confidence: f32,
 }
 
 impl ErrorSuggestion {
@@ -130,8 +130,8 @@ impl ErrorSuggestion {
 /// Error aggregator for collecting multiple errors during resolution
 #[derive(Default)]
 pub struct ErrorAggregator {
-    pub errors:      Vec<DependencyError>,
-    pub warnings:    Vec<String>,
+    pub errors: Vec<DependencyError>,
+    pub warnings: Vec<String>,
     pub suggestions: Vec<ErrorSuggestion>,
 }
 
@@ -193,7 +193,7 @@ impl ErrorAggregator {
             // No errors, return success with empty result
             Err(DependencyError::ResolutionError {
                 package: "unknown".to_string(),
-                reason:  "Empty result".to_string(),
+                reason: "Empty result".to_string(),
             })
         } else if self.errors.len() == 1 {
             Err(self.errors.into_iter().next().unwrap())
@@ -208,7 +208,7 @@ impl ErrorAggregator {
 
             Err(DependencyError::ResolutionError {
                 package: "multiple".to_string(),
-                reason:  format!("Multiple errors: {}", error_messages),
+                reason: format!("Multiple errors: {}", error_messages),
             })
         }
     }

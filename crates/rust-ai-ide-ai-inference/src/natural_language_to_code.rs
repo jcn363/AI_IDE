@@ -27,55 +27,55 @@ use crate::types::*;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NLToCodeInput {
     /// Natural language description of desired functionality
-    pub description:     String,
+    pub description: String,
     /// Target programming language
     pub target_language: String,
     /// Project context information
     pub project_context: HashMap<String, String>,
     /// User preferences and coding style
-    pub coding_style:    Option<CodingStyle>,
+    pub coding_style: Option<CodingStyle>,
     /// Existing code context for better understanding
-    pub existing_code:   Option<String>,
+    pub existing_code: Option<String>,
     /// Specific requirements or constraints
-    pub requirements:    Vec<String>,
+    pub requirements: Vec<String>,
 }
 
 /// Generated code result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NLToCodeResult {
     /// Generated code
-    pub code:             String,
+    pub code: String,
     /// Programming language used
-    pub language:         String,
+    pub language: String,
     /// Confidence score (0.0-1.0)
     pub confidence_score: f64,
     /// Explanatory comments and documentation
-    pub explanation:      String,
+    pub explanation: String,
     /// Potential issues or warnings
-    pub warnings:         Vec<String>,
+    pub warnings: Vec<String>,
     /// Alternative implementations
-    pub alternatives:     Vec<AlternativeCode>,
+    pub alternatives: Vec<AlternativeCode>,
     /// Generation metadata
-    pub metadata:         GenerationMetadata,
+    pub metadata: GenerationMetadata,
 }
 
 /// Alternative code implementations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlternativeCode {
-    pub code:        String,
+    pub code: String,
     pub description: String,
-    pub complexity:  u8,
-    pub pros:        Vec<String>,
-    pub cons:        Vec<String>,
+    pub complexity: u8,
+    pub pros: Vec<String>,
+    pub cons: Vec<String>,
 }
 
 /// Generation metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GenerationMetadata {
-    pub generation_id:               String,
-    pub timestamp:                   DateTime<Utc>,
-    pub processing_time_ms:          u64,
-    pub model_used:                  String,
+    pub generation_id: String,
+    pub timestamp: DateTime<Utc>,
+    pub processing_time_ms: u64,
+    pub model_used: String,
     pub context_understanding_score: f64,
 }
 
@@ -100,20 +100,20 @@ pub trait NLProcessingEngine: Send + Sync {
 /// Validation result for generated code
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
-    pub is_valid:          bool,
-    pub syntax_errors:     Vec<String>,
+    pub is_valid: bool,
+    pub syntax_errors: Vec<String>,
     pub semantic_warnings: Vec<String>,
-    pub security_issues:   Vec<String>,
-    pub suggestions:       Vec<String>,
+    pub security_issues: Vec<String>,
+    pub suggestions: Vec<String>,
 }
 
 /// Advanced natural language to code converter
 pub struct NLToCodeConverter {
-    engine:             Arc<dyn NLProcessingEngine>,
-    code_templates:     RwLock<HashMap<String, Vec<CodeTemplate>>>,
-    language_grammars:  RwLock<HashMap<String, LanguageGrammar>>,
-    context_analyzer:   ContextAnalyzer,
-    code_validator:     CodeValidator,
+    engine: Arc<dyn NLProcessingEngine>,
+    code_templates: RwLock<HashMap<String, Vec<CodeTemplate>>>,
+    language_grammars: RwLock<HashMap<String, LanguageGrammar>>,
+    context_analyzer: ContextAnalyzer,
+    code_validator: CodeValidator,
     feedback_processor: FeedbackProcessor,
 }
 
@@ -145,10 +145,10 @@ impl NLToCodeConverter {
 
         // Update metadata
         result.metadata = GenerationMetadata {
-            generation_id:               Uuid::new_v4().to_string(),
-            timestamp:                   Utc::now(),
-            processing_time_ms:          start_time.elapsed().as_millis() as u64,
-            model_used:                  "nl-to-code-engine-v2".to_string(),
+            generation_id: Uuid::new_v4().to_string(),
+            timestamp: Utc::now(),
+            processing_time_ms: start_time.elapsed().as_millis() as u64,
+            model_used: "nl-to-code-engine-v2".to_string(),
             context_understanding_score: context_score.score,
         };
 
@@ -230,7 +230,11 @@ impl NLToCodeConverter {
     }
 
     /// Enhance input with contextual understanding
-    async fn enhance_input_with_context(&self, input: NLToCodeInput, context: &ContextAnalysis) -> NLToCodeInput {
+    async fn enhance_input_with_context(
+        &self,
+        input: NLToCodeInput,
+        context: &ContextAnalysis,
+    ) -> NLToCodeInput {
         let mut enhanced = input.clone();
 
         // Add context-based improvements to the description
@@ -239,7 +243,8 @@ impl NLToCodeConverter {
         }
 
         if context.uses_async {
-            enhanced.description += "\nInclude proper async/await patterns as used in this codebase.";
+            enhanced.description +=
+                "\nInclude proper async/await patterns as used in this codebase.";
         }
 
         if let Some(style) = &context.detected_style {
@@ -250,7 +255,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate performance-optimized variant
-    async fn generate_performance_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_performance_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         // This would use templates and optimizations based on language
         let optimized = match language {
             "rust" => self.optimize_rust_performance(original),
@@ -260,15 +269,15 @@ impl NLToCodeConverter {
         };
 
         Some(AlternativeCode {
-            code:        optimized,
+            code: optimized,
             description: "Performance-optimized implementation".to_string(),
-            complexity:  7,
-            pros:        vec![
+            complexity: 7,
+            pros: vec![
                 "Reduced time complexity".to_string(),
                 "Better resource utilization".to_string(),
                 "Optimized data structures".to_string(),
             ],
-            cons:        vec![
+            cons: vec![
                 "Higher code complexity".to_string(),
                 "May be harder to understand".to_string(),
                 "Possible trade-offs in error handling".to_string(),
@@ -277,7 +286,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate memory-efficient variant
-    async fn generate_memory_efficient_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_memory_efficient_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         let optimized = match language {
             "rust" => self.optimize_rust_memory(original),
             "python" => self.optimize_python_memory(original),
@@ -286,15 +299,15 @@ impl NLToCodeConverter {
         };
 
         Some(AlternativeCode {
-            code:        optimized,
+            code: optimized,
             description: "Memory-efficient implementation".to_string(),
-            complexity:  6,
-            pros:        vec![
+            complexity: 6,
+            pros: vec![
                 "Reduced memory footprint".to_string(),
                 "Better scalability".to_string(),
                 "Lower GC pressure".to_string(),
             ],
-            cons:        vec![
+            cons: vec![
                 "May use less idiomatic patterns".to_string(),
                 "Potential readability trade-offs".to_string(),
             ],
@@ -302,7 +315,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate readable/maintainable variant
-    async fn generate_readable_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_readable_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         let readable = match language {
             "rust" => self.improve_rust_readability(original),
             "python" => self.improve_python_readability(original),
@@ -311,15 +328,15 @@ impl NLToCodeConverter {
         };
 
         Some(AlternativeCode {
-            code:        readable,
+            code: readable,
             description: "Highly readable and maintainable implementation".to_string(),
-            complexity:  3,
-            pros:        vec![
+            complexity: 3,
+            pros: vec![
                 "Easy to understand".to_string(),
                 "Self-documenting".to_string(),
                 "Easier maintenance".to_string(),
             ],
-            cons:        vec![
+            cons: vec![
                 "May be less performant".to_string(),
                 "More verbose code".to_string(),
             ],
@@ -327,7 +344,11 @@ impl NLToCodeConverter {
     }
 
     /// Generate error-handling enhanced variant
-    async fn generate_error_handling_variant(&self, original: &str, language: &str) -> Option<AlternativeCode> {
+    async fn generate_error_handling_variant(
+        &self,
+        original: &str,
+        language: &str,
+    ) -> Option<AlternativeCode> {
         let enhanced = match language {
             "rust" => self.enhance_rust_error_handling(original),
             "python" => self.enhance_python_error_handling(original),
@@ -336,15 +357,15 @@ impl NLToCodeConverter {
         };
 
         Some(AlternativeCode {
-            code:        enhanced,
+            code: enhanced,
             description: "Enhanced error handling and reliability".to_string(),
-            complexity:  5,
-            pros:        vec![
+            complexity: 5,
+            pros: vec![
                 "Robust error handling".to_string(),
                 "Better user experience".to_string(),
                 "Easier debugging".to_string(),
             ],
-            cons:        vec![
+            cons: vec![
                 "Increased complexity".to_string(),
                 "More code to maintain".to_string(),
             ],
@@ -416,24 +437,24 @@ impl NLToCodeConverter {
 // Supporting structs and traits
 #[derive(Debug, Clone)]
 struct CodeTemplate {
-    pattern:    String,
-    template:   String,
+    pattern: String,
+    template: String,
     conditions: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 struct LanguageGrammar {
-    keywords:        Vec<String>,
+    keywords: Vec<String>,
     syntax_patterns: Vec<String>,
     common_patterns: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 struct ContextAnalysis {
-    score:                 f64,
+    score: f64,
     has_existing_patterns: bool,
-    uses_async:            bool,
-    detected_style:        Option<CodingStyle>,
+    uses_async: bool,
+    detected_style: Option<CodingStyle>,
 }
 
 struct ContextAnalyzer {
@@ -448,10 +469,10 @@ impl ContextAnalyzer {
     async fn analyze_context(&self, input: &NLToCodeInput) -> SecurityResult<ContextAnalysis> {
         // Analyze context for better understanding
         Ok(ContextAnalysis {
-            score:                 0.8,
+            score: 0.8,
             has_existing_patterns: true,
-            uses_async:            false,
-            detected_style:        Some(CodingStyle::Functional),
+            uses_async: false,
+            detected_style: Some(CodingStyle::Functional),
         })
     }
 }
@@ -523,24 +544,24 @@ impl NLProcessingEngine for BasicNLPToCodeEngine {
         let refined_code = format!("{}\n// Refined based on feedback: {}", original, feedback);
 
         Ok(NLToCodeResult {
-            code:             refined_code,
-            language:         context.target_language.clone(),
+            code: refined_code,
+            language: context.target_language.clone(),
             confidence_score: 0.9,
-            explanation:      "Refined code based on user feedback".to_string(),
-            warnings:         vec![],
-            alternatives:     vec![],
-            metadata:         GenerationMetadata::default(),
+            explanation: "Refined code based on user feedback".to_string(),
+            warnings: vec![],
+            alternatives: vec![],
+            metadata: GenerationMetadata::default(),
         })
     }
 
     async fn validate_code(&self, code: &str, language: &str) -> SecurityResult<ValidationResult> {
         // Basic validation
         Ok(ValidationResult {
-            is_valid:          true,
-            syntax_errors:     vec![],
+            is_valid: true,
+            syntax_errors: vec![],
             semantic_warnings: vec![],
-            security_issues:   vec![],
-            suggestions:       vec![
+            security_issues: vec![],
+            suggestions: vec![
                 "Consider adding error handling".to_string(),
                 "Add comprehensive tests".to_string(),
             ],
@@ -931,10 +952,10 @@ if (require.main === module) {{
 impl Default for GenerationMetadata {
     fn default() -> Self {
         Self {
-            generation_id:               Uuid::new_v4().to_string(),
-            timestamp:                   Utc::now(),
-            processing_time_ms:          0,
-            model_used:                  "default".to_string(),
+            generation_id: Uuid::new_v4().to_string(),
+            timestamp: Utc::now(),
+            processing_time_ms: 0,
+            model_used: "default".to_string(),
             context_understanding_score: 0.0,
         }
     }
@@ -946,10 +967,10 @@ struct DefaultMetadata;
 impl From<DefaultMetadata> for GenerationMetadata {
     fn from(_: DefaultMetadata) -> Self {
         Self {
-            generation_id:               Uuid::new_v4().to_string(),
-            timestamp:                   Utc::now(),
-            processing_time_ms:          0,
-            model_used:                  "default".to_string(),
+            generation_id: Uuid::new_v4().to_string(),
+            timestamp: Utc::now(),
+            processing_time_ms: 0,
+            model_used: "default".to_string(),
             context_understanding_score: 0.0,
         }
     }
@@ -970,12 +991,12 @@ mod tests {
         let converter = create_nl_to_code_converter();
 
         let input = NLToCodeInput {
-            description:     "Create a function that calculates factorial".to_string(),
+            description: "Create a function that calculates factorial".to_string(),
             target_language: "rust".to_string(),
             project_context: HashMap::new(),
-            coding_style:    None,
-            existing_code:   None,
-            requirements:    vec![],
+            coding_style: None,
+            existing_code: None,
+            requirements: vec![],
         };
 
         let result = converter.convert(input).await.unwrap();
@@ -991,12 +1012,12 @@ mod tests {
         let converter = create_nl_to_code_converter();
 
         let input = NLToCodeInput {
-            description:     "Implement a simple data processor".to_string(),
+            description: "Implement a simple data processor".to_string(),
             target_language: "python".to_string(),
             project_context: HashMap::new(),
-            coding_style:    None,
-            existing_code:   None,
-            requirements:    vec![],
+            coding_style: None,
+            existing_code: None,
+            requirements: vec![],
         };
 
         let result = converter.convert(input).await.unwrap();

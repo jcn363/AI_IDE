@@ -1,4 +1,4 @@
-//! Conflict analyzer for dependency version conflicts and resolution suggestions
+//! Conflict analyzer for dependency version conflicts and resolution suggestions with AI mediation
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
@@ -7,16 +7,66 @@ use rayon::prelude::*;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
+// AI/ML integration for conflict resolution
+use rust_ai_ide_ai_inference::{
+    NLToCodeConverter, NLToCodeInput, NLToCodeResult,
+    InferenceError,
+};
+
 use crate::error::*;
 use crate::graph::*;
 use crate::resolver::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionConflict {
-    pub package_name:         String,
-    pub constraints:          Vec<ConstraintInfo>,
+    pub package_name: String,
+    pub constraints: Vec<ConstraintInfo>,
     pub suggested_resolution: Option<String>,
-    pub conflict_level:       ConflictLevel,
+    pub conflict_level: ConflictLevel,
+    /// AI-enhanced conflict metadata
+    pub ai_metadata: Option<AIConflictMetadata>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AIConflictMetadata {
+    /// AI confidence score (0.0 to 1.0)
+    pub confidence_score: f64,
+    /// AI-generated resolution suggestions
+    pub ai_suggestions: Vec<AISuggestion>,
+    /// AI analysis of conflict impact
+    pub impact_analysis: Option<String>,
+    /// AI reasoning for the suggested resolution
+    pub reasoning: Option<String>,
+    /// Whether AI was used for analysis
+    pub ai_used: bool,
+    /// Timestamp of AI analysis
+    pub analyzed_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AISuggestion {
+    /// Suggested version or resolution strategy
+    pub suggestion: String,
+    /// Confidence score for this suggestion (0.0 to 1.0)
+    pub confidence: f64,
+    /// Type of suggestion
+    pub suggestion_type: AISuggestionType,
+    /// AI reasoning for this suggestion
+    pub reasoning: String,
+    /// Potential risks or caveats
+    pub caveats: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum AISuggestionType {
+    /// Suggest a specific version
+    Version,
+    /// Suggest updating all dependencies
+    UpdateAll,
+    /// Suggest using a different dependency
+    AlternativeDependency,
+    /// Suggest a custom resolution strategy
+    CustomStrategy,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -29,9 +79,9 @@ pub enum ConflictLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConstraintInfo {
-    pub source_package:      String,
+    pub source_package: String,
     pub version_requirement: String,
-    pub depth:               usize,
+    pub depth: usize,
 }
 
 impl ConstraintInfo {
@@ -46,11 +96,55 @@ impl ConstraintInfo {
 
 pub struct ConflictAnalyzer {
     graph: Arc<RwLock<DependencyGraph>>,
+    /// AI services for conflict analysis
+    ai_converter: Arc<NLToCodeConverter>,
+    /// Configuration for AI features
+    ai_config: AIConflictConfig,
+}
+
+#[derive(Debug, Clone)]
+pub struct AIConflictConfig {
+    /// Enable AI-powered conflict analysis
+    pub enable_ai_analysis: bool,
+    /// Minimum confidence threshold for AI suggestions
+    pub min_confidence_threshold: f64,
+    /// Maximum time to spend on AI analysis (seconds)
+    pub max_analysis_time_secs: u64,
+    /// Whether to include AI reasoning in responses
+    pub include_reasoning: bool,
+    /// Fallback to traditional analysis on AI failure
+    pub fallback_on_ai_failure: bool,
+}
+
+impl Default for AIConflictConfig {
+    fn default() -> Self {
+        Self {
+            enable_ai_analysis: true,
+            min_confidence_threshold: 0.7,
+            max_analysis_time_secs: 30,
+            include_reasoning: true,
+            fallback_on_ai_failure: true,
+        }
+    }
 }
 
 impl ConflictAnalyzer {
     pub fn new(graph: Arc<RwLock<DependencyGraph>>) -> Self {
-        Self { graph }
+        Self::new_with_config(graph, AIConflictConfig::default())
+    }
+
+    pub fn new_with_config(
+        graph: Arc<RwLock<DependencyGraph>>,
+        ai_config: AIConflictConfig,
+    ) -> Self {
+        // Create a simple AI converter for conflict resolution
+        let ai_converter = Arc::new(SimpleConflictAI {});
+
+        Self {
+            graph,
+            ai_converter,
+            ai_config,
+        }
     }
 
     /// Analyze all version conflicts in the dependency graph
@@ -67,14 +161,13 @@ impl ConflictAnalyzer {
                 let dependencies = graph.get_dependencies(&node.name)?;
                 for (dep_name, dep_edge) in dependencies {
                     if let Some(version_req) = &dep_edge.version_constraint {
-                        constraint_map
-                            .entry(dep_name.clone())
-                            .or_default()
-                            .push(ConstraintInfo::new(
+                        constraint_map.entry(dep_name.clone()).or_default().push(
+                            ConstraintInfo::new(
                                 node.name.clone(),
                                 version_req.clone(),
                                 dep_edge.req_depth,
-                            ));
+                            ),
+                        );
                     }
                 }
             }
@@ -113,18 +206,227 @@ impl ConflictAnalyzer {
         }
 
         let mut conflict = VersionConflict {
-            package_name:         package_name.to_string(),
-            constraints:          constraints.to_vec(),
+            package_name: package_name.to_string(),
+            constraints: constraints.to_vec(),
             suggested_resolution: None,
-            conflict_level:       ConflictLevel::None,
+            conflict_level: ConflictLevel::None,
+            ai_metadata: None,
         };
 
         if unique_reqs.len() > 1 {
-            conflict.conflict_level = self.determine_conflict_level(constraints.len(), unique_reqs.len());
-            conflict.suggested_resolution = Some(self.suggest_resolution(&constraints).await?);
+            conflict.conflict_level =
+                self.determine_conflict_level(constraints.len(), unique_reqs.len());
+
+            // Traditional resolution as fallback
+            let traditional_resolution = self.suggest_resolution(&constraints)?;
+
+            // Try AI-powered analysis if enabled
+            if self.ai_config.enable_ai_analysis {
+                match self.analyze_conflict_with_ai(package_name, constraints).await {
+                    Ok(ai_metadata) => {
+                        conflict.ai_metadata = Some(ai_metadata);
+                        // Use AI suggestion if confidence is high enough, otherwise fall back to traditional
+                        if let Some(ai_meta) = &conflict.ai_metadata {
+                            if ai_meta.confidence_score >= self.ai_config.min_confidence_threshold {
+                                if let Some(ai_suggestion) = ai_meta.ai_suggestions.first() {
+                                    conflict.suggested_resolution = Some(ai_suggestion.suggestion.clone());
+                                }
+                            } else {
+                                conflict.suggested_resolution = traditional_resolution;
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        // AI analysis failed, use traditional resolution
+                        if self.ai_config.fallback_on_ai_failure {
+                            conflict.suggested_resolution = traditional_resolution;
+                        }
+                    }
+                }
+            } else {
+                conflict.suggested_resolution = traditional_resolution;
+            }
         }
 
         Ok(conflict)
+    }
+
+    /// Analyze conflict using AI services for enhanced suggestions
+    async fn analyze_conflict_with_ai(
+        &self,
+        package_name: &str,
+        constraints: &[ConstraintInfo],
+    ) -> DependencyResult<AIConflictMetadata> {
+        let start_time = chrono::Utc::now();
+
+        // Create a natural language description of the conflict
+        let conflict_description = self.build_conflict_description(package_name, constraints);
+
+        // Use NLToCodeConverter to analyze the conflict
+        let ai_input = NLToCodeInput {
+            description: conflict_description,
+            target_language: "rust".to_string(),
+            project_context: vec![format!("Resolving dependency version conflict for package '{}' with {} conflicting constraints", package_name, constraints.len())],
+            coding_style: None,
+            existing_code: None,
+            requirements: vec!["Analyze dependency version conflict and suggest resolution".to_string()],
+        };
+
+        // Get AI suggestions with timeout
+        let ai_result = tokio::time::timeout(
+            std::time::Duration::from_secs(self.ai_config.max_analysis_time_secs),
+            self.ai_converter.convert(ai_input),
+        ).await;
+
+        match ai_result {
+            Ok(Ok(conversion_result)) => {
+                // Parse AI response and extract suggestions
+                let ai_suggestions = self.parse_ai_suggestions(&conversion_result)?;
+                let confidence_score = self.calculate_ai_confidence(&ai_suggestions, constraints);
+
+                let metadata = AIConflictMetadata {
+                    confidence_score,
+                    ai_suggestions,
+                    impact_analysis: self.analyze_conflict_impact(package_name, constraints).await,
+                    reasoning: self.ai_config.include_reasoning.then_some(
+                        conversion_result.explanation.clone()
+                    ),
+                    ai_used: true,
+                    analyzed_at: Some(start_time),
+                };
+
+                Ok(metadata)
+            }
+            Ok(Err(e)) => {
+                // AI service error
+                tracing::warn!("AI conflict analysis failed for {}: {:?}", package_name, e);
+                Err(DependencyError::ResolutionError {
+                    package: package_name.to_string(),
+                    reason: format!("AI analysis failed: {:?}", e),
+                })
+            }
+            Err(_) => {
+                // Timeout
+                tracing::warn!("AI conflict analysis timed out for {}", package_name);
+                Err(DependencyError::ResolutionError {
+                    package: package_name.to_string(),
+                    reason: "AI analysis timed out".to_string(),
+                })
+            }
+        }
+    }
+
+    /// Build a natural language description of the conflict for AI analysis
+    fn build_conflict_description(&self, package_name: &str, constraints: &[ConstraintInfo]) -> String {
+        let mut description = format!(
+            "Resolve dependency version conflict for package '{}'.\n\nConstraints:\n",
+            package_name
+        );
+
+        for (i, constraint) in constraints.iter().enumerate() {
+            description.push_str(&format!(
+                "{}. Package '{}' requires version '{}'\n",
+                i + 1,
+                constraint.source_package,
+                constraint.version_requirement
+            ));
+        }
+
+        description.push_str("\nPlease suggest the best version to resolve this conflict, considering:\n");
+        description.push_str("- Semantic versioning compatibility\n");
+        description.push_str("- Stability and maintenance status\n");
+        description.push_str("- Breaking change impact\n");
+        description.push_str("- Ecosystem compatibility\n\n");
+        description.push_str("Provide a specific version number that satisfies most constraints.");
+
+        description
+    }
+
+    /// Parse AI-generated suggestions from the conversion result
+    fn parse_ai_suggestions(&self, result: &NLToCodeResult) -> DependencyResult<Vec<AISuggestion>> {
+        let mut suggestions = Vec::new();
+
+        // Extract version suggestions from AI response
+        let code = &result.code;
+        // Parse version numbers from the response
+        let version_pattern = regex::Regex::new(r"\d+\.\d+\.\d+").unwrap();
+        for cap in version_pattern.captures_iter(code) {
+            if let Some(version_match) = cap.get(0) {
+                let version = version_match.as_str().to_string();
+                suggestions.push(AISuggestion {
+                    suggestion: version.clone(),
+                    confidence: result.confidence_score,
+                    suggestion_type: AISuggestionType::Version,
+                    reasoning: format!("AI recommended version {} based on conflict analysis: {}", version, result.explanation),
+                    caveats: vec!["Verify compatibility with your specific use case".to_string()],
+                });
+            }
+        }
+
+        // If no versions found, provide alternative suggestions
+        if suggestions.is_empty() {
+            suggestions.push(AISuggestion {
+                suggestion: "Update all dependencies to latest compatible versions".to_string(),
+                confidence: 0.7,
+                suggestion_type: AISuggestionType::UpdateAll,
+                reasoning: format!("AI suggests updating dependencies to resolve conflicts: {}", result.explanation),
+                caveats: vec![
+                    "May introduce breaking changes".to_string(),
+                    "Test thoroughly after updates".to_string(),
+                ],
+            });
+        }
+
+        Ok(suggestions)
+    }
+
+    /// Calculate confidence score for AI suggestions
+    fn calculate_ai_confidence(&self, suggestions: &[AISuggestion], constraints: &[ConstraintInfo]) -> f64 {
+        if suggestions.is_empty() {
+            return 0.0;
+        }
+
+        // Start with base confidence from AI suggestions
+        let mut total_confidence = suggestions.iter().map(|s| s.confidence).sum::<f64>();
+        let avg_confidence = total_confidence / suggestions.len() as f64;
+
+        // Adjust based on constraint complexity
+        let complexity_factor = match constraints.len() {
+            1..=2 => 1.0,
+            3..=5 => 0.9,
+            _ => 0.8,
+        };
+
+        // Adjust based on version requirement complexity
+        let version_complexity = constraints.iter()
+            .filter(|c| c.version_requirement.contains("||") || c.version_requirement.contains(">="))
+            .count() as f64 / constraints.len() as f64;
+
+        let complexity_penalty = 1.0 - (version_complexity * 0.1);
+
+        (avg_confidence * complexity_factor * complexity_penalty).min(1.0).max(0.0)
+    }
+
+    /// Analyze the impact of the conflict resolution
+    async fn analyze_conflict_impact(&self, package_name: &str, constraints: &[ConstraintInfo]) -> Option<String> {
+        let affected_packages = constraints.len();
+        let unique_versions: std::collections::HashSet<_> = constraints.iter()
+            .map(|c| &c.version_requirement)
+            .collect();
+
+        let conflict_severity = if affected_packages > 5 {
+            "high"
+        } else if affected_packages > 2 {
+            "medium"
+        } else {
+            "low"
+        };
+
+        Some(format!(
+            "This conflict affects {} packages with {} unique version requirements. \
+             Resolution impact is {} - consider testing after applying changes.",
+            affected_packages, unique_versions.len(), conflict_severity
+        ))
     }
 
     /// Get available versions for a package (mock implementation)
@@ -139,7 +441,11 @@ impl ConflictAnalyzer {
         ])
     }
 
-    fn determine_conflict_level(&self, constraint_count: usize, unique_reqs: usize) -> ConflictLevel {
+    fn determine_conflict_level(
+        &self,
+        constraint_count: usize,
+        unique_reqs: usize,
+    ) -> ConflictLevel {
         match constraint_count {
             2..=3 => ConflictLevel::Warning,
             4..=6 => ConflictLevel::Error,
@@ -180,7 +486,7 @@ impl ConflictAnalyzer {
             .map(|(version, _)| version)
             .ok_or_else(|| DependencyError::ResolutionError {
                 package: "unknown".to_string(),
-                reason:  "No compatible version found".to_string(),
+                reason: "No compatible version found".to_string(),
             })
     }
 
@@ -210,10 +516,10 @@ impl ConflictAnalyzer {
         }
 
         Ok(ConflictStats {
-            total_conflicts:         conflicts.len(),
-            warning_conflicts:       warning_count,
-            error_conflicts:         error_count,
-            critical_conflicts:      critical_count,
+            total_conflicts: conflicts.len(),
+            warning_conflicts: warning_count,
+            error_conflicts: error_count,
+            critical_conflicts: critical_count,
             total_affected_packages: affected_packages.len(),
         })
     }
@@ -221,9 +527,9 @@ impl ConflictAnalyzer {
     /// Check if there are any unresolvable conflicts
     pub async fn has_unresolvable_conflicts(&self) -> DependencyResult<bool> {
         let conflicts = self.analyze_conflicts().await?;
-        let has_unresolvable = conflicts
-            .iter()
-            .any(|c| c.conflict_level == ConflictLevel::Critical && c.suggested_resolution.is_none());
+        let has_unresolvable = conflicts.iter().any(|c| {
+            c.conflict_level == ConflictLevel::Critical && c.suggested_resolution.is_none()
+        });
 
         Ok(has_unresolvable)
     }
@@ -231,10 +537,10 @@ impl ConflictAnalyzer {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConflictStats {
-    pub total_conflicts:         usize,
-    pub warning_conflicts:       usize,
-    pub error_conflicts:         usize,
-    pub critical_conflicts:      usize,
+    pub total_conflicts: usize,
+    pub warning_conflicts: usize,
+    pub error_conflicts: usize,
+    pub critical_conflicts: usize,
     pub total_affected_packages: usize,
 }
 
@@ -251,17 +557,17 @@ impl ConflictStats {
 /// Resolution suggestions and conflict resolution plan
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResolutionPlan {
-    pub conflicts:            Vec<VersionConflict>,
-    pub resolutions:          HashMap<String, String>,
+    pub conflicts: Vec<VersionConflict>,
+    pub resolutions: HashMap<String, String>,
     pub unresolved_conflicts: Vec<String>,
-    pub impact_analysis:      ImpactAnalysis,
+    pub impact_analysis: ImpactAnalysis,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ImpactAnalysis {
-    pub packages_to_update:         Vec<String>,
+    pub packages_to_update: Vec<String>,
     pub potential_breaking_changes: usize,
-    pub compatibility_risk:         RiskLevel,
+    pub compatibility_risk: RiskLevel,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -304,9 +610,9 @@ impl ComprehensiveConflictAnalyzer {
         }
 
         let impact_analysis = ImpactAnalysis {
-            packages_to_update:         packages_to_update.into_iter().collect(),
+            packages_to_update: packages_to_update.into_iter().collect(),
             potential_breaking_changes: self.estimate_breaking_changes(&resolutions).await?,
-            compatibility_risk:         self.assess_compatibility_risk(&conflicts),
+            compatibility_risk: self.assess_compatibility_risk(&conflicts),
         };
 
         Ok(ResolutionPlan {
@@ -317,7 +623,10 @@ impl ComprehensiveConflictAnalyzer {
         })
     }
 
-    async fn estimate_breaking_changes(&self, resolutions: &HashMap<String, String>) -> DependencyResult<usize> {
+    async fn estimate_breaking_changes(
+        &self,
+        resolutions: &HashMap<String, String>,
+    ) -> DependencyResult<usize> {
         // Rough estimation based on major version changes
         let mut breaking_changes = 0;
 

@@ -18,17 +18,17 @@ use tokio::sync::{Mutex, RwLock};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VirtualMemoryConfig {
     /// Maximum virtual memory to allocate (default: 16GB)
-    pub max_virtual_memory_gb:     usize,
+    pub max_virtual_memory_gb: usize,
     /// Page size for virtual memory mapping (default: 4MB)
-    pub page_size_mb:              usize,
+    pub page_size_mb: usize,
     /// Enable swap file usage (default: true)
-    pub enable_swap:               bool,
+    pub enable_swap: bool,
     /// Swap file path (default: system temp directory)
-    pub swap_file_path:            Option<PathBuf>,
+    pub swap_file_path: Option<PathBuf>,
     /// Maximum swap file size (default: 64GB)
-    pub max_swap_file_size_gb:     usize,
+    pub max_swap_file_size_gb: usize,
     /// Prefault memory pages for better performance (default: false)
-    pub prefault_pages:            bool,
+    pub prefault_pages: bool,
     /// Memory pressure threshold for triggering cleanup (0.0-1.0)
     pub memory_pressure_threshold: f64,
 }
@@ -36,12 +36,12 @@ pub struct VirtualMemoryConfig {
 impl Default for VirtualMemoryConfig {
     fn default() -> Self {
         Self {
-            max_virtual_memory_gb:     16,
-            page_size_mb:              4,
-            enable_swap:               true,
-            swap_file_path:            None,
-            max_swap_file_size_gb:     64,
-            prefault_pages:            false,
+            max_virtual_memory_gb: 16,
+            page_size_mb: 4,
+            enable_swap: true,
+            swap_file_path: None,
+            max_swap_file_size_gb: 64,
+            prefault_pages: false,
             memory_pressure_threshold: 0.8,
         }
     }
@@ -51,28 +51,28 @@ impl Default for VirtualMemoryConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemoryPage {
     /// Unique page identifier
-    pub page_id:          String,
+    pub page_id: String,
     /// Virtual address range
-    pub address_range:    (usize, usize),
+    pub address_range: (usize, usize),
     /// Physical address (if mapped)
     pub physical_address: Option<usize>,
     /// Size in bytes
-    pub size_bytes:       usize,
+    pub size_bytes: usize,
     /// Whether this page is currently swapped to disk
-    pub is_swapped:       bool,
+    pub is_swapped: bool,
     /// Last access timestamp
-    pub last_access:      chrono::DateTime<chrono::Utc>,
+    pub last_access: chrono::DateTime<chrono::Utc>,
     /// Access count
-    pub access_count:     u64,
+    pub access_count: u64,
 }
 
 /// Virtual memory page manager
 pub struct VirtualPageManager {
-    config:     VirtualMemoryConfig,
-    pages:      Arc<RwLock<HashMap<String, MemoryPage>>>,
+    config: VirtualMemoryConfig,
+    pages: Arc<RwLock<HashMap<String, MemoryPage>>>,
     memory_map: Arc<RwLock<HashMap<usize, String>>>, // address -> page_id
     free_pages: Arc<Mutex<Vec<usize>>>,
-    swap_file:  Option<Arc<RwLock<MmapMut>>>,
+    swap_file: Option<Arc<RwLock<MmapMut>>>,
 }
 
 impl VirtualPageManager {
@@ -99,7 +99,10 @@ impl VirtualPageManager {
         })
     }
 
-    async fn create_swap_file(config: &VirtualMemoryConfig, size: usize) -> Result<Arc<RwLock<MmapMut>>, IDEError> {
+    async fn create_swap_file(
+        config: &VirtualMemoryConfig,
+        size: usize,
+    ) -> Result<Arc<RwLock<MmapMut>>, IDEError> {
         let swap_path = config
             .swap_file_path
             .clone()
@@ -123,7 +126,11 @@ impl VirtualPageManager {
     }
 
     /// Allocate a new virtual memory page
-    pub async fn allocate_page(&self, page_id: String, size_bytes: usize) -> Result<MemoryPage, IDEError> {
+    pub async fn allocate_page(
+        &self,
+        page_id: String,
+        size_bytes: usize,
+    ) -> Result<MemoryPage, IDEError> {
         let page_size = self.config.page_size_mb * 1024 * 1024;
         if size_bytes > page_size {
             return Err(IDEError::InvalidArgument(format!(
@@ -280,7 +287,7 @@ impl VirtualPageManager {
 
 /// Large file memory handler for streaming operations
 pub struct LargeFileMemoryHandler {
-    config:        VirtualMemoryConfig,
+    config: VirtualMemoryConfig,
     file_mappings: Arc<RwLock<HashMap<String, (File, MmapMut)>>>,
 }
 
@@ -329,7 +336,12 @@ impl LargeFileMemoryHandler {
     }
 
     /// Stream processing for large files with minimal memory usage
-    pub async fn stream_process_file<F>(&self, file_id: &str, chunk_size: usize, processor: F) -> Result<(), IDEError>
+    pub async fn stream_process_file<F>(
+        &self,
+        file_id: &str,
+        chunk_size: usize,
+        processor: F,
+    ) -> Result<(), IDEError>
     where
         F: Fn(&[u8]) -> Result<(), IDEError>,
     {
@@ -361,9 +373,9 @@ impl LargeFileMemoryHandler {
 
 /// Virtual address space manager
 pub struct VirtualAddressSpaceManager {
-    config:           VirtualMemoryConfig,
+    config: VirtualMemoryConfig,
     allocated_ranges: Arc<RwLock<Vec<(usize, usize)>>>, // (start, end)
-    freed_ranges:     Arc<RwLock<Vec<(usize, usize)>>>,
+    freed_ranges: Arc<RwLock<Vec<(usize, usize)>>>,
 }
 
 impl VirtualAddressSpaceManager {
@@ -438,10 +450,10 @@ impl VirtualAddressSpaceManager {
 
 /// Virtual Memory Interface - Main API
 pub struct VirtualMemoryInterface {
-    config:             VirtualMemoryConfig,
-    page_manager:       Arc<VirtualPageManager>,
+    config: VirtualMemoryConfig,
+    page_manager: Arc<VirtualPageManager>,
     large_file_handler: Arc<LargeFileMemoryHandler>,
-    address_manager:    Arc<VirtualAddressSpaceManager>,
+    address_manager: Arc<VirtualAddressSpaceManager>,
 }
 
 impl VirtualMemoryInterface {
@@ -479,7 +491,11 @@ impl VirtualMemoryInterface {
     }
 
     /// Allocate virtual memory page
-    pub async fn allocate_page(&self, page_id: String, size_bytes: usize) -> Result<MemoryPage, IDEError> {
+    pub async fn allocate_page(
+        &self,
+        page_id: String,
+        size_bytes: usize,
+    ) -> Result<MemoryPage, IDEError> {
         self.page_manager.allocate_page(page_id, size_bytes).await
     }
 

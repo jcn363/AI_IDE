@@ -35,7 +35,7 @@ which = "8.0.0"         # For finding executables in PATH
 rand = { workspace = true, optional = true } # For random load balancing
 
 # Monitoring and Security Dependencies
-prometheus = { version = "0.13.3", optional = true } # Prometheus metrics collection
+prometheus = { version = "0.14.0", optional = true } # Prometheus metrics collection
 opentelemetry = { version = "0.21.0", optional = true } # Advanced observability
 hdrhistogram = { version = "7.5.3", optional = true } # High-performance latency histograms
 governor = { version = "0.6.0", optional = true } # Rate limiting

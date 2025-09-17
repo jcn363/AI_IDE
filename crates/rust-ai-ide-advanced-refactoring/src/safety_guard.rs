@@ -8,7 +8,10 @@ use tokio::sync::Mutex;
 
 use crate::ai_suggester::AnalysisContext;
 use crate::error::{AnalysisError, AnalysisResult};
-use crate::types::{RefactoringSuggestion, SafetyValidation, ValidationCheck, ValidationCheckType, ValidationSeverity};
+use crate::types::{
+    RefactoringSuggestion, SafetyValidation, ValidationCheck, ValidationCheckType,
+    ValidationSeverity,
+};
 
 /// Safety guard component using syn AST analysis for validation
 pub struct RefactoringSafetyGuard {
@@ -69,13 +72,16 @@ impl RefactoringSafetyGuard {
         context: &AnalysisContext,
     ) -> AnalysisResult<SafetyValidation> {
         // Parse the file to analyze
-        let content = std::fs::read_to_string(&suggestion.target_file).map_err(|e| AnalysisError::DataProcessing {
-            stage: format!("Failed to read file {}: {}", suggestion.target_file, e),
+        let content = std::fs::read_to_string(&suggestion.target_file).map_err(|e| {
+            AnalysisError::DataProcessing {
+                stage: format!("Failed to read file {}: {}", suggestion.target_file, e),
+            }
         })?;
 
-        let syntax_tree: SynFile = parse_file(&content).map_err(|e| AnalysisError::DataProcessing {
-            stage: format!("Failed to parse file {}: {}", suggestion.target_file, e),
-        })?;
+        let syntax_tree: SynFile =
+            parse_file(&content).map_err(|e| AnalysisError::DataProcessing {
+                stage: format!("Failed to parse file {}: {}", suggestion.target_file, e),
+            })?;
 
         // Perform various safety checks using syn visitors
         let syntactic_check = self.check_syntactic_correctness(&syntax_tree);
@@ -100,7 +106,9 @@ impl RefactoringSafetyGuard {
             functional_equivalence_verified,
             behavior_preservation_confirmed,
             circular_dependencies: vec![], // Would be detected separately
-            overall_safety_score: if functional_equivalence_verified && behavior_preservation_confirmed {
+            overall_safety_score: if functional_equivalence_verified
+                && behavior_preservation_confirmed
+            {
                 1.0
             } else {
                 0.5
@@ -114,15 +122,19 @@ impl RefactoringSafetyGuard {
         // But we could do additional checks here
         ValidationCheck {
             check_type: ValidationCheckType::SyntacticCorrectness,
-            passed:     true,
-            severity:   ValidationSeverity::Info,
-            message:    "Code parses successfully".to_string(),
-            details:    Default::default(),
+            passed: true,
+            severity: ValidationSeverity::Info,
+            message: "Code parses successfully".to_string(),
+            details: Default::default(),
         }
     }
 
     /// Check type safety using syn type analysis
-    fn check_type_safety(&self, syntax_tree: &SynFile, suggestion: &RefactoringSuggestion) -> ValidationCheck {
+    fn check_type_safety(
+        &self,
+        syntax_tree: &SynFile,
+        suggestion: &RefactoringSuggestion,
+    ) -> ValidationCheck {
         // Use syn visitor to check for type-related issues
         let mut visitor = TypeSafetyVisitor::new();
         visitor.visit_file(syntax_tree);
@@ -160,7 +172,7 @@ impl RefactoringSafetyGuard {
             crate::types::RefactoringType::RenameSymbol => true, // Renaming should preserve functionality
             crate::types::RefactoringType::ExtractMethod => true, // Extracting method should preserve functionality
             crate::types::RefactoringType::ExtractVariable => true, // Extracting variable should preserve functionality
-            _ => false,                                          // Unknown refactoring types need manual verification
+            _ => false, // Unknown refactoring types need manual verification
         };
 
         ValidationCheck {

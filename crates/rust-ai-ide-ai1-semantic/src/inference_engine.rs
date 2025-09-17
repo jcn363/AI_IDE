@@ -18,7 +18,7 @@ impl InferenceEngine {
         self.rules.push(rule);
     }
 
-    pub fn infer(&self, context: &SemanticContext) -> Vec<InferenceResult> {
+    pub fn infer(&self, _context: &SemanticContext) -> Vec<InferenceResult> {
         vec![] // Placeholder
     }
 }
@@ -26,16 +26,16 @@ impl InferenceEngine {
 /// Semantic context for inference
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SemanticContext {
-    pub symbols:       Vec<String>,
+    pub symbols: Vec<String>,
     pub relationships: Vec<String>,
 }
 
 /// Inference rule
 #[derive(Debug, Clone)]
 pub struct InferenceRule {
-    pub name:      String,
+    pub name: String,
     pub condition: fn(&SemanticContext) -> bool,
-    pub action:    fn(&SemanticContext) -> InferenceResult,
+    pub action: fn(&SemanticContext) -> InferenceResult,
 }
 
 impl InferenceRule {
@@ -56,7 +56,7 @@ impl InferenceRule {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InferenceResult {
     pub inference_type: String,
-    pub confidence:     f32,
-    pub description:    String,
-    pub suggestions:    Vec<String>,
+    pub confidence: f32,
+    pub description: String,
+    pub suggestions: Vec<String>,
 }

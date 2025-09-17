@@ -1,5 +1,82 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+
+// Styles
+import './MultiModalAI.css';
+
+// Security imports
+import DOMPurify from 'dompurify';
+
+// Webview compatibility utilities
+const isWebviewEnvironment = (): boolean => {
+  return typeof window !== 'undefined' && (
+    window.navigator.userAgent.includes('Tauri') ||
+    window.navigator.userAgent.includes('WebView') ||
+    typeof (window as any).__TAURI__ !== 'undefined'
+  );
+};
+
+const hasPerformanceMemoryAPI = (): boolean => {
+  return typeof performance !== 'undefined' &&
+         'memory' in performance &&
+         isWebviewEnvironment(); // Only use in webview to avoid security issues
+};
+
+// Performance monitoring hook with webview compatibility
+const usePerformanceMonitor = (componentName: string) => {
+  const [renderCount, setRenderCount] = useState(0);
+  const [renderTimes, setRenderTimes] = useState<number[]>([]);
+  const [memoryUsage, setMemoryUsage] = useState<number | null>(null);
+
+  useEffect(() => {
+    const startTime = performance.now();
+    setRenderCount(prev => prev + 1);
+
+    return () => {
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+      setRenderTimes(prev => [...prev.slice(-9), renderTime]); // Keep last 10 render times
+
+      // Monitor memory usage if available and in webview environment
+      if (hasPerformanceMemoryAPI()) {
+        const memory = (performance as { memory: { usedJSHeapSize: number } }).memory;
+        setMemoryUsage(memory.usedJSHeapSize);
+      }
+
+      // Log performance metrics only in development
+      if (process.env.NODE_ENV === 'development' && renderTime > 16.67) { // More than one frame at 60fps
+        console.warn(`${componentName} render took ${renderTime.toFixed(2)}ms - potential performance issue`);
+      }
+    };
+  });
+
+  const getAverageRenderTime = () => {
+    if (renderTimes.length === 0) return 0;
+    return renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
+  };
+
+  const getPerformanceMetrics = () => ({
+    renderCount,
+    averageRenderTime: getAverageRenderTime(),
+    lastRenderTime: renderTimes[renderTimes.length - 1] || 0,
+    memoryUsage,
+  });
+
+  return { getPerformanceMetrics };
+};
+
+// Lazy loaded components for better performance
+const CollaborationPanel = React.lazy(() =>
+  import('./CollaborationPanel').catch(() => ({
+    default: () => <div>Collaboration panel not available</div>
+  }))
+);
+
+const ResultsSection = React.lazy(() =>
+  import('./ResultsSection').catch(() => ({
+    default: () => <div>Results section not available</div>
+  }))
+);
 
 // NOTE: Following project rules - no React hooks for external state libraries
 // Using useState as allowed, but no external hooks
@@ -64,6 +141,14 @@ interface AnalysisResponse {
   error?: string;
 }
 
+// Security constants
+const SECURITY_CONFIG = {
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  ALLOWED_FILE_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  MAX_INPUT_LENGTH: 10000,
+  GENERIC_ERROR_MESSAGE: 'An error occurred. Please try again.',
+};
+
 const MODALITY_TYPES = {
   TEXT: 'text',
   IMAGE: 'image',
@@ -74,7 +159,7 @@ const MODALITY_TYPES = {
   MULTIMODAL: 'multimodal',
 };
 
-const MultiModalAI: React.FC<MultiModalAIProps> = ({
+const MultiModalAI: React.FC<MultiModalAIProps> = React.memo(({
   onAnalysisComplete,
   isFullscreen = false,
 }) => {
@@ -85,6 +170,7 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
   );
   const [inputText, setInputText] = useState('');
   const [inputImage, setInputImage] = useState<File | null>(null);
+  const [imageObjectUrl, setImageObjectUrl] = useState<string | null>(null);
   const [audioRecording, setAudioRecording] = useState(false);
 
   // Collaboration state
@@ -93,11 +179,55 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
   );
   const [collaborativeResults, setCollaborativeResults] = useState<CollaborativeResult[]>([]);
   const [sharedInputs, setSharedInputs] = useState<SharedInput[]>([]);
-  const [userId] = useState(() => `user_${Math.random().toString(36).substr(2, 9)}`);
-  const [username] = useState(() => `User_${Math.random().toString(36).substr(2, 4)}`);
+  // Secure ID generation using crypto.getRandomValues
+  const generateSecureId = (length: number): string => {
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(36)).join('').slice(0, length);
+  };
+
+  // Input sanitization and validation functions
+  const sanitizeInput = useCallback((input: string): string => {
+    // Remove potentially dangerous characters and trim
+    return input
+      .replace(/[<>\"'&]/g, '') // Remove HTML/XML dangerous chars
+      .trim()
+      .slice(0, SECURITY_CONFIG.MAX_INPUT_LENGTH);
+  }, []);
+
+  const validateInput = useCallback((input: string, fieldName: string): { isValid: boolean; error?: string } => {
+    if (!input || input.trim().length === 0) {
+      return { isValid: false, error: `${fieldName} cannot be empty` };
+    }
+
+    if (input.length > SECURITY_CONFIG.MAX_INPUT_LENGTH) {
+      return { isValid: false, error: `${fieldName} exceeds maximum length of ${SECURITY_CONFIG.MAX_INPUT_LENGTH} characters` };
+    }
+
+    // Check for potentially malicious patterns
+    const maliciousPatterns = [
+      /<script/i,
+      /javascript:/i,
+      /on\w+\s*=/i,
+      /data:text\/html/i
+    ];
+
+    for (const pattern of maliciousPatterns) {
+      if (pattern.test(input)) {
+        return { isValid: false, error: `${fieldName} contains invalid content` };
+      }
+    }
+
+    return { isValid: true };
+  }, []);
+
+  const [userId] = useState(() => `user_${generateSecureId(9)}`);
+  const [username] = useState(() => `User_${generateSecureId(4)}`);
   const [showCollaborationPanel, setShowCollaborationPanel] = useState(false);
   const [sessionNameInput, setSessionNameInput] = useState('');
   const [joinSessionId, setJoinSessionId] = useState('');
+  const [audioData, setAudioData] = useState<string>('');
+  const [errorState, setErrorState] = useState<{hasError: boolean, message: string, details: string} | null>(null);
 
   const handleModalityToggle = useCallback(
     (modality: string) => {
@@ -112,27 +242,236 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
     [selectedModalities]
   );
 
+  const handleTextInputChange = useCallback((value: string) => {
+    const sanitized = sanitizeInput(value);
+    const validation = validateInput(sanitized, 'Text input');
+    if (validation.isValid) {
+      setInputText(sanitized);
+      setErrorState(null);
+    } else {
+      setErrorState({
+        hasError: true,
+        message: 'Input validation failed',
+        details: validation.error || 'Invalid input',
+      });
+    }
+  }, [sanitizeInput, validateInput]);
+
+  const handleSessionNameChange = useCallback((value: string) => {
+    const sanitized = sanitizeInput(value);
+    const validation = validateInput(sanitized, 'Session name');
+    if (validation.isValid) {
+      setSessionNameInput(sanitized);
+      setErrorState(null);
+    } else {
+      setErrorState({
+        hasError: true,
+        message: 'Session name validation failed',
+        details: validation.error || 'Invalid session name',
+      });
+    }
+  }, [sanitizeInput, validateInput]);
+
+  const handleJoinSessionIdChange = useCallback((value: string) => {
+    const sanitized = sanitizeInput(value);
+    const validation = validateInput(sanitized, 'Session ID');
+    if (validation.isValid) {
+      setJoinSessionId(sanitized);
+      setErrorState(null);
+    } else {
+      setErrorState({
+        hasError: true,
+        message: 'Session ID validation failed',
+        details: validation.error || 'Invalid session ID',
+      });
+    }
+  }, [sanitizeInput, validateInput]);
+
+  const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
+    // Check file size
+    if (file.size > SECURITY_CONFIG.MAX_FILE_SIZE) {
+      return { isValid: false, error: `File size exceeds ${SECURITY_CONFIG.MAX_FILE_SIZE / (1024 * 1024)}MB limit` };
+    }
+
+    // Check file type
+    if (!SECURITY_CONFIG.ALLOWED_FILE_TYPES.includes(file.type)) {
+      return { isValid: false, error: 'File type not allowed. Only JPEG, PNG, GIF, and WebP images are permitted' };
+    }
+
+    // Basic content validation (check file extension matches type)
+    const extension = file.name.toLowerCase().split('.').pop();
+    const expectedExtensions: { [key: string]: string[] } = {
+      'image/jpeg': ['jpg', 'jpeg'],
+      'image/png': ['png'],
+      'image/gif': ['gif'],
+      'image/webp': ['webp']
+    };
+
+    if (!expectedExtensions[file.type]?.includes(extension || '')) {
+      return { isValid: false, error: 'File extension does not match file type' };
+    }
+
+    return { isValid: true };
+  }, []);
+
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
+      const validation = validateFile(file);
+      if (validation.isValid) {
         setInputImage(file);
+        setErrorState(null);
+      } else {
+        setErrorState({
+          hasError: true,
+          message: 'File upload rejected',
+          details: validation.error || 'Unknown error',
+        });
       }
+    }
+  }, [validateFile]);
+
+  // Manage object URL lifecycle for image preview
+  useEffect(() => {
+    if (inputImage) {
+      const url = URL.createObjectURL(inputImage);
+      setImageObjectUrl(url);
+
+      // Cleanup previous URL and create new one
+      return () => {
+        if (imageObjectUrl) {
+          URL.revokeObjectURL(imageObjectUrl);
+        }
+      };
+    } else {
+      // Clear object URL when no image
+      if (imageObjectUrl) {
+        URL.revokeObjectURL(imageObjectUrl);
+        setImageObjectUrl(null);
+      }
+    }
+  }, [inputImage, imageObjectUrl]);
+
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      if (imageObjectUrl) {
+        URL.revokeObjectURL(imageObjectUrl);
+      }
+    };
+  }, [imageObjectUrl]);
+
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+
+  const startAudioRecording = useCallback(async () => {
+    try {
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setAudioStream(stream);
+
+      // Create media recorder
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+
+      // Handle data available event
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      // Handle recording stop
+      recorder.onstop = () => {
+        setAudioChunks(chunks);
+        const audioBlob = new Blob(chunks, { type: 'audio/wav' });
+        // Convert to base64 for backend processing
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          // Store the audio data in state for processing
+          setAudioData(base64data);
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+
+      // Start recording
+      recorder.start();
+      setMediaRecorder(recorder);
+      setAudioRecording(true);
+      console.log('Audio recording started');
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      // Handle error state
+      setErrorState({
+        hasError: true,
+        message: 'Failed to access microphone. Please check permissions.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   }, []);
 
-  const startAudioRecording = useCallback(() => {
-    setAudioRecording(true);
-    // TODO: Implement audio recording
-    // Note: Webview restrictions prevent full access to navigator.mediaDevices
-    console.log('Audio recording started');
-  }, []);
-
   const stopAudioRecording = useCallback(() => {
-    setAudioRecording(false);
-    // TODO: Stop recording and process audio
-    console.log('Audio recording stopped');
-  }, []);
+    if (mediaRecorder && audioRecording) {
+      mediaRecorder.stop();
+      setAudioRecording(false);
+
+      // Stop all tracks in the stream
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+        setAudioStream(null);
+      }
+
+      console.log('Audio recording stopped and processed');
+    }
+  }, [mediaRecorder, audioRecording, audioStream]);
+
+  // Clean up resources on unmount
+  useEffect(() => {
+    return () => {
+      if (audioStream) {
+        audioStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [audioStream]);
+
+  const shareMultimodalInput = useCallback(
+    async (modalityType: string, content: any) => {
+      if (!collaborationSession) return;
+
+      const sharedInput: SharedInput = {
+        participant_id: userId,
+        participant_name: username,
+        modality_type: modalityType,
+        content,
+        timestamp: Date.now(),
+      };
+
+      setSharedInputs((prev) => [...prev, sharedInput]);
+
+      // In a real implementation, this would send to all session participants
+      console.log('Shared input with session:', sharedInput);
+    },
+    [collaborationSession, userId, username]
+  );
+
+  const shareAnalysisResult = useCallback(
+    async (result: AnalysisResponse) => {
+      if (!collaborationSession || !result) return;
+
+      const collaborativeResult: CollaborativeResult = {
+        participant_id: userId,
+        participant_name: username,
+        result,
+        timestamp: Date.now(),
+        is_shared: true,
+      };
+
+      setCollaborativeResults((prev) => [...prev, collaborativeResult]);
+    },
+    [collaborationSession, userId, username]
+  );
 
   const processAnalysis = useCallback(async () => {
     if (selectedModalities.size === 0) return;
@@ -189,12 +528,13 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
         await shareAnalysisResult(result);
       }
     } catch (error) {
+      // Secure error handling - prevent information disclosure
       console.error('Multi-modal analysis failed:', error);
       const errorResult: AnalysisResponse = {
         success: false,
         results: [],
         processing_time: 0,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: SECURITY_CONFIG.GENERIC_ERROR_MESSAGE, // Generic error message to prevent info disclosure
       };
       setAnalysisResult(errorResult);
       onAnalysisComplete?.(errorResult);
@@ -203,6 +543,13 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
       if (collaborationSession) {
         await shareAnalysisResult(errorResult);
       }
+
+      // Set secure error state
+      setErrorState({
+        hasError: true,
+        message: 'Analysis failed',
+        details: SECURITY_CONFIG.GENERIC_ERROR_MESSAGE,
+      });
     } finally {
       setLoading(false);
     }
@@ -330,43 +677,6 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
     [collaborationSession, userId, username]
   );
 
-  const shareMultimodalInput = useCallback(
-    async (modalityType: string, content: any) => {
-      if (!collaborationSession) return;
-
-      const sharedInput: SharedInput = {
-        participant_id: userId,
-        participant_name: username,
-        modality_type: modalityType,
-        content,
-        timestamp: Date.now(),
-      };
-
-      setSharedInputs((prev) => [...prev, sharedInput]);
-
-      // In a real implementation, this would send to all session participants
-      console.log('Shared input with session:', sharedInput);
-    },
-    [collaborationSession, userId, username]
-  );
-
-  const shareAnalysisResult = useCallback(
-    async (result: AnalysisResponse) => {
-      if (!collaborationSession || !result) return;
-
-      const collaborativeResult: CollaborativeResult = {
-        participant_id: userId,
-        participant_name: username,
-        result,
-        timestamp: Date.now(),
-        is_shared: true,
-      };
-
-      setCollaborativeResults((prev) => [...prev, collaborativeResult]);
-    },
-    [collaborationSession, userId, username]
-  );
-
   const requestCollaborativeCoaching = useCallback(async () => {
     if (!collaborationSession || !analysisResult) return;
 
@@ -409,7 +719,7 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
     });
   }, []);
 
-  const getModalityColor = (modality: string): string => {
+  const getModalityColor = useCallback((modality: string): string => {
     switch (modality) {
       case MODALITY_TYPES.TEXT:
         return '#3182ce';
@@ -426,7 +736,7 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
       default:
         return '#4a5568';
     }
-  };
+  }, []);
 
   return (
     <div className={`multimodal-ai ${isFullscreen ? 'fullscreen' : ''}`}>
@@ -490,85 +800,21 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
         </div>
       </div>
 
-      {/* Collaboration Panel */}
+      {/* Collaboration Panel - Lazy Loaded */}
       {showCollaborationPanel && (
-        <div className="collaboration-panel">
-          <h3>Collaboration Session</h3>
-          {!collaborationSession ? (
-            <div className="session-setup">
-              <div className="setup-section">
-                <h4>Create New Session</h4>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    placeholder="Session name..."
-                    value={sessionNameInput}
-                    onChange={(e) => setSessionNameInput(e.target.value)}
-                  />
-                  <button
-                    className="create-btn"
-                    onClick={createCollaborationSession}
-                    disabled={!sessionNameInput.trim()}
-                  >
-                    Create Session
-                  </button>
-                </div>
-              </div>
-              <div className="setup-section">
-                <h4>Join Existing Session</h4>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    placeholder="Session ID..."
-                    value={joinSessionId}
-                    onChange={(e) => setJoinSessionId(e.target.value)}
-                  />
-                  <button
-                    className="join-btn"
-                    onClick={joinCollaborationSession}
-                    disabled={!joinSessionId.trim()}
-                  >
-                    Join Session
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="active-session">
-              <div className="participants-section">
-                <h4>Participants ({collaborationSession.participants.length})</h4>
-                <div className="participants-list">
-                  {collaborationSession.participants.map((participant) => (
-                    <div key={participant.user_id} className="participant-item">
-                      <div className={`status-indicator ${participant.status}`}></div>
-                      <span className="participant-name">
-                        {participant.username}
-                        {participant.user_id === userId && ' (You)'}
-                      </span>
-                      <span className="participant-activity">{participant.activity}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {sharedInputs.length > 0 && (
-                <div className="shared-inputs-section">
-                  <h4>Shared Inputs</h4>
-                  <div className="shared-inputs-list">
-                    {sharedInputs.slice(-5).map((input, index) => (
-                      <div key={index} className="shared-input-item">
-                        <span className="input-participant">{input.participant_name}</span>
-                        <span className="input-type">{input.modality_type}</span>
-                        <span className="input-time">
-                          {new Date(input.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <Suspense fallback={<div className="loading-panel">Loading collaboration...</div>}>
+          <CollaborationPanel
+            collaborationSession={collaborationSession}
+            userId={userId}
+            sessionNameInput={sessionNameInput}
+            joinSessionId={joinSessionId}
+            sharedInputs={sharedInputs}
+            onSessionNameChange={handleSessionNameChange}
+            onJoinSessionIdChange={handleJoinSessionIdChange}
+            onCreateSession={createCollaborationSession}
+            onJoinSession={joinCollaborationSession}
+          />
+        </Suspense>
       )}
 
       {/* Input Section */}
@@ -578,7 +824,7 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
             <label>Text Input</label>
             <textarea
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={(e) => handleTextInputChange(e.target.value)}
               placeholder="Enter text to analyze..."
               rows={4}
             />
@@ -589,10 +835,10 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
           <div className="input-group">
             <label>Image Upload</label>
             <input type="file" accept="image/*" onChange={handleFileUpload} />
-            {inputImage && (
+            {inputImage && imageObjectUrl && (
               <div className="image-preview">
                 <img
-                  src={URL.createObjectURL(inputImage)}
+                  src={imageObjectUrl}
                   alt="Preview"
                   style={{ maxWidth: '200px', maxHeight: '200px' }}
                 />
@@ -646,62 +892,15 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
         )}
       </div>
 
-      {/* Results Section */}
+      {/* Results Section - Lazy Loaded */}
       {analysisResult && (
-        <div className="results-section">
-          <h3>Your Analysis Results</h3>
-
-          {analysisResult.success ? (
-            <div className="success-results">
-              <div className="success-header">
-                <span className="success-icon">✅</span>
-                <span>Analysis completed successfully</span>
-              </div>
-              <p>Processing time: {analysisResult.processing_time.toFixed(2)}ms</p>
-
-              <div className="results-grid">
-                {analysisResult.results.map((result, index) => (
-                  <div key={index} className="result-card">
-                    <div className="result-header">
-                      <h4>{result.modality_type}</h4>
-                      <span
-                        className={`confidence ${result.confidence > 0.8 ? 'high' : result.confidence > 0.6 ? 'medium' : 'low'}`}
-                      >
-                        {Math.round(result.confidence * 100)}%
-                      </span>
-                    </div>
-
-                    {result.success ? (
-                      <div className="result-content">
-                        {result.modality_type === 'text' &&
-                          typeof result.data === 'object' &&
-                          'content' in result.data && (
-                            <p>{(result.data as { content: string }).content}</p>
-                          )}
-                        {result.modality_type === 'image' &&
-                          typeof result.data === 'object' &&
-                          'description' in result.data && (
-                            <p>{(result.data as { description: string }).description}</p>
-                          )}
-                        {result.data_length && <p>Data processed: {result.data_length} bytes</p>}
-                      </div>
-                    ) : (
-                      <p className="error-text">Processing failed for this modality</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="error-results">
-              <div className="error-header">
-                <span className="error-icon">❌</span>
-                <span>Analysis failed</span>
-              </div>
-              <p className="error-text">{analysisResult.error}</p>
-            </div>
-          )}
-        </div>
+        <Suspense fallback={<div className="loading-results">Loading results...</div>}>
+          <ResultsSection
+            analysisResult={analysisResult}
+            collaborativeResults={collaborativeResults}
+            getModalityColor={getModalityColor}
+          />
+        </Suspense>
       )}
 
       {/* Collaborative Results Section */}
@@ -753,688 +952,10 @@ const MultiModalAI: React.FC<MultiModalAIProps> = ({
         </div>
       )}
 
-      <style jsx>{`
-        .multimodal-ai {
-          padding: 24px;
-          border-radius: 12px;
-          background: white;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .multimodal-ai.fullscreen {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 1000;
-          margin: 0;
-          border-radius: 0;
-          overflow-y: auto;
-        }
-
-        .multimodal-header {
-          text-align: center;
-          margin-bottom: 32px;
-        }
-
-        .multimodal-header h2 {
-          margin: 0 0 8px 0;
-          color: #2d3748;
-          font-size: 24px;
-        }
-
-        .multimodal-header p {
-          margin: 0;
-          color: #718096;
-          font-size: 14px;
-        }
-
-        .modality-selection h3 {
-          margin: 0 0 16px 0;
-          color: #4a5568;
-          font-size: 16px;
-        }
-
-        .modality-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-bottom: 24px;
-        }
-
-        .modality-btn {
-          padding: 8px 16px;
-          border: 2px solid #e1e5e9;
-          border-radius: 8px;
-          background: white;
-          color: #4a5568;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-
-        .modality-btn:hover:not(.active) {
-          border-color: #3182ce;
-        }
-
-        .modality-btn.active {
-          color: white;
-          border-color: transparent;
-          font-weight: 600;
-        }
-
-        .input-section {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          margin-bottom: 24px;
-        }
-
-        .input-group label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 500;
-          color: #4a5568;
-        }
-
-        .input-group textarea {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #e1e5e9;
-          border-radius: 6px;
-          resize: vertical;
-          font-size: 14px;
-        }
-
-        .input-group input[type='file'] {
-          padding: 8px;
-          border: 1px solid #e1e5e9;
-          border-radius: 6px;
-        }
-
-        .image-preview {
-          margin-top: 12px;
-          text-align: center;
-        }
-
-        .image-preview p {
-          margin: 8px 0 0 0;
-          font-size: 12px;
-          color: #718096;
-        }
-
-        .audio-controls {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .audio-btn {
-          padding: 10px 16px;
-          border: 1px solid #e1e5e9;
-          border-radius: 6px;
-          background: #f7fafc;
-          cursor: pointer;
-          font-size: 14px;
-        }
-
-        .audio-btn.recording {
-          background: #fed7d7;
-          border-color: #e53e3e;
-        }
-
-        .action-section {
-          text-align: center;
-          margin-bottom: 24px;
-          display: flex;
-          justify-content: center;
-          gap: 12px;
-          flex-wrap: wrap;
-        }
-
-        .analyze-btn {
-          padding: 14px 32px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-
-        .analyze-btn:hover:not(:disabled) {
-          transform: translateY(-1px);
-        }
-
-        .analyze-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .coaching-btn {
-          padding: 14px 24px;
-          background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-
-        .coaching-btn:hover:not(:disabled) {
-          transform: translateY(-1px);
-        }
-
-        .coaching-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .results-section {
-          border-top: 1px solid #e1e5e9;
-          padding-top: 24px;
-        }
-
-        .results-section h3 {
-          margin: 0 0 16px 0;
-          color: #4a5568;
-          font-size: 18px;
-        }
-
-        .success-results {
-          background: #f0fff4;
-          border: 1px solid #c6f6d5;
-          border-radius: 8px;
-          padding: 16px;
-        }
-
-        .success-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-
-        .success-header span:first-child {
-          font-size: 18px;
-        }
-
-        .success-header span:last-child {
-          color: #276749;
-          font-weight: 500;
-        }
-
-        .error-results {
-          background: #fed7d7;
-          border: 1px solid #feb2b2;
-          border-radius: 8px;
-          padding: 16px;
-        }
-
-        .error-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-        }
-
-        .error-text {
-          margin: 8px 0 0 0;
-          color: #c53030;
-          font-size: 14px;
-        }
-
-        .results-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 16px;
-          margin-top: 16px;
-        }
-
-        .result-card {
-          background: white;
-          border: 1px solid #e1e5e9;
-          border-radius: 8px;
-          padding: 16px;
-        }
-
-        .result-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px;
-        }
-
-        .result-header h4 {
-          margin: 0;
-          color: #2d3748;
-          text-transform: capitalize;
-        }
-
-        .confidence {
-          padding: 4px 8px;
-          border-radius: 12px;
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .confidence.high {
-          background: #c6f6d5;
-          color: #276749;
-        }
-
-        .confidence.medium {
-          background: #fef5e7;
-          color: #92400e;
-        }
-
-        .confidence.low {
-          background: #fed7d7;
-          color: #c53030;
-        }
-
-        .result-content p {
-          margin: 0;
-          color: #4a5568;
-          line-height: 1.5;
-        }
-
-        /* Collaboration Styles */
-        .multimodal-header {
-          position: relative;
-        }
-
-        .header-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 20px;
-        }
-
-        .collaboration-controls {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        .collaboration-toggle {
-          padding: 8px 16px;
-          border: 2px solid #e1e5e9;
-          border-radius: 20px;
-          background: white;
-          color: #4a5568;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-
-        .collaboration-toggle:hover:not(.active) {
-          border-color: #3182ce;
-        }
-
-        .collaboration-toggle.active {
-          background: #3182ce;
-          color: white;
-          border-color: #3182ce;
-        }
-
-        .leave-session-btn {
-          padding: 8px 12px;
-          border: 1px solid #e53e3e;
-          border-radius: 16px;
-          background: #fed7d7;
-          color: #c53030;
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-
-        .leave-session-btn:hover {
-          background: #feb2b2;
-        }
-
-        .session-info {
-          margin-top: 12px;
-          padding: 8px 12px;
-          background: #f7fafc;
-          border-radius: 8px;
-          border-left: 4px solid #3182ce;
-        }
-
-        .session-name {
-          font-weight: 600;
-          color: #2d3748;
-        }
-
-        .participant-count {
-          color: #718096;
-          font-size: 14px;
-        }
-
-        .collaboration-panel {
-          background: #f8f9fa;
-          border: 1px solid #e1e5e9;
-          border-radius: 12px;
-          padding: 20px;
-          margin-bottom: 24px;
-        }
-
-        .collaboration-panel h3 {
-          margin: 0 0 16px 0;
-          color: #2d3748;
-          font-size: 18px;
-        }
-
-        .session-setup {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-        }
-
-        .setup-section h4 {
-          margin: 0 0 12px 0;
-          color: #4a5568;
-          font-size: 16px;
-        }
-
-        .setup-section .input-group {
-          display: flex;
-          gap: 8px;
-        }
-
-        .setup-section input {
-          flex: 1;
-          padding: 8px 12px;
-          border: 1px solid #e1e5e9;
-          border-radius: 6px;
-          font-size: 14px;
-        }
-
-        .create-btn,
-        .join-btn {
-          padding: 8px 16px;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          font-size: 14px;
-          font-weight: 500;
-          transition: all 0.2s;
-        }
-
-        .create-btn {
-          background: #3182ce;
-          color: white;
-        }
-
-        .create-btn:hover:not(:disabled) {
-          background: #2c5282;
-        }
-
-        .join-btn {
-          background: #38a169;
-          color: white;
-        }
-
-        .join-btn:hover:not(:disabled) {
-          background: #2f855a;
-        }
-
-        .create-btn:disabled,
-        .join-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .active-session .participants-section {
-          margin-bottom: 20px;
-        }
-
-        .participants-section h4 {
-          margin: 0 0 12px 0;
-          color: #4a5568;
-        }
-
-        .participants-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .participant-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          background: white;
-          border-radius: 6px;
-          border: 1px solid #e1e5e9;
-        }
-
-        .status-indicator {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-        }
-
-        .status-indicator.online {
-          background: #38a169;
-        }
-
-        .status-indicator.away {
-          background: #dd6b20;
-        }
-
-        .status-indicator.offline {
-          background: #a0aec0;
-        }
-
-        .participant-name {
-          flex: 1;
-          font-weight: 500;
-          color: #2d3748;
-        }
-
-        .participant-activity {
-          font-size: 12px;
-          color: #718096;
-        }
-
-        .shared-inputs-section h4 {
-          margin: 0 0 12px 0;
-          color: #4a5568;
-        }
-
-        .shared-inputs-list {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-
-        .shared-input-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 6px 12px;
-          background: white;
-          border-radius: 4px;
-          border: 1px solid #e1e5e9;
-          font-size: 12px;
-        }
-
-        .input-participant {
-          font-weight: 500;
-          color: #3182ce;
-        }
-
-        .input-type {
-          background: #edf2f7;
-          padding: 2px 6px;
-          border-radius: 10px;
-          color: #4a5568;
-        }
-
-        .input-time {
-          color: #718096;
-        }
-
-        .collaborative-results-section {
-          border-top: 1px solid #e1e5e9;
-          padding-top: 24px;
-          margin-top: 24px;
-        }
-
-        .collaborative-results-section h3 {
-          margin: 0 0 16px 0;
-          color: #4a5568;
-          font-size: 18px;
-        }
-
-        .collaborative-results-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 16px;
-        }
-
-        .collaborative-result-card {
-          background: #f8f9fa;
-          border: 1px solid #e1e5e9;
-          border-radius: 8px;
-          padding: 16px;
-        }
-
-        .collaborative-result-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px;
-        }
-
-        .participant-info {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-
-        .participant-info .participant-name {
-          font-weight: 600;
-          color: #2d3748;
-        }
-
-        .result-time {
-          font-size: 12px;
-          color: #718096;
-        }
-
-        .collab-success-icon {
-          font-size: 16px;
-          color: #38a169;
-        }
-
-        .collab-error-icon {
-          font-size: 16px;
-          color: #e53e3e;
-        }
-
-        .collaborative-result-content p {
-          margin: 0 0 8px 0;
-          font-size: 14px;
-          color: #4a5568;
-        }
-
-        .collab-results-summary {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .collab-modality-summary {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 12px;
-        }
-
-        .modality-name {
-          font-weight: 500;
-          color: #4a5568;
-        }
-
-        .modality-confidence {
-          padding: 2px 6px;
-          border-radius: 8px;
-          font-size: 11px;
-          font-weight: 500;
-        }
-
-        .modality-confidence.high {
-          background: #c6f6d5;
-          color: #276749;
-        }
-
-        .modality-confidence.medium {
-          background: #fef5e7;
-          color: #92400e;
-        }
-
-        .modality-confidence.low {
-          background: #fed7d7;
-          color: #c53030;
-        }
-
-        .collaborative-error-content {
-          background: #fed7d7;
-          border: 1px solid #feb2b2;
-          border-radius: 6px;
-          padding: 12px;
-        }
-
-        @media (max-width: 768px) {
-          .multimodal-ai {
-            padding: 16px;
-          }
-
-          .header-content {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 12px;
-          }
-
-          .collaboration-controls {
-            justify-content: center;
-          }
-
-          .modality-buttons {
-            justify-content: center;
-          }
-
-          .results-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .session-setup {
-            grid-template-columns: 1fr;
-            gap: 16px;
-          }
-
-          .collaborative-results-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
     </div>
   );
-};
+});
+
+MultiModalAI.displayName = 'MultiModalAI';
 
 export default MultiModalAI;

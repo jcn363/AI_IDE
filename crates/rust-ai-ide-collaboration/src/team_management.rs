@@ -15,48 +15,48 @@ use crate::*;
 
 /// Team management service
 pub struct TeamManagementService {
-    teams:            Arc<RwLock<HashMap<String, Team>>>,
+    teams: Arc<RwLock<HashMap<String, Team>>>,
     team_memberships: Arc<RwLock<HashMap<String, Vec<String>>>>, // user_id -> team_ids
-    invitations:      Arc<RwLock<HashMap<String, TeamInvitation>>>,
-    project_sharing:  Arc<RwLock<HashMap<String, ProjectShare>>>,
+    invitations: Arc<RwLock<HashMap<String, TeamInvitation>>>,
+    project_sharing: Arc<RwLock<HashMap<String, ProjectShare>>>,
 }
 
 /// Team information
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Team {
-    pub id:            String,
-    pub name:          String,
-    pub description:   String,
-    pub owner_id:      String,
-    pub created_at:    std::time::SystemTime,
-    pub settings:      TeamSettings,
-    pub member_count:  usize,
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub owner_id: String,
+    pub created_at: std::time::SystemTime,
+    pub settings: TeamSettings,
+    pub member_count: usize,
     pub project_count: usize,
 }
 
 /// Team settings
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TeamSettings {
-    pub allow_public_projects:      bool,
+    pub allow_public_projects: bool,
     pub require_approval_for_joins: bool,
-    pub default_member_role:        UserRole,
-    pub max_members:                Option<usize>,
-    pub max_projects:               Option<usize>,
+    pub default_member_role: UserRole,
+    pub max_members: Option<usize>,
+    pub max_projects: Option<usize>,
 }
 
 /// Team invitation
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TeamInvitation {
-    pub invitation_id:      String,
-    pub team_id:            String,
-    pub invited_by:         String,
+    pub invitation_id: String,
+    pub team_id: String,
+    pub invited_by: String,
     pub invited_user_email: String,
-    pub invited_user_id:    Option<String>,
-    pub role:               UserRole,
-    pub status:             InvitationStatus,
-    pub created_at:         std::time::SystemTime,
-    pub expires_at:         std::time::SystemTime,
-    pub message:            Option<String>,
+    pub invited_user_id: Option<String>,
+    pub role: UserRole,
+    pub status: InvitationStatus,
+    pub created_at: std::time::SystemTime,
+    pub expires_at: std::time::SystemTime,
+    pub message: Option<String>,
 }
 
 /// Invitation status
@@ -72,14 +72,14 @@ pub enum InvitationStatus {
 /// Project sharing configuration
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProjectShare {
-    pub project_id:  String,
-    pub shared_by:   String,
-    pub team_id:     String,
+    pub project_id: String,
+    pub shared_by: String,
+    pub team_id: String,
     pub permissions: Vec<Permission>,
-    pub share_type:  ShareType,
-    pub created_at:  std::time::SystemTime,
-    pub expires_at:  Option<std::time::SystemTime>,
-    pub is_active:   bool,
+    pub share_type: ShareType,
+    pub created_at: std::time::SystemTime,
+    pub expires_at: Option<std::time::SystemTime>,
+    pub is_active: bool,
 }
 
 /// Share types for projects
@@ -94,24 +94,24 @@ pub enum ShareType {
 /// Team member with role
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TeamMember {
-    pub user_id:            String,
-    pub username:           String,
-    pub email:              String,
-    pub role:               UserRole,
-    pub joined_at:          std::time::SystemTime,
-    pub last_active:        std::time::SystemTime,
+    pub user_id: String,
+    pub username: String,
+    pub email: String,
+    pub role: UserRole,
+    pub joined_at: std::time::SystemTime,
+    pub last_active: std::time::SystemTime,
     pub contribution_count: usize,
 }
 
 /// Project access log
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ProjectAccessLog {
-    pub user_id:    String,
+    pub user_id: String,
     pub project_id: String,
-    pub team_id:    String,
-    pub action:     AccessAction,
-    pub timestamp:  std::time::SystemTime,
-    pub details:    String,
+    pub team_id: String,
+    pub action: AccessAction,
+    pub timestamp: std::time::SystemTime,
+    pub details: String,
 }
 
 /// Access action types
@@ -128,10 +128,10 @@ pub enum AccessAction {
 impl TeamManagementService {
     pub fn new() -> Self {
         Self {
-            teams:            Arc::new(RwLock::new(HashMap::new())),
+            teams: Arc::new(RwLock::new(HashMap::new())),
             team_memberships: Arc::new(RwLock::new(HashMap::new())),
-            invitations:      Arc::new(RwLock::new(HashMap::new())),
-            project_sharing:  Arc::new(RwLock::new(HashMap::new())),
+            invitations: Arc::new(RwLock::new(HashMap::new())),
+            project_sharing: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -209,7 +209,8 @@ impl TeamManagementService {
             role,
             status: InvitationStatus::Pending,
             created_at: std::time::SystemTime::now(),
-            expires_at: std::time::SystemTime::now() + std::time::Duration::from_secs(7 * 24 * 60 * 60), // 7 days
+            expires_at: std::time::SystemTime::now()
+                + std::time::Duration::from_secs(7 * 24 * 60 * 60), // 7 days
             message,
         };
 
@@ -338,7 +339,10 @@ impl TeamManagementService {
     }
 
     /// Get team members
-    pub async fn get_team_members(&self, team_id: &str) -> Result<Vec<TeamMember>, Box<dyn std::error::Error>> {
+    pub async fn get_team_members(
+        &self,
+        team_id: &str,
+    ) -> Result<Vec<TeamMember>, Box<dyn std::error::Error>> {
         let teams = self.teams.read().await;
         let team = teams
             .get(team_id)
@@ -349,24 +353,24 @@ impl TeamManagementService {
 
         // Add owner
         members.push(TeamMember {
-            user_id:            team.owner_id.clone(),
-            username:           format!("owner_{}", team.owner_id),
-            email:              format!("owner@team.com"),
-            role:               UserRole::Owner,
-            joined_at:          team.created_at,
-            last_active:        std::time::SystemTime::now(),
+            user_id: team.owner_id.clone(),
+            username: format!("owner_{}", team.owner_id),
+            email: format!("owner@team.com"),
+            role: UserRole::Owner,
+            joined_at: team.created_at,
+            last_active: std::time::SystemTime::now(),
             contribution_count: 0,
         });
 
         // Add other members (would be from database)
         for i in 1..team.member_count {
             members.push(TeamMember {
-                user_id:            format!("member_{}", i),
-                username:           format!("member_{}", i),
-                email:              format!("member{}@team.com", i),
-                role:               UserRole::Editor,
-                joined_at:          std::time::SystemTime::now(),
-                last_active:        std::time::SystemTime::now(),
+                user_id: format!("member_{}", i),
+                username: format!("member_{}", i),
+                email: format!("member{}@team.com", i),
+                role: UserRole::Editor,
+                joined_at: std::time::SystemTime::now(),
+                last_active: std::time::SystemTime::now(),
                 contribution_count: 0,
             });
         }
@@ -375,7 +379,10 @@ impl TeamManagementService {
     }
 
     /// Get user's teams
-    pub async fn get_user_teams(&self, user_id: &str) -> Result<Vec<Team>, Box<dyn std::error::Error>> {
+    pub async fn get_user_teams(
+        &self,
+        user_id: &str,
+    ) -> Result<Vec<Team>, Box<dyn std::error::Error>> {
         let memberships = self.team_memberships.read().await;
         let user_team_ids = memberships.get(user_id).cloned().unwrap_or_default();
 
@@ -433,7 +440,9 @@ impl TeamManagementService {
         let invitations = self.invitations.read().await;
         Ok(invitations
             .values()
-            .filter(|inv| inv.invited_user_email == user_email && inv.status == InvitationStatus::Pending)
+            .filter(|inv| {
+                inv.invited_user_email == user_email && inv.status == InvitationStatus::Pending
+            })
             .cloned()
             .collect())
     }
@@ -442,11 +451,11 @@ impl TeamManagementService {
 impl Default for TeamSettings {
     fn default() -> Self {
         Self {
-            allow_public_projects:      false,
+            allow_public_projects: false,
             require_approval_for_joins: true,
-            default_member_role:        UserRole::Editor,
-            max_members:                Some(50),
-            max_projects:               Some(100),
+            default_member_role: UserRole::Editor,
+            max_members: Some(50),
+            max_projects: Some(100),
         }
     }
 }

@@ -1,0 +1,83 @@
+{
+  "extends": "lighthouse:default",
+  "settings": {
+    "formFactor": "desktop",
+    "screenEmulation": {
+      "mobile": false,
+      "width": 1920,
+      "height": 1080,
+      "deviceScaleFactor": 1,
+      "disabled": false
+    },
+    "throttling": {
+      "rttMs": 40,
+      "throughputKbps": 10240,
+      "cpuSlowdownMultiplier": 1
+    },
+    "onlyCategories": ["accessibility", "performance", "seo"],
+    "skipAudits": [
+      "uses-http2",
+      "redirects-http",
+      "uses-long-cache-ttl",
+      "critical-request-chains",
+      "render-blocking-resources",
+      "unused-javascript",
+      "unused-css-rules",
+      "efficient-animated-content"
+    ]
+  },
+  "passes": [
+    {
+      "passName": "defaultPass",
+      "recordTrace": true,
+      "useThrottling": false,
+      "gatherers": []
+    }
+  ],
+  "audits": [
+    "accessibility/accesskeys",
+    "accessibility/aria-allowed-attr",
+    "accessibility/aria-hidden-body",
+    "accessibility/aria-hidden-focus",
+    "accessibility/aria-input-field-name",
+    "accessibility/aria-required-attr",
+    "accessibility/aria-required-children",
+    "accessibility/aria-required-parent",
+    "accessibility/aria-roles",
+    "accessibility/aria-toggle-field-name",
+    "accessibility/aria-valid-attr-value",
+    "accessibility/aria-valid-attr",
+    "accessibility/audio-caption",
+    "accessibility/button-name",
+    "accessibility/bypass",
+    "accessibility/color-contrast",
+    "accessibility/definition-list",
+    "accessibility/dlitem",
+    "accessibility/document-title",
+    "accessibility/duplicate-id-active",
+    "accessibility/duplicate-id-aria",
+    "accessibility/focus-traps",
+    "accessibility/focusable-controls",
+    "accessibility/focused-element-hidden",
+    "accessibility/frame-title",
+    "accessibility/heading-order",
+    "accessibility/html-has-lang",
+    "accessibility/html-lang-valid",
+    "accessibility/image-alt",
+    "accessibility/input-image-alt",
+    "accessibility/label",
+    "accessibility/layout-table",
+    "accessibility/link-name",
+    "accessibility/list",
+    "accessibility/listitem",
+    "accessibility/meta-refresh",
+    "accessibility/meta-viewport",
+    "accessibility/object-alt",
+    "accessibility/tabindex",
+    "accessibility/td-headers-attr",
+    "accessibility/th-has-data-cells",
+    "accessibility/valid-lang",
+    "accessibility/video-caption",
+    "accessibility/video-description"
+  ]
+}

@@ -309,6 +309,9 @@ pub struct ServerMetrics {
     pub requests_per_second: f64,
     pub average_response_time_ms: f64,
     pub active_requests: usize,
+    pub pending_requests: usize,
+    pub last_response_time: std::time::Instant,
+    pub cpu_usage_percent: f64,
     pub memory_usage_mb: Option<f64>,
     pub error_rate: f64,
     pub uptime_seconds: u64,
@@ -334,6 +337,9 @@ impl LanguageServerWrapper {
                 requests_per_second: 0.0,
                 average_response_time_ms: 0.0,
                 active_requests: 0,
+                pending_requests: 0,
+                last_response_time: std::time::Instant::now(),
+                cpu_usage_percent: 0.0,
                 memory_usage_mb: None,
                 error_rate: 0.0,
                 uptime_seconds: 0,
@@ -349,6 +355,81 @@ impl LanguageServerWrapper {
     pub fn language(&self) -> &LanguageServerKind {
         &self.config.language
     }
+
+    /// Get current load metrics for this server
+    pub fn get_load_metrics(&self) -> ServerLoadMetrics {
+        ServerLoadMetrics {
+            pending_requests: self.metrics.pending_requests,
+            last_response_time: self.metrics.last_response_time.elapsed(),
+            cpu_usage_percent: self.metrics.cpu_usage_percent,
+            memory_usage_mb: self.metrics.memory_usage_mb,
+            request_rate: self.metrics.requests_per_second,
+            error_rate: self.metrics.error_rate,
+            health_score: self.calculate_health_score(),
+        }
+    }
+
+    /// Calculate health score based on load metrics (0.0 = unhealthy, 1.0 = healthy)
+    pub fn calculate_health_score(&self) -> f64 {
+        let mut score = 1.0;
+
+        // Penalize for high pending requests
+        if self.metrics.pending_requests > 10 {
+            score -= (self.metrics.pending_requests as f64 - 10.0) * 0.05;
+        }
+
+        // Penalize for high CPU usage
+        if self.metrics.cpu_usage_percent > 80.0 {
+            score -= (self.metrics.cpu_usage_percent - 80.0) / 20.0;
+        }
+
+        // Penalize for high error rate
+        if self.metrics.error_rate > 0.1 {
+            score -= self.metrics.error_rate * 2.0;
+        }
+
+        // Penalize for slow response times
+        if self.metrics.average_response_time_ms > 1000.0 {
+            score -= (self.metrics.average_response_time_ms - 1000.0) / 2000.0;
+        }
+
+        // Penalize for low memory
+        if let Some(mem_mb) = self.metrics.memory_usage_mb {
+            if mem_mb < 50.0 {
+                score -= (50.0 - mem_mb) / 50.0;
+            }
+        }
+
+        score.max(0.0).min(1.0)
+    }
+
+    /// Update CPU usage metric
+    pub fn update_cpu_usage(&mut self, cpu_percent: f64) {
+        self.metrics.cpu_usage_percent = cpu_percent;
+    }
+
+    /// Update pending requests count
+    pub fn update_pending_requests(&mut self, count: usize) {
+        self.metrics.pending_requests = count;
+    }
+
+    /// Record response time
+    pub fn record_response_time(&mut self, response_time_ms: f64) {
+        self.metrics.average_response_time_ms = response_time_ms;
+        self.metrics.last_response_time = std::time::Instant::now();
+    }
+}
+
+/// Load metrics for server monitoring and load balancing
+#[derive(Debug, Clone)]
+pub struct ServerLoadMetrics {
+    pub pending_requests: usize,
+    pub last_response_time: std::time::Duration,
+    pub cpu_usage_percent: f64,
+    pub memory_usage_mb: Option<f64>,
+    pub request_rate: f64,
+    pub error_rate: f64,
+    pub health_score: f64,
 }
 
 /// Type alias for thread-safe language server wrapper

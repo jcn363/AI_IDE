@@ -12,39 +12,39 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub struct CargoDependency {
     /// Version specification (can be exact version, range, or constraint)
-    pub version:          Option<String>,
+    pub version: Option<String>,
     /// Local path dependency
-    pub path:             Option<String>,
+    pub path: Option<String>,
     /// Git repository dependency
-    pub git:              Option<String>,
-    pub branch:           Option<String>,
-    pub tag:              Option<String>,
-    pub rev:              Option<String>,
+    pub git: Option<String>,
+    pub branch: Option<String>,
+    pub tag: Option<String>,
+    pub rev: Option<String>,
     /// Advanced dependency options
-    pub features:         Option<Vec<String>>,
-    pub optional:         Option<bool>,
+    pub features: Option<Vec<String>>,
+    pub optional: Option<bool>,
     pub default_features: Option<bool>,
-    pub package:          Option<String>,
+    pub package: Option<String>,
     /// Registry and workspace options
-    pub registry:         Option<String>,
-    pub workspace:        Option<bool>,
+    pub registry: Option<String>,
+    pub workspace: Option<bool>,
 }
 
 impl Default for CargoDependency {
     fn default() -> Self {
         Self {
-            version:          None,
-            path:             None,
-            git:              None,
-            branch:           None,
-            tag:              None,
-            rev:              None,
-            features:         None,
-            optional:         None,
+            version: None,
+            path: None,
+            git: None,
+            branch: None,
+            tag: None,
+            rev: None,
+            features: None,
+            optional: None,
             default_features: None,
-            package:          None,
-            registry:         None,
-            workspace:        None,
+            package: None,
+            registry: None,
+            workspace: None,
         }
     }
 }
@@ -53,36 +53,36 @@ impl Default for CargoDependency {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FeatureUsage {
-    pub name:               String,
+    pub name: String,
     pub enabled_by_default: bool,
-    pub is_used:            bool,
-    pub used_by:            Vec<String>,
-    pub is_default:         Option<bool>,
+    pub is_used: bool,
+    pub used_by: Vec<String>,
+    pub is_default: Option<bool>,
 }
 
 /// Package metadata for Cargo.toml
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CargoPackage {
-    pub name:             Option<String>,
-    pub version:          Option<String>,
-    pub authors:          Option<Vec<String>>,
-    pub edition:          Option<String>,
-    pub rust_version:     Option<String>,
-    pub description:      Option<String>,
-    pub documentation:    Option<String>,
-    pub homepage:         Option<String>,
-    pub repository:       Option<String>,
-    pub readme:           Option<String>,
-    pub keywords:         Option<Vec<String>>,
-    pub categories:       Option<Vec<String>>,
-    pub license:          Option<String>,
-    pub license_file:     Option<String>,
-    pub include:          Option<Vec<String>>,
-    pub exclude:          Option<Vec<String>>,
-    pub publish:          Option<PublishConfig>,
+    pub name: Option<String>,
+    pub version: Option<String>,
+    pub authors: Option<Vec<String>>,
+    pub edition: Option<String>,
+    pub rust_version: Option<String>,
+    pub description: Option<String>,
+    pub documentation: Option<String>,
+    pub homepage: Option<String>,
+    pub repository: Option<String>,
+    pub readme: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub categories: Option<Vec<String>>,
+    pub license: Option<String>,
+    pub license_file: Option<String>,
+    pub include: Option<Vec<String>>,
+    pub exclude: Option<Vec<String>>,
+    pub publish: Option<PublishConfig>,
     pub default_features: Option<Vec<String>>,
-    pub metadata:         Option<HashMap<String, serde_json::Value>>,
+    pub metadata: Option<HashMap<String, serde_json::Value>>,
 }
 
 /// Publishing configuration
@@ -97,44 +97,44 @@ pub enum PublishConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct CargoWorkspace {
-    pub members:            Option<Vec<String>>,
-    pub exclude:            Option<Vec<String>>,
-    pub default_members:    Option<Vec<String>>,
-    pub metadata:           Option<HashMap<String, serde_json::Value>>,
-    pub dependencies:       Option<HashMap<String, CargoDependency>>,
-    pub dev_dependencies:   Option<HashMap<String, CargoDependency>>,
+    pub members: Option<Vec<String>>,
+    pub exclude: Option<Vec<String>>,
+    pub default_members: Option<Vec<String>>,
+    pub metadata: Option<HashMap<String, serde_json::Value>>,
+    pub dependencies: Option<HashMap<String, CargoDependency>>,
+    pub dev_dependencies: Option<HashMap<String, CargoDependency>>,
     pub build_dependencies: Option<HashMap<String, CargoDependency>>,
-    pub package:            Option<WorkspacePackageConfig>,
-    pub resolver:           Option<String>,
+    pub package: Option<WorkspacePackageConfig>,
+    pub resolver: Option<String>,
 }
 
 /// Workspace package configuration defaults
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkspacePackageConfig {
-    pub version:       Option<String>,
-    pub authors:       Option<Vec<String>>,
-    pub description:   Option<String>,
+    pub version: Option<String>,
+    pub authors: Option<Vec<String>>,
+    pub description: Option<String>,
     pub documentation: Option<String>,
-    pub homepage:      Option<String>,
-    pub repository:    Option<String>,
-    pub license:       Option<String>,
+    pub homepage: Option<String>,
+    pub repository: Option<String>,
+    pub license: Option<String>,
 }
 
 /// Profile configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CargoProfile {
-    pub opt_level:        Option<OptimizationLevel>,
-    pub debug:            Option<DebugLevel>,
-    pub rpath:            Option<bool>,
-    pub lto:              Option<LinkTimeOptimization>,
-    pub codegen_units:    Option<u32>,
-    pub panic:            Option<PanicStrategy>,
-    pub incremental:      Option<bool>,
-    pub overflow_checks:  Option<bool>,
+    pub opt_level: Option<OptimizationLevel>,
+    pub debug: Option<DebugLevel>,
+    pub rpath: Option<bool>,
+    pub lto: Option<LinkTimeOptimization>,
+    pub codegen_units: Option<u32>,
+    pub panic: Option<PanicStrategy>,
+    pub incremental: Option<bool>,
+    pub overflow_checks: Option<bool>,
     pub debug_assertions: Option<bool>,
-    pub split_debuginfo:  Option<String>,
+    pub split_debuginfo: Option<String>,
 }
 
 /// Optimization level
@@ -176,19 +176,19 @@ pub enum PanicStrategy {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LibConfig {
-    pub name:       Option<String>,
-    pub path:       Option<String>,
+    pub name: Option<String>,
+    pub path: Option<String>,
     pub crate_type: Option<Vec<String>>,
-    pub edition:    Option<String>,
+    pub edition: Option<String>,
 }
 
 /// Binary target configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BinConfig {
-    pub name:              Option<String>,
-    pub path:              Option<String>,
-    pub edition:           Option<String>,
+    pub name: Option<String>,
+    pub path: Option<String>,
+    pub edition: Option<String>,
     pub required_features: Option<Vec<String>>,
 }
 
@@ -196,9 +196,9 @@ pub struct BinConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ExampleConfig {
-    pub name:              Option<String>,
-    pub path:              Option<String>,
-    pub edition:           Option<String>,
+    pub name: Option<String>,
+    pub path: Option<String>,
+    pub edition: Option<String>,
     pub required_features: Option<Vec<String>>,
 }
 
@@ -206,10 +206,10 @@ pub struct ExampleConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TestConfig {
-    pub name:              Option<String>,
-    pub path:              Option<String>,
-    pub edition:           Option<String>,
-    pub harness:           Option<bool>,
+    pub name: Option<String>,
+    pub path: Option<String>,
+    pub edition: Option<String>,
+    pub harness: Option<bool>,
     pub required_features: Option<Vec<String>>,
 }
 
@@ -217,10 +217,10 @@ pub struct TestConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BenchConfig {
-    pub name:              Option<String>,
-    pub path:              Option<String>,
-    pub edition:           Option<String>,
-    pub harness:           Option<bool>,
+    pub name: Option<String>,
+    pub path: Option<String>,
+    pub edition: Option<String>,
+    pub harness: Option<bool>,
     pub required_features: Option<Vec<String>>,
 }
 
@@ -229,56 +229,56 @@ pub struct BenchConfig {
 #[serde(rename_all = "camelCase")]
 pub struct CargoTargetConfig {
     pub compilation_target: Option<String>,
-    pub rustflags:          Option<Vec<String>>,
-    pub linker:             Option<String>,
+    pub rustflags: Option<Vec<String>>,
+    pub linker: Option<String>,
 }
 
 /// Root Cargo.toml manifest structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoManifest {
     /// Core package configuration
-    pub package:            Option<CargoPackage>,
+    pub package: Option<CargoPackage>,
     /// Dependencies
-    pub dependencies:       Option<HashMap<String, CargoDependency>>,
+    pub dependencies: Option<HashMap<String, CargoDependency>>,
     #[serde(rename = "dev-dependencies")]
-    pub dev_dependencies:   Option<HashMap<String, CargoDependency>>,
+    pub dev_dependencies: Option<HashMap<String, CargoDependency>>,
     #[serde(rename = "build-dependencies")]
     pub build_dependencies: Option<HashMap<String, CargoDependency>>,
-    pub target:             Option<HashMap<String, HashMap<String, CargoDependency>>>,
+    pub target: Option<HashMap<String, HashMap<String, CargoDependency>>>,
     /// Feature flags
-    pub features:           Option<HashMap<String, Vec<String>>>,
+    pub features: Option<HashMap<String, Vec<String>>>,
     /// Workspace configuration
-    pub workspace:          Option<CargoWorkspace>,
+    pub workspace: Option<CargoWorkspace>,
     /// Profile configuration
-    pub profile:            Option<HashMap<String, CargoProfile>>,
+    pub profile: Option<HashMap<String, CargoProfile>>,
     /// Library target
-    pub lib:                Option<LibConfig>,
+    pub lib: Option<LibConfig>,
     /// Binary targets
-    pub bin:                Option<Vec<BinConfig>>,
+    pub bin: Option<Vec<BinConfig>>,
     /// Example targets
-    pub example:            Option<Vec<ExampleConfig>>,
+    pub example: Option<Vec<ExampleConfig>>,
     /// Test targets
-    pub test:               Option<Vec<TestConfig>>,
+    pub test: Option<Vec<TestConfig>>,
     /// Benchmark targets
-    pub bench:              Option<Vec<BenchConfig>>,
+    pub bench: Option<Vec<BenchConfig>>,
 }
 
 impl Default for CargoManifest {
     fn default() -> Self {
         Self {
-            package:            None,
-            dependencies:       None,
-            dev_dependencies:   None,
+            package: None,
+            dependencies: None,
+            dev_dependencies: None,
             build_dependencies: None,
-            target:             None,
-            features:           None,
-            workspace:          None,
-            profile:            None,
-            lib:                None,
-            bin:                None,
-            example:            None,
-            test:               None,
-            bench:              None,
+            target: None,
+            features: None,
+            workspace: None,
+            profile: None,
+            lib: None,
+            bin: None,
+            example: None,
+            test: None,
+            bench: None,
         }
     }
 }
@@ -304,31 +304,31 @@ impl DependencySection {
 /// Location of a dependency in the manifest
 #[derive(Debug)]
 pub struct DependencyLocation<'a> {
-    pub section:    DependencySection,
-    pub name:       &'a str,
+    pub section: DependencySection,
+    pub name: &'a str,
     pub dependency: &'a CargoDependency,
 }
 
 /// Feature configuration
 #[derive(Debug, Clone)]
 pub struct FeatureConfig {
-    pub name:               String,
+    pub name: String,
     pub enabled_by_default: bool,
-    pub dependencies:       Vec<String>,
+    pub dependencies: Vec<String>,
 }
 
 /// Dependency update information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DependencyUpdate {
-    pub name:            String,
+    pub name: String,
     pub current_version: String,
-    pub new_version:     String,
-    pub update_type:     UpdateType,
-    pub used_in:         Vec<UsageLocation>,
-    pub changelog_url:   Option<String>,
-    pub is_updating:     bool,
-    pub update_error:    Option<String>,
+    pub new_version: String,
+    pub update_type: UpdateType,
+    pub used_in: Vec<UsageLocation>,
+    pub changelog_url: Option<String>,
+    pub is_updating: bool,
+    pub update_error: Option<String>,
 }
 
 /// Update type classification
@@ -344,56 +344,56 @@ pub enum UpdateType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UsageLocation {
-    pub member:  String,
+    pub member: String,
     pub version: String,
 }
 
 /// Cargo build metadata from `cargo metadata`
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoMetadata {
-    pub packages:          Vec<CargoPackageMetadata>,
-    pub workspace_root:    String,
-    pub target_directory:  String,
-    pub resolve:           Option<ResolveNode>,
+    pub packages: Vec<CargoPackageMetadata>,
+    pub workspace_root: String,
+    pub target_directory: String,
+    pub resolve: Option<ResolveNode>,
     pub workspace_members: Vec<String>,
 }
 
 /// Individual package metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CargoPackageMetadata {
-    pub name:          String,
-    pub version:       String,
-    pub id:            String,
-    pub source:        Option<String>,
-    pub dependencies:  Vec<PackageDependency>,
+    pub name: String,
+    pub version: String,
+    pub id: String,
+    pub source: Option<String>,
+    pub dependencies: Vec<PackageDependency>,
     pub manifest_path: String,
-    pub features:      HashMap<String, Vec<String>>,
+    pub features: HashMap<String, Vec<String>>,
 }
 
 /// Package dependency information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageDependency {
-    pub name:                  String,
-    pub source:                Option<String>,
-    pub req:                   String,
-    pub kind:                  Option<String>,
-    pub rename:                Option<String>,
-    pub optional:              bool,
+    pub name: String,
+    pub source: Option<String>,
+    pub req: String,
+    pub kind: Option<String>,
+    pub rename: Option<String>,
+    pub optional: bool,
     pub uses_default_features: bool,
-    pub features:              Vec<String>,
+    pub features: Vec<String>,
 }
 
 /// Dependency resolution information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResolveNode {
     pub nodes: Vec<ResolveNodeItem>,
-    pub root:  Option<String>,
+    pub root: Option<String>,
 }
 
 /// Individual resolution node
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResolveNodeItem {
-    pub id:           String,
+    pub id: String,
     pub dependencies: Vec<String>,
 }
 
@@ -401,20 +401,20 @@ pub struct ResolveNodeItem {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildInfo {
-    pub build_time:    u64,
+    pub build_time: u64,
     pub features_used: Vec<String>,
-    pub profile:       String,
+    pub profile: String,
 }
 
 /// Target triple information
 #[derive(Debug, Clone, Serialize)]
 pub struct TargetTriple {
-    pub triple:       String,
-    pub platform:     String,
+    pub triple: String,
+    pub platform: String,
     pub architecture: String,
-    pub vendor:       String,
-    pub os:           String,
-    pub abi:          Option<String>,
+    pub vendor: String,
+    pub os: String,
+    pub abi: Option<String>,
 }
 
 #[cfg(test)]

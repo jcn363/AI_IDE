@@ -12,13 +12,13 @@ use crate::utils;
 /// AI service configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIServiceConfig {
-    pub id:                String,
-    pub name:              String,
-    pub provider:          String,
-    pub model:             String,
-    pub endpoint:          Option<String>,
-    pub capabilities:      Vec<String>,
-    pub status:            ServiceStatus,
+    pub id: String,
+    pub name: String,
+    pub provider: String,
+    pub model: String,
+    pub endpoint: Option<String>,
+    pub capabilities: Vec<String>,
+    pub status: ServiceStatus,
     pub last_health_check: chrono::DateTime<chrono::Utc>,
 }
 
@@ -34,10 +34,10 @@ pub enum ServiceStatus {
 /// Service registration request
 #[derive(Debug, Deserialize)]
 pub struct ServiceRegistrationRequest {
-    pub name:         String,
-    pub provider:     String,
-    pub model:        String,
-    pub endpoint:     Option<String>,
+    pub name: String,
+    pub provider: String,
+    pub model: String,
+    pub endpoint: Option<String>,
     pub capabilities: Vec<String>,
 }
 
@@ -45,7 +45,7 @@ pub struct ServiceRegistrationRequest {
 #[derive(Debug, Deserialize)]
 pub struct ServiceDiscoveryRequest {
     pub capability: Option<String>,
-    pub provider:   Option<String>,
+    pub provider: Option<String>,
     pub min_status: Option<ServiceStatus>,
 }
 
@@ -79,13 +79,13 @@ pub async fn register_ai_service(
 
     // Create service configuration
     let config = AIServiceConfig {
-        id:                service_id.clone(),
-        name:              request.name.clone(),
-        provider:          request.provider,
-        model:             request.model,
-        endpoint:          request.endpoint,
-        capabilities:      request.capabilities,
-        status:            ServiceStatus::Unknown,
+        id: service_id.clone(),
+        name: request.name.clone(),
+        provider: request.provider,
+        model: request.model,
+        endpoint: request.endpoint,
+        capabilities: request.capabilities,
+        status: ServiceStatus::Unknown,
         last_health_check: chrono::Utc::now(),
     };
 
@@ -127,23 +127,23 @@ pub async fn discover_ai_services(
     // In real implementation, this would query registry based on criteria
     let services = vec![
         AIServiceConfig {
-            id:                "openai_gpt4".to_string(),
-            name:              "GPT-4".to_string(),
-            provider:          "OpenAI".to_string(),
-            model:             "gpt-4".to_string(),
-            endpoint:          Some("https://api.openai.com/v1".to_string()),
-            capabilities:      vec!["text-generation".to_string(), "code-completion".to_string()],
-            status:            ServiceStatus::Healthy,
+            id: "openai_gpt4".to_string(),
+            name: "GPT-4".to_string(),
+            provider: "OpenAI".to_string(),
+            model: "gpt-4".to_string(),
+            endpoint: Some("https://api.openai.com/v1".to_string()),
+            capabilities: vec!["text-generation".to_string(), "code-completion".to_string()],
+            status: ServiceStatus::Healthy,
             last_health_check: chrono::Utc::now(),
         },
         AIServiceConfig {
-            id:                "local_llama2".to_string(),
-            name:              "Llama-2-7B".to_string(),
-            provider:          "Local".to_string(),
-            model:             "llama2-7b".to_string(),
-            endpoint:          None,
-            capabilities:      vec!["text-generation".to_string()],
-            status:            ServiceStatus::Healthy,
+            id: "local_llama2".to_string(),
+            name: "Llama-2-7B".to_string(),
+            provider: "Local".to_string(),
+            model: "llama2-7b".to_string(),
+            endpoint: None,
+            capabilities: vec!["text-generation".to_string()],
+            status: ServiceStatus::Healthy,
             last_health_check: chrono::Utc::now(),
         },
     ];
@@ -200,13 +200,13 @@ pub async fn get_ai_service_info(
     // In real implementation, this would query registry for specific service
     // For now, return a mock service
     let service = AIServiceConfig {
-        id:                service_id.clone(),
-        name:              "Test Service".to_string(),
-        provider:          "TestProvider".to_string(),
-        model:             "test-model".to_string(),
-        endpoint:          Some("http://example.com".to_string()),
-        capabilities:      vec!["text-generation".to_string()],
-        status:            ServiceStatus::Healthy,
+        id: service_id.clone(),
+        name: "Test Service".to_string(),
+        provider: "TestProvider".to_string(),
+        model: "test-model".to_string(),
+        endpoint: Some("http://example.com".to_string()),
+        capabilities: vec!["text-generation".to_string()],
+        status: ServiceStatus::Healthy,
         last_health_check: chrono::Utc::now(),
     };
 
@@ -251,13 +251,13 @@ pub async fn list_ai_services(
 
     // In real implementation, this would list all services from registry
     let services = vec![AIServiceConfig {
-        id:                "openai_gpt4".to_string(),
-        name:              "GPT-4".to_string(),
-        provider:          "OpenAI".to_string(),
-        model:             "gpt-4".to_string(),
-        endpoint:          Some("https://api.openai.com/v1".to_string()),
-        capabilities:      vec!["text-generation".to_string(), "code-completion".to_string()],
-        status:            ServiceStatus::Healthy,
+        id: "openai_gpt4".to_string(),
+        name: "GPT-4".to_string(),
+        provider: "OpenAI".to_string(),
+        model: "gpt-4".to_string(),
+        endpoint: Some("https://api.openai.com/v1".to_string()),
+        capabilities: vec!["text-generation".to_string(), "code-completion".to_string()],
+        status: ServiceStatus::Healthy,
         last_health_check: chrono::Utc::now(),
     }];
 
@@ -267,18 +267,20 @@ pub async fn list_ai_services(
 
 /// Get registry statistics
 #[tauri::command]
-pub async fn get_registry_stats(ai_service_state: tauri::State<'_, AIServiceState>) -> Result<RegistryStats, String> {
+pub async fn get_registry_stats(
+    ai_service_state: tauri::State<'_, AIServiceState>,
+) -> Result<RegistryStats, String> {
     log::info!("Getting registry statistics");
 
     let _ai_service = utils::get_or_create_ai_service(&ai_service_state).await?;
 
     // In real implementation, this would compute actual statistics
     let stats = RegistryStats {
-        total_services:     5,
-        healthy_services:   4,
-        degraded_services:  1,
+        total_services: 5,
+        healthy_services: 4,
+        degraded_services: 1,
         unhealthy_services: 0,
-        capabilities:       {
+        capabilities: {
             let mut caps = HashMap::new();
             caps.insert("text-generation".to_string(), 3);
             caps.insert("code-completion".to_string(), 4);
@@ -293,18 +295,21 @@ pub async fn get_registry_stats(ai_service_state: tauri::State<'_, AIServiceStat
 /// Registry statistics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegistryStats {
-    pub total_services:     usize,
-    pub healthy_services:   usize,
-    pub degraded_services:  usize,
+    pub total_services: usize,
+    pub healthy_services: usize,
+    pub degraded_services: usize,
     pub unhealthy_services: usize,
-    pub capabilities:       HashMap<String, usize>,
+    pub capabilities: HashMap<String, usize>,
 }
 
 /// Helper function to check if service status meets minimum requirement
 fn service_status_meets_minimum(current: &ServiceStatus, minimum: &ServiceStatus) -> bool {
     match (current, minimum) {
         (ServiceStatus::Healthy, _) => true,
-        (ServiceStatus::Degraded, ServiceStatus::Degraded | ServiceStatus::Unhealthy | ServiceStatus::Unknown) => true,
+        (
+            ServiceStatus::Degraded,
+            ServiceStatus::Degraded | ServiceStatus::Unhealthy | ServiceStatus::Unknown,
+        ) => true,
         (ServiceStatus::Unhealthy, ServiceStatus::Unhealthy | ServiceStatus::Unknown) => true,
         (ServiceStatus::Unknown, ServiceStatus::Unknown) => true,
         _ => false,

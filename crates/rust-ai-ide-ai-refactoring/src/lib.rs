@@ -1,3 +1,8 @@
+//! AI-powered code refactoring for Rust AI IDE
+//!
+//! This crate provides intelligent code refactoring capabilities using machine learning
+//! and static analysis to improve code quality and maintainability.
+
 // Diagnostic log for syn version compatibility
 #[cfg(test)]
 mod diagnostics {
@@ -7,10 +12,6 @@ mod diagnostics {
         println!("Syn crate features: {:?}", std::env::var("CARGO_FEATURES").unwrap_or_default());
     }
 }
-//! AI-powered code refactoring for Rust AI IDE
-//!
-//! This crate provides intelligent code refactoring capabilities using machine learning
-//! and static analysis to improve code quality and maintainability.
 
 // Module declarations
 pub mod analysis;

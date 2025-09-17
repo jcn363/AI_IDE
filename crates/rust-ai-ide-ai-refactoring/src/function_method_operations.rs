@@ -54,7 +54,7 @@ impl RefactoringOperation for ExtractFunctionOperation {
             .map_err(|e| format!("Failed to read file {}: {}", context.file_path, e))?;
 
         // Parse the Rust AST
-        let syntax_tree: syn::File = syn::parse_str::<syn::File>(&content)?;
+        let _syntax_tree: syn::File = syn::parse_str::<syn::File>(&content)?;
 
         // Extract the selected code (simplified - in a real implementation, we'd need more sophisticated
         // AST analysis)
@@ -162,13 +162,13 @@ impl RefactoringOperation for ExtractFunctionOperation {
 
     async fn is_applicable(
         &self,
-        context: &RefactoringContext,
-        options: Option<&RefactoringOptions>,
+        _context: &RefactoringContext,
+        _options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        let base_check = context.selection.is_some();
+        let base_check = _context.selection.is_some();
 
         // Check experimental flag if options are provided
-        if let Some(opts) = options {
+        if let Some(opts) = _options {
             if !self.is_experimental_enabled(opts) {
                 return Ok(false); // Not applicable unless experimental features are enabled
             }
@@ -225,8 +225,8 @@ impl RefactoringOperation for InlineFunctionOperation {
     }
     async fn is_applicable(
         &self,
-        context: &RefactoringContext,
-        options: Option<&RefactoringOptions>,
+        _context: &RefactoringContext,
+        _options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         Ok(false)
     }
@@ -276,8 +276,8 @@ impl RefactoringOperation for InlineMethodOperation {
     }
     async fn is_applicable(
         &self,
-        context: &RefactoringContext,
-        options: Option<&RefactoringOptions>,
+        _context: &RefactoringContext,
+        _options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         Ok(false)
     }
@@ -378,8 +378,8 @@ impl RefactoringOperation for MoveMethodOperation {
     }
     async fn is_applicable(
         &self,
-        context: &RefactoringContext,
-        options: Option<&RefactoringOptions>,
+        _context: &RefactoringContext,
+        _options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
         Ok(false)
     }

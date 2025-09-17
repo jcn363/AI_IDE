@@ -12,17 +12,23 @@ use crate::resource_types::{ModelSize, ModelType, ResourceUsage};
 /// Model handle with clone support and resource tracking
 #[derive(Debug, Clone)]
 pub struct ModelHandle {
-    pub id:             String,
-    pub path:           PathBuf,
-    pub size:           ModelSize,
-    pub loaded_at:      Instant,
-    pub model_type:     ModelType,
+    pub id: String,
+    pub path: PathBuf,
+    pub size: ModelSize,
+    pub loaded_at: Instant,
+    pub model_type: ModelType,
     pub resource_usage: ResourceUsage,
 }
 
 impl ModelHandle {
     /// Create a new model handle
-    pub fn new(id: String, path: PathBuf, size: ModelSize, model_type: ModelType, memory_usage_bytes: u64) -> Self {
+    pub fn new(
+        id: String,
+        path: PathBuf,
+        size: ModelSize,
+        model_type: ModelType,
+        memory_usage_bytes: u64,
+    ) -> Self {
         let now = Utc::now();
         Self {
             id,
@@ -83,12 +89,12 @@ impl ModelHandle {
     /// Get model metadata for display/logging
     pub fn metadata(&self) -> ModelMetadata {
         ModelMetadata {
-            id:            self.id.clone(),
-            model_type:    self.model_type,
-            size:          self.size,
-            memory_mb:     self.memory_usage_mb(),
-            age_hours:     self.age_since_load_hours() as f64,
-            access_count:  self.resource_usage.access_count,
+            id: self.id.clone(),
+            model_type: self.model_type,
+            size: self.size,
+            memory_mb: self.memory_usage_mb(),
+            age_hours: self.age_since_load_hours() as f64,
+            access_count: self.resource_usage.access_count,
             last_accessed: self.resource_usage.last_accessed,
         }
     }
@@ -97,12 +103,12 @@ impl ModelHandle {
 /// Metadata for model information display
 #[derive(Debug, Clone)]
 pub struct ModelMetadata {
-    pub id:            String,
-    pub model_type:    ModelType,
-    pub size:          ModelSize,
-    pub memory_mb:     f64,
-    pub age_hours:     f64,
-    pub access_count:  u64,
+    pub id: String,
+    pub model_type: ModelType,
+    pub size: ModelSize,
+    pub memory_mb: f64,
+    pub age_hours: f64,
+    pub access_count: u64,
     pub last_accessed: DateTime<Utc>,
 }
 
@@ -124,20 +130,20 @@ impl ModelMetadata {
 /// Builder pattern for creating model handles
 #[derive(Debug)]
 pub struct ModelHandleBuilder {
-    pub id:                 Option<String>,
-    pub path:               Option<PathBuf>,
-    pub size:               Option<ModelSize>,
-    pub model_type:         Option<ModelType>,
+    pub id: Option<String>,
+    pub path: Option<PathBuf>,
+    pub size: Option<ModelSize>,
+    pub model_type: Option<ModelType>,
     pub memory_usage_bytes: Option<u64>,
 }
 
 impl ModelHandleBuilder {
     pub fn new() -> Self {
         Self {
-            id:                 None,
-            path:               None,
-            size:               None,
-            model_type:         None,
+            id: None,
+            path: None,
+            size: None,
+            model_type: None,
             memory_usage_bytes: None,
         }
     }

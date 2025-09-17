@@ -3,9 +3,7 @@
 //! Advanced semantic analysis for deep code understanding, cross-language support,
 //! and intelligent code transformations.
 
-use std::collections::{HashMap, HashSet};
-
-use serde::{Deserialize, Serialize};
+// Core types and traits
 
 pub mod code_graph;
 pub mod cross_language;
@@ -15,18 +13,8 @@ pub mod semantic_analyzer;
 // Re-exports
 pub use code_graph::{CodeGraph, RelationshipGraph};
 pub use cross_language::{CrossLanguageRefactor, LanguageSupport};
-pub use inference_engine::{InferenceEngine, SemanticInference};
-pub use semantic_analyzer::{SemanticAnalyzer, SemanticContext};
-
-/// Configuration for semantic understanding
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SemanticConfig {
-    pub enable_deep_analysis:   bool,
-    pub cross_language_support: bool,
-    pub graph_construction:     bool,
-    pub inference_enabled:      bool,
-    pub max_analysis_depth:     u32,
-}
+pub use inference_engine::InferenceEngine;
+pub use semantic_analyzer::{SemanticAnalyzer, SemanticContext, SemanticConfig};
 
 /// Main semantic understanding engine
 #[derive(Debug)]
@@ -44,12 +32,12 @@ impl SemanticUnderstandingEngine {
 
         Self {
             analyzer,
-            cross_language: if config.cross_language_support {
+            cross_language: if config.enable_relationship_analysis {
                 Some(CrossLanguageRefactor::new())
             } else {
                 None
             },
-            code_graph: if config.graph_construction {
+            code_graph: if config.enable_relationship_analysis {
                 Some(CodeGraph::new())
             } else {
                 None
@@ -59,18 +47,18 @@ impl SemanticUnderstandingEngine {
     }
 
     /// Analyze code for deep semantic understanding
-    pub async fn analyze_code(&self, source_code: &str, language: &str) -> Result<SemanticAnalysis, SemanticError> {
+    pub async fn analyze_code(&mut self, source_code: &str, language: &str) -> Result<SemanticAnalysis, SemanticError> {
         // Perform basic semantic analysis
         let context = self.analyzer.analyze(source_code, language).await?;
 
         // Build code graph if enabled
-        if let Some(graph) = &self.code_graph {
+        if let Some(_graph) = &self.code_graph {
             // Add nodes and relationships
         }
 
         // Perform cross-language analysis if enabled
-        if let Some(cl_analyzer) = &self.cross_language {
-            // Analyze cross-language relationships
+        if let Some(_cl_analyzer) = &self.cross_language {
+            // Analyze cross-language dependencies
         }
 
         Ok(SemanticAnalysis {
@@ -81,11 +69,11 @@ impl SemanticUnderstandingEngine {
     }
 
     /// Generate semantic suggestions for code improvement
-    pub async fn generate_semantic_suggestions(
+    pub fn generate_semantic_suggestions(
         &self,
-        analysis: &SemanticAnalysis,
+        _analysis: &SemanticAnalysis,
     ) -> Result<Vec<SemanticSuggestion>, SemanticError> {
-        let mut suggestions = vec![];
+        let suggestions = vec![];
 
         // Generate suggestions based on semantic analysis
         // Implementation would use the inference engine
@@ -152,15 +140,25 @@ pub struct AntiPattern {
 /// Error types for semantic operations
 #[derive(Debug, thiserror::Error)]
 pub enum SemanticError {
-    #[error("Analysis failed: {reason}")]
-    AnalysisFailed { reason: String },
+    /// Error when analysis fails
+    #[error("Analysis failed: {0}")]
+    AnalysisFailed(String),
+    
+    /// Error for unsupported languages
+    #[error("Unsupported language: {0}")]
+    UnsupportedLanguage(String),
+    
+    /// Error for semantic inference failures
+    #[error("Semantic inference error: {0}")]
+    InferenceError(String),
+    
+    /// Error for graph construction failures
+    #[error("Graph construction failed: {0}")]
+    GraphError(String),
+}
 
-    #[error("Unsupported language: {language}")]
-    UnsupportedLanguage { language: String },
-
-    #[error("Semantic inference error: {reason}")]
-    InferenceError { reason: String },
-
-    #[error("Graph construction failed: {reason}")]
-    GraphConstructionError { reason: String },
+impl From<String> for SemanticError {
+    fn from(err: String) -> Self {
+        SemanticError::AnalysisFailed(err)
+    }
 }

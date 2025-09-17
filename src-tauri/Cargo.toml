@@ -63,6 +63,10 @@ rust-ai-ide-connectors = { path = "../crates/rust-ai-ide-connectors" }
 rust-ai-ide-commands-ai = { path = "../crates/rust-ai-ide-commands-ai" }
 # AI analysis crate for advanced code analysis
 rust-ai-ide-ai-analysis = { path = "../crates/rust-ai-ide-ai-analysis" }
+# Collaboration features
+rust-ai-ide-collaboration = { path = "../crates/rust-ai-ide-collaboration" }
+# AI inference for conflict resolution
+rust-ai-ide-ai-inference = { path = "../crates/rust-ai-ide-ai-inference" }
 # rust-ai-ide-protocol removed: crate directory exists but missing Cargo.toml
 
 # Observability and monitoring

@@ -1,0 +1,30 @@
+[package]
+name = "performance-baseline-runner"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.91.0"
+authors = ["Rust AI IDE Team"]
+description = "Performance baseline runner for Rust AI IDE"
+license = "MIT OR Apache-2.0"
+
+[[bin]]
+name = "performance_baseline_runner"
+path = "performance_baseline_runner.rs"
+
+[dependencies]
+# Minimal dependencies for performance baseline runner
+# Uses only std library for portability and minimal overhead
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+overflow-checks = true
+
+[workspace]

@@ -13,17 +13,18 @@ use tokio::time::{Duration, Instant};
 
 use crate::config::{validate_config, OrchestrationConfig};
 use crate::types::{
-    LoadDecision, ModelId, ModelMetrics, ModelSwitchEvent, ModelTask, RequestContext, RequestPriority, SwitchReason,
+    LoadDecision, ModelId, ModelMetrics, ModelSwitchEvent, ModelTask, RequestContext,
+    RequestPriority, SwitchReason,
 };
 use crate::{OrchestrationError, Result};
 
 /// Represents a queued request with priority
 #[derive(Debug, Clone)]
 pub struct QueuedRequest {
-    pub id:           uuid::Uuid,
-    pub context:      RequestContext,
+    pub id: uuid::Uuid,
+    pub context: RequestContext,
     pub submitted_at: Instant,
-    pub priority:     RequestPriority,
+    pub priority: RequestPriority,
 }
 
 impl QueuedRequest {
@@ -69,9 +70,9 @@ impl Ord for QueuedRequest {
 #[derive(Debug)]
 pub struct RequestRouter {
     model_capabilities: Arc<RwLock<HashMap<ModelId, Vec<ModelTask>>>>,
-    active_requests:    Arc<RwLock<HashMap<ModelId, usize>>>,
-    model_health:       Arc<RwLock<HashMap<ModelId, ModelMetrics>>>,
-    routing_history:    Arc<RwLock<Vec<(Instant, ModelId)>>>,
+    active_requests: Arc<RwLock<HashMap<ModelId, usize>>>,
+    model_health: Arc<RwLock<HashMap<ModelId, ModelMetrics>>>,
+    routing_history: Arc<RwLock<Vec<(Instant, ModelId)>>>,
 }
 
 impl RequestRouter {
@@ -130,10 +131,10 @@ impl RequestRouter {
         };
 
         let decision = LoadDecision {
-            target_model:              best_model,
-            estimated_queue_time:      queue_time_estimate,
+            target_model: best_model,
+            estimated_queue_time: queue_time_estimate,
             estimated_processing_time: expected_latency,
-            load_factor:               *active_requests.get(&best_model).unwrap_or(&0) as f64 / 10.0, // Normalize
+            load_factor: *active_requests.get(&best_model).unwrap_or(&0) as f64 / 10.0, // Normalize
         };
 
         // Update routing history
@@ -169,13 +170,21 @@ impl RequestRouter {
         }
     }
 
-    pub async fn update_model_capabilities(&self, model_id: ModelId, capabilities: Vec<ModelTask>) -> Result<()> {
+    pub async fn update_model_capabilities(
+        &self,
+        model_id: ModelId,
+        capabilities: Vec<ModelTask>,
+    ) -> Result<()> {
         let mut model_capabilities = self.model_capabilities.write().await;
         model_capabilities.insert(model_id, capabilities);
         Ok(())
     }
 
-    pub async fn update_model_health(&self, model_id: ModelId, metrics: ModelMetrics) -> Result<()> {
+    pub async fn update_model_health(
+        &self,
+        model_id: ModelId,
+        metrics: ModelMetrics,
+    ) -> Result<()> {
         let mut model_health = self.model_health.write().await;
         model_health.insert(model_id, metrics);
         Ok(())
@@ -185,11 +194,11 @@ impl RequestRouter {
 /// Intelligent priority-based request queuing system
 #[derive(Debug)]
 pub struct QueueManager {
-    request_queue:       Arc<Mutex<BinaryHeap<QueuedRequest>>>,
-    processing_channel:  mpsc::Sender<QueuedRequest>,
+    request_queue: Arc<Mutex<BinaryHeap<QueuedRequest>>>,
+    processing_channel: mpsc::Sender<QueuedRequest>,
     processing_receiver: Arc<Mutex<Option<mpsc::Receiver<QueuedRequest>>>>,
-    max_queue_size:      usize,
-    processed_requests:  Arc<RwLock<HashMap<uuid::Uuid, Instant>>>,
+    max_queue_size: usize,
+    processed_requests: Arc<RwLock<HashMap<uuid::Uuid, Instant>>>,
 }
 
 impl QueueManager {
@@ -263,19 +272,19 @@ impl QueueManager {
 /// System capacity monitoring and constraint management
 #[derive(Debug)]
 pub struct SystemCapacityMonitor {
-    system_resources:      Arc<RwLock<SystemCapacity>>,
+    system_resources: Arc<RwLock<SystemCapacity>>,
     model_capacity_limits: Arc<RwLock<HashMap<ModelId, usize>>>,
-    capacity_history:      Arc<RwLock<Vec<Instant>>>,
+    capacity_history: Arc<RwLock<Vec<Instant>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SystemCapacity {
-    pub total_memory_mb:        f64,
-    pub available_memory_mb:    f64,
-    pub total_cpu_cores:        usize,
-    pub available_cpu_percent:  f64,
+    pub total_memory_mb: f64,
+    pub available_memory_mb: f64,
+    pub total_cpu_cores: usize,
+    pub available_cpu_percent: f64,
     pub network_bandwidth_mbps: f64,
-    pub last_updated:           Instant,
+    pub last_updated: Instant,
 }
 
 impl SystemCapacityMonitor {
@@ -347,10 +356,10 @@ impl SystemCapacityMonitor {
 /// Failover engine for transparent recovery from failures
 #[derive(Debug)]
 pub struct FailoverEngine {
-    failover_counts:   Arc<RwLock<HashMap<ModelId, usize>>>,
-    max_failovers:     usize,
+    failover_counts: Arc<RwLock<HashMap<ModelId, usize>>>,
+    max_failovers: usize,
     failover_cooldown: Duration,
-    last_failovers:    Arc<RwLock<HashMap<ModelId, Instant>>>,
+    last_failovers: Arc<RwLock<HashMap<ModelId, Instant>>>,
 }
 
 impl FailoverEngine {
@@ -398,10 +407,10 @@ impl FailoverEngine {
 /// Dynamic concurrency limiter based on system capacity
 #[derive(Debug)]
 pub struct ConcurrencyLimiter {
-    semaphore:               Arc<Semaphore>,
-    current_limit:           Arc<RwLock<usize>>,
+    semaphore: Arc<Semaphore>,
+    current_limit: Arc<RwLock<usize>>,
     max_possible_concurrent: usize,
-    adjustment_interval:     Duration,
+    adjustment_interval: Duration,
 }
 
 impl ConcurrencyLimiter {
@@ -417,10 +426,12 @@ impl ConcurrencyLimiter {
     }
 
     pub async fn acquire(&self) -> Result<tokio::sync::SemaphorePermit<'_>> {
-        self.semaphore
-            .acquire()
-            .await
-            .map_err(|e| OrchestrationError::LoadBalancingError(format!("Failed to acquire concurrency permit: {}", e)))
+        self.semaphore.acquire().await.map_err(|e| {
+            OrchestrationError::LoadBalancingError(format!(
+                "Failed to acquire concurrency permit: {}",
+                e
+            ))
+        })
     }
 
     pub async fn adjust_limit(&self, new_limit: usize) -> Result<()> {
@@ -448,12 +459,12 @@ impl ConcurrencyLimiter {
 /// Main Model Load Balancer
 #[derive(Debug)]
 pub struct ModelLoadBalancer {
-    pub request_router:      Arc<RequestRouter>,
-    pub queue_manager:       Arc<QueueManager>,
-    pub capacity_monitor:    Arc<SystemCapacityMonitor>,
-    pub failover_engine:     Arc<FailoverEngine>,
+    pub request_router: Arc<RequestRouter>,
+    pub queue_manager: Arc<QueueManager>,
+    pub capacity_monitor: Arc<SystemCapacityMonitor>,
+    pub failover_engine: Arc<FailoverEngine>,
     pub concurrency_limiter: Arc<ConcurrencyLimiter>,
-    config:                  OrchestrationConfig,
+    config: OrchestrationConfig,
 }
 
 impl ModelLoadBalancer {
@@ -474,32 +485,32 @@ impl ModelLoadBalancer {
 
         // Start capacity monitoring task
         let capacity_monitor = Arc::new(SystemCapacityMonitor {
-            system_resources:      Arc::new(RwLock::new(SystemCapacity {
-                total_memory_mb:        8192.0, // Default 8GB
-                available_memory_mb:    4096.0, // Default 4GB available
-                total_cpu_cores:        num_cpus::get(),
-                available_cpu_percent:  50.0,   // Default 50% CPU available
+            system_resources: Arc::new(RwLock::new(SystemCapacity {
+                total_memory_mb: 8192.0,     // Default 8GB
+                available_memory_mb: 4096.0, // Default 4GB available
+                total_cpu_cores: num_cpus::get(),
+                available_cpu_percent: 50.0, // Default 50% CPU available
                 network_bandwidth_mbps: 1000.0, // Default 1Gbps
-                last_updated:           Instant::now(),
+                last_updated: Instant::now(),
             })),
             model_capacity_limits: Arc::new(RwLock::new(HashMap::new())),
-            capacity_history:      Arc::new(RwLock::new(Vec::new())),
+            capacity_history: Arc::new(RwLock::new(Vec::new())),
         });
 
         Ok(Self {
             request_router: Arc::new(RequestRouter {
                 model_capabilities: Arc::new(RwLock::new(HashMap::new())),
-                active_requests:    Arc::new(RwLock::new(HashMap::new())),
-                model_health:       Arc::new(RwLock::new(HashMap::new())),
-                routing_history:    Arc::new(RwLock::new(Vec::new())),
+                active_requests: Arc::new(RwLock::new(HashMap::new())),
+                model_health: Arc::new(RwLock::new(HashMap::new())),
+                routing_history: Arc::new(RwLock::new(Vec::new())),
             }),
             queue_manager,
             capacity_monitor,
             failover_engine: Arc::new(FailoverEngine {
-                failover_counts:   Arc::new(RwLock::new(HashMap::new())),
-                max_failovers:     3,
+                failover_counts: Arc::new(RwLock::new(HashMap::new())),
+                max_failovers: 3,
                 failover_cooldown: Duration::from_secs(300), // 5 minutes
-                last_failovers:    Arc::new(RwLock::new(HashMap::new())),
+                last_failovers: Arc::new(RwLock::new(HashMap::new())),
             }),
             concurrency_limiter: Arc::new(ConcurrencyLimiter::new(
                 config.load_balancing_config.max_concurrent_requests,
@@ -554,8 +565,8 @@ impl ModelLoadBalancer {
 
     pub async fn get_queue_stats(&self) -> LoadBalancerStats {
         LoadBalancerStats {
-            queue_size:                  self.queue_manager.get_queue_size().await,
-            average_wait_time:           self.queue_manager.get_average_wait_time().await,
+            queue_size: self.queue_manager.get_queue_size().await,
+            average_wait_time: self.queue_manager.get_average_wait_time().await,
             current_concurrent_requests: self.concurrency_limiter.current_limit().await,
         }
     }
@@ -563,8 +574,8 @@ impl ModelLoadBalancer {
 
 #[derive(Debug, Clone)]
 pub struct LoadBalancerStats {
-    pub queue_size:                  usize,
-    pub average_wait_time:           Duration,
+    pub queue_size: usize,
+    pub average_wait_time: Duration,
     pub current_concurrent_requests: usize,
 }
 
@@ -583,12 +594,12 @@ mod tests {
 
         // Test request submission
         let context = RequestContext {
-            task_type:           ModelTask::Completion,
-            input_length:        100,
-            priority:            RequestPriority::Medium,
+            task_type: ModelTask::Completion,
+            input_length: 100,
+            priority: RequestPriority::Medium,
             expected_complexity: Complexity::Medium,
-            acceptable_latency:  Duration::from_secs(5),
-            preferred_hardware:  None,
+            acceptable_latency: Duration::from_secs(5),
+            preferred_hardware: None,
         };
 
         // This should fail without models, but test the submission flow

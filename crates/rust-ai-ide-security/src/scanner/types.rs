@@ -45,44 +45,44 @@ impl std::fmt::Display for Severity {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
     /// Unique identifier for the finding
-    pub id:             String,
+    pub id: String,
     /// Human-readable title of the finding
-    pub title:          String,
+    pub title: String,
     /// Detailed description of the finding
-    pub description:    String,
+    pub description: String,
     /// Severity level (critical, high, medium, low, info)
-    pub severity:       Severity,
+    pub severity: Severity,
     /// File path where the finding was detected
-    pub file:           String,
+    pub file: String,
     /// Line number where the finding was detected
-    pub line:           Option<u32>,
+    pub line: Option<u32>,
     /// Column number where the finding was detected
-    pub column:         Option<u32>,
+    pub column: Option<u32>,
     /// OWASP category this finding belongs to
-    pub category:       String,
+    pub category: String,
     /// Suggested remediation steps
-    pub remediation:    String,
+    pub remediation: String,
     /// CWE ID if applicable
-    pub cwe_id:         Option<u32>,
+    pub cwe_id: Option<u32>,
     /// OWASP category if applicable
     pub owasp_category: Option<String>,
     /// Additional metadata
-    pub metadata:       HashMap<String, String>,
+    pub metadata: HashMap<String, String>,
     /// Source of the finding (e.g., "cargo-audit", "cargo-deny", "owasp-scanner")
-    pub source:         String,
+    pub source: String,
 }
 
 /// Scan results in a format suitable for CI/CD integration
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScanResults {
     /// Timestamp of the scan
-    pub timestamp:        String,
+    pub timestamp: String,
     /// Duration of the scan in seconds
     pub duration_seconds: f64,
     /// Number of files scanned
-    pub files_scanned:    usize,
+    pub files_scanned: usize,
     /// List of security findings
-    pub findings:         Vec<Finding>,
+    pub findings: Vec<Finding>,
     /// Summary of findings by severity
-    pub summary:          HashMap<Severity, usize>,
+    pub summary: HashMap<Severity, usize>,
 }

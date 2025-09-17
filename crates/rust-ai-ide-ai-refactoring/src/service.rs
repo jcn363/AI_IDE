@@ -173,9 +173,9 @@ impl RefactoringService {
 
         let context = convert_request_to_context(request);
         let suggestion_context = SuggestionContext {
-            file_path:       context.file_path,
-            symbol_name:     context.symbol_name,
-            symbol_kind:     context.symbol_kind,
+            file_path:       context.file_path.clone(),
+            symbol_name:     context.symbol_name.clone(),
+            symbol_kind:     context.symbol_kind.clone(),
             project_context: HashMap::new(), // Can be enhanced
         };
 

@@ -16,48 +16,49 @@ use crate::pattern_recognizer::PatternRecognizer;
 use crate::safety_filter::SafetyFilter;
 use crate::suggestion_generator::SuggestionGenerator;
 use crate::types::{
-    Complexity, RefactoringSuggestion, RefactoringTransformation, RefactoringType, RiskLevel, TransformationOperation,
+    Complexity, RefactoringSuggestion, RefactoringTransformation, RefactoringType, RiskLevel,
+    TransformationOperation,
 };
 
 /// AI-powered refactoring suggestion engine
 pub struct AiRefactoringSuggester {
-    pattern_recognizer:   Arc<PatternRecognizer>,
-    context_analyzer:     Arc<CodeContextAnalyzer>,
+    pattern_recognizer: Arc<PatternRecognizer>,
+    context_analyzer: Arc<CodeContextAnalyzer>,
     suggestion_generator: Arc<SuggestionGenerator>,
-    confidence_scorer:    Arc<ConfidenceScorer>,
-    safety_filter:        Arc<SafetyFilter>,
-    ai_service:           Arc<AiInferenceService>,
-    lsp_service:          Arc<LSPService>,
-    config:               SuggesterConfig,
-    cache:                Arc<RwLock<lru::LruCache<String, Vec<RefactoringSuggestion>>>>,
+    confidence_scorer: Arc<ConfidenceScorer>,
+    safety_filter: Arc<SafetyFilter>,
+    ai_service: Arc<AiInferenceService>,
+    lsp_service: Arc<LSPService>,
+    config: SuggesterConfig,
+    cache: Arc<RwLock<lru::LruCache<String, Vec<RefactoringSuggestion>>>>,
 }
 
 /// Configuration for the AI suggestion engine
 #[derive(Debug, Clone)]
 pub struct SuggesterConfig {
-    pub max_suggestions_per_file:   usize,
-    pub confidence_threshold:       f64,
-    pub analysis_timeout_seconds:   u64,
-    pub enable_context_analysis:    bool,
+    pub max_suggestions_per_file: usize,
+    pub confidence_threshold: f64,
+    pub analysis_timeout_seconds: u64,
+    pub enable_context_analysis: bool,
     pub enable_pattern_recognition: bool,
-    pub enable_safety_filtering:    bool,
-    pub max_concurrent_analysis:    usize,
-    pub cache_size_mb:              usize,
-    pub cache_ttl_seconds:          u64,
+    pub enable_safety_filtering: bool,
+    pub max_concurrent_analysis: usize,
+    pub cache_size_mb: usize,
+    pub cache_ttl_seconds: u64,
 }
 
 impl Default for SuggesterConfig {
     fn default() -> Self {
         Self {
-            max_suggestions_per_file:   10,
-            confidence_threshold:       0.85,
-            analysis_timeout_seconds:   30,
-            enable_context_analysis:    true,
+            max_suggestions_per_file: 10,
+            confidence_threshold: 0.85,
+            analysis_timeout_seconds: 30,
+            enable_context_analysis: true,
             enable_pattern_recognition: true,
-            enable_safety_filtering:    true,
-            max_concurrent_analysis:    5,
-            cache_size_mb:              50,
-            cache_ttl_seconds:          300,
+            enable_safety_filtering: true,
+            max_concurrent_analysis: 5,
+            cache_size_mb: 50,
+            cache_ttl_seconds: 300,
         }
     }
 }
@@ -105,14 +106,17 @@ impl AiRefactoringSuggester {
         context: AnalysisContext,
     ) -> AnalysisResult<Vec<RefactoringSuggestion>> {
         // Input validation
-        let sanitized_path =
-            TauriInputSanitizer::sanitize_path(file_path).map_err(|e| AnalysisError::DataProcessing {
+        let sanitized_path = TauriInputSanitizer::sanitize_path(file_path).map_err(|e| {
+            AnalysisError::DataProcessing {
                 stage: format!("Path sanitization failed: {}", e),
-            })?;
+            }
+        })?;
 
         let sanitized_content =
-            TauriInputSanitizer::sanitize_code_input(file_content).map_err(|e| AnalysisError::DataProcessing {
-                stage: format!("Content sanitization failed: {}", e),
+            TauriInputSanitizer::sanitize_code_input(file_content).map_err(|e| {
+                AnalysisError::DataProcessing {
+                    stage: format!("Content sanitization failed: {}", e),
+                }
             })?;
 
         // Check cache first
@@ -246,7 +250,12 @@ impl AiRefactoringSuggester {
     }
 
     /// Build AI inference prompt
-    fn build_ai_prompt(&self, file_path: &str, file_content: &str, context: &AnalysisContext) -> String {
+    fn build_ai_prompt(
+        &self,
+        file_path: &str,
+        file_content: &str,
+        context: &AnalysisContext,
+    ) -> String {
         format!(
             "Analyze the following code file for refactoring opportunities:
 
@@ -433,13 +442,13 @@ AFTER: [code_after]
 /// Context information for analysis
 #[derive(Debug, Clone)]
 pub struct AnalysisContext {
-    pub project_root:           String,
-    pub project_type:           String,
-    pub dependencies:           Vec<String>,
-    pub recent_changes:         Vec<String>,
+    pub project_root: String,
+    pub project_type: String,
+    pub dependencies: Vec<String>,
+    pub recent_changes: Vec<String>,
     pub code_style_preferences: Vec<String>,
-    pub excluded_patterns:      Vec<String>,
-    pub included_languages:     Vec<String>,
+    pub excluded_patterns: Vec<String>,
+    pub included_languages: Vec<String>,
 }
 
 /// Parse refactoring type from string

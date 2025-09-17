@@ -37,8 +37,8 @@ impl Default for DependencyGraphConfig {
 
 pub struct DependencyGraphServiceBuilder {
     config: DependencyGraphConfig,
-    graph:  Option<Arc<RwLock<DependencyGraph>>>,
-    cache:  Option<Arc<GraphCache>>,
+    graph: Option<Arc<RwLock<DependencyGraph>>>,
+    cache: Option<Arc<GraphCache>>,
 }
 
 impl Default for DependencyGraphServiceBuilder {
@@ -51,8 +51,8 @@ impl DependencyGraphServiceBuilder {
     pub fn new() -> Self {
         Self {
             config: DependencyGraphConfig::default(),
-            graph:  None,
-            cache:  None,
+            graph: None,
+            cache: None,
         }
     }
 
@@ -109,8 +109,8 @@ impl DependencyGraphServiceBuilder {
 }
 
 pub struct DependencyGraphService {
-    pub graph:  Arc<RwLock<DependencyGraph>>,
-    pub cache:  Arc<GraphCache>,
+    pub graph: Arc<RwLock<DependencyGraph>>,
+    pub cache: Arc<GraphCache>,
     pub config: DependencyGraphConfig,
 }
 
@@ -165,7 +165,7 @@ impl DependencyGraphService {
 #[derive(Debug, Clone)]
 pub struct GraphValidationResult {
     pub warnings: Vec<ValidationWarning>,
-    pub errors:   Vec<ValidationError>,
+    pub errors: Vec<ValidationError>,
 }
 
 impl GraphValidationResult {
@@ -180,8 +180,8 @@ impl GraphValidationResult {
     pub fn get_summary(&self) -> ValidationSummary {
         ValidationSummary {
             total_warnings: self.warnings.len(),
-            total_errors:   self.errors.len(),
-            is_valid:       self.is_valid(),
+            total_errors: self.errors.len(),
+            is_valid: self.is_valid(),
         }
     }
 }
@@ -189,14 +189,14 @@ impl GraphValidationResult {
 #[derive(Debug, Clone)]
 pub struct ValidationSummary {
     pub total_warnings: usize,
-    pub total_errors:   usize,
-    pub is_valid:       bool,
+    pub total_errors: usize,
+    pub is_valid: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum ValidationWarning {
     DeepDependencies {
-        packages:  Vec<String>,
+        packages: Vec<String>,
         max_depth: usize,
     },
     UnusedDependencies(Vec<String>),
@@ -211,10 +211,10 @@ pub enum ValidationError {
 }
 
 pub struct WorkspaceResolverBuilder {
-    pub workspace_root:   Option<String>,
-    pub member_patterns:  Vec<String>,
+    pub workspace_root: Option<String>,
+    pub member_patterns: Vec<String>,
     pub exclude_patterns: Vec<String>,
-    pub max_depth:        Option<usize>,
+    pub max_depth: Option<usize>,
 }
 
 impl Default for WorkspaceResolverBuilder {
@@ -226,10 +226,10 @@ impl Default for WorkspaceResolverBuilder {
 impl WorkspaceResolverBuilder {
     pub fn new() -> Self {
         Self {
-            workspace_root:   None,
-            member_patterns:  vec!["*".to_string()],
+            workspace_root: None,
+            member_patterns: vec!["*".to_string()],
             exclude_patterns: vec!["vendor".to_string(), "target".to_string()],
-            max_depth:        Some(5),
+            max_depth: Some(5),
         }
     }
 
@@ -255,10 +255,10 @@ impl WorkspaceResolverBuilder {
 
     pub fn build(self) -> WorkspaceResolver {
         WorkspaceResolver {
-            workspace_root:   self.workspace_root,
-            member_patterns:  self.member_patterns,
+            workspace_root: self.workspace_root,
+            member_patterns: self.member_patterns,
             exclude_patterns: self.exclude_patterns,
-            max_depth:        self.max_depth,
+            max_depth: self.max_depth,
         }
     }
 }

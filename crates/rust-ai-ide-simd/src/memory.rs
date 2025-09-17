@@ -7,7 +7,7 @@ use crate::error::{RecoveryStrategy, SIMDError, SIMDResult};
 
 /// SIMD memory allocator for aligned memory allocation
 pub struct SIMDAllocator {
-    cache:            moka::sync::Cache<String, NonNull<u8>>,
+    cache: moka::sync::Cache<String, NonNull<u8>>,
     allocation_count: std::sync::atomic::AtomicUsize,
 }
 
@@ -15,7 +15,7 @@ impl SIMDAllocator {
     /// Create new SIMD allocator with caching enabled
     pub fn new() -> Self {
         Self {
-            cache:            moka::sync::Cache::builder()
+            cache: moka::sync::Cache::builder()
                 .max_capacity(100) // Cache up to 100 allocations
                 .time_to_live(std::time::Duration::from_secs(300)) // 5 minute TTL
                 .build(),
@@ -28,11 +28,11 @@ impl SIMDAllocator {
         let caps = get_cached_capabilities();
         let alignment = caps.recommended_alignment();
 
-        let size_bytes = count
-            .checked_mul(std::mem::size_of::<T>())
-            .ok_or(SIMDError::MemoryAllocationError {
+        let size_bytes = count.checked_mul(std::mem::size_of::<T>()).ok_or(
+            SIMDError::MemoryAllocationError {
                 reason: "Integer overflow in size calculation".to_string(),
-            })?;
+            },
+        )?;
 
         // Ensure minimum alignment and natural alignment for type
         let alignment = alignment.max(std::mem::align_of::<T>());
@@ -44,11 +44,13 @@ impl SIMDAllocator {
             });
         }
 
-        let layout = Layout::from_size_align(size_bytes, alignment).map_err(|_| SIMDError::MemoryAllocationError {
-            reason: format!(
-                "Invalid layout for size {} and alignment {}",
-                size_bytes, alignment
-            ),
+        let layout = Layout::from_size_align(size_bytes, alignment).map_err(|_| {
+            SIMDError::MemoryAllocationError {
+                reason: format!(
+                    "Invalid layout for size {} and alignment {}",
+                    size_bytes, alignment
+                ),
+            }
         })?;
 
         // Use cached allocation if available
@@ -142,7 +144,12 @@ impl SIMDAllocator {
     }
 
     /// Create SIMDVector from an allocated pointer
-    fn create_vector_from_ptr<T>(&self, ptr: NonNull<u8>, count: usize, alignment: usize) -> SIMDResult<SIMDVector<T>> {
+    fn create_vector_from_ptr<T>(
+        &self,
+        ptr: NonNull<u8>,
+        count: usize,
+        alignment: usize,
+    ) -> SIMDResult<SIMDVector<T>> {
         let data_ptr = ptr.cast::<T>();
 
         // Verify alignment
@@ -156,7 +163,7 @@ impl SIMDAllocator {
             }
             return Err(SIMDError::AlignmentError {
                 required: std::mem::align_of::<T>(),
-                actual:   actual_alignment,
+                actual: actual_alignment,
             });
         }
 
@@ -174,8 +181,8 @@ impl SIMDAllocator {
             total_allocations: self
                 .allocation_count
                 .load(std::sync::atomic::Ordering::SeqCst),
-            cache_hits:        0, // TODO: Implement cache hit tracking
-            cache_size:        self.cache.run_pending_tasks(),
+            cache_hits: 0, // TODO: Implement cache hit tracking
+            cache_size: self.cache.run_pending_tasks(),
         }
     }
 }
@@ -198,8 +205,8 @@ pub enum PrefetchHint {
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 pub struct AllocationStats {
     pub total_allocations: usize,
-    pub cache_hits:        usize,
-    pub cache_size:        moka::sync::Cache<String, NonNull<u8>>,
+    pub cache_hits: usize,
+    pub cache_size: moka::sync::Cache<String, NonNull<u8>>,
 }
 
 /// Fast copy operations optimized for SIMD data movement
@@ -219,7 +226,7 @@ impl SIMDDataMover {
         if dst.len() != src.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: dst.len(),
-                actual:   src.len(),
+                actual: src.len(),
             });
         }
 
@@ -251,32 +258,74 @@ impl SIMDDataMover {
 
     /// Optimized data copy with SIMD when available
     fn simd_copy_dispatch<T: Copy>(&self, dst: &mut [T], src: &[T]) -> SIMDResult<()> {
-        // Focus on floating point and integer types which benefit most from SIMD
-        match std::mem::size_of::<T>() {
-            4 if self.caps.has_avx2 => self.avx2_copy_f32(dst, src),
-            8 if self.caps.has_avx2 => self.avx2_copy_f64(dst, src),
-            4 if self.caps.has_sse41 => self.sse_copy_f32(dst, src),
-            8 if self.caps.has_sse2 => self.sse_copy_f64(dst, src),
-            _ => {
-                // Fallback to standard copy for unsupported types/sizes
-                dst.copy_from_slice(src);
-                Ok(())
+        // Focus on floating point types which benefit most from SIMD
+        if std::mem::size_of::<T>() == 4 && std::mem::align_of::<T>() == 4 {
+            if self.caps.has_avx2 {
+                // SAFETY: We've verified size and alignment match f32
+                unsafe {
+                    let src_f32 = std::slice::from_raw_parts(src.as_ptr() as *const f32, src.len());
+                    let dst_f32 = std::slice::from_raw_parts_mut(dst.as_mut_ptr() as *mut f32, dst.len());
+                    return self.avx2_copy_f32(dst_f32, src_f32);
+                }
+            } else if self.caps.has_sse41 {
+                // SAFETY: We've verified size and alignment match f32
+                unsafe {
+                    let src_f32 = std::slice::from_raw_parts(src.as_ptr() as *const f32, src.len());
+                    let dst_f32 = std::slice::from_raw_parts_mut(dst.as_mut_ptr() as *mut f32, dst.len());
+                    return self.sse_copy_f32(dst_f32, src_f32);
+                }
+            }
+        } else if std::mem::size_of::<T>() == 8 && std::mem::align_of::<T>() == 8 {
+            if self.caps.has_avx2 {
+                // SAFETY: We've verified size and alignment match f64
+                unsafe {
+                    let src_f64 = std::slice::from_raw_parts(src.as_ptr() as *const f64, src.len());
+                    let dst_f64 = std::slice::from_raw_parts_mut(dst.as_mut_ptr() as *mut f64, dst.len());
+                    return self.avx2_copy_f64(dst_f64, src_f64);
+                }
+            } else if self.caps.has_sse2 {
+                // SAFETY: We've verified size and alignment match f64
+                unsafe {
+                    let src_f64 = std::slice::from_raw_parts(src.as_ptr() as *const f64, src.len());
+                    let dst_f64 = std::slice::from_raw_parts_mut(dst.as_mut_ptr() as *mut f64, dst.len());
+                    return self.sse_copy_f64(dst_f64, src_f64);
+                }
             }
         }
+        
+        // Fallback to standard copy for unsupported types/sizes
+        dst.copy_from_slice(src);
+        Ok(())
     }
 
     /// SIMD zero fill dispatch
     fn simd_zero_dispatch<T: Copy + Default>(&self, data: &mut [T]) -> SIMDResult<()> {
-        match std::mem::size_of::<T>() {
-            4 if self.caps.has_sse41 => self.sse_zero_f32(data),
-            8 if self.caps.has_sse2 => self.sse_zero_f64(data),
-            _ => {
-                for item in data.iter_mut() {
-                    *item = T::default();
-                }
-                Ok(())
+        // Handle floating point types which benefit most from SIMD
+        if std::mem::size_of::<T>() == 4 && std::mem::align_of::<T>() == 4 && self.caps.has_sse41 {
+            // SAFETY: We've verified size and alignment match f32
+            unsafe {
+                let data_f32 = std::slice::from_raw_parts_mut(
+                    data.as_mut_ptr() as *mut f32,
+                    data.len()
+                );
+                return self.sse_zero_f32(data_f32);
+            }
+        } else if std::mem::size_of::<T>() == 8 && std::mem::align_of::<T>() == 8 && self.caps.has_sse2 {
+            // SAFETY: We've verified size and alignment match f64
+            unsafe {
+                let data_f64 = std::slice::from_raw_parts_mut(
+                    data.as_mut_ptr() as *mut f64,
+                    data.len()
+                );
+                return self.sse_zero_f64(data_f64);
             }
         }
+        
+        // Fallback for other types or when SIMD is not available
+        for item in data.iter_mut() {
+            *item = T::default();
+        }
+        Ok(())
     }
 
     #[cfg(target_arch = "x86_64")]

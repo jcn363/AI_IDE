@@ -56,7 +56,10 @@ pub async fn scan_code(path: &PathBuf, min_severity: &str, limit: usize) -> Resu
         for entry in WalkDir::new(path)
             .into_iter()
             .filter_map(Result::ok)
-            .filter(|e| !e.file_type().is_dir() && e.path().extension().and_then(|s| s.to_str()) == Some("rs"))
+            .filter(|e| {
+                !e.file_type().is_dir()
+                    && e.path().extension().and_then(|s| s.to_str()) == Some("rs")
+            })
         {
             files.push(entry.path().to_path_buf());
         }
@@ -67,7 +70,9 @@ pub async fn scan_code(path: &PathBuf, min_severity: &str, limit: usize) -> Resu
     // Compile patterns once
     let patterns: Vec<_> = SECURITY_PATTERNS
         .iter()
-        .map(|(pat, title, severity, cwe, owasp)| (Regex::new(pat).unwrap(), *title, *severity, *cwe, *owasp))
+        .map(|(pat, title, severity, cwe, owasp)| {
+            (Regex::new(pat).unwrap(), *title, *severity, *cwe, *owasp)
+        })
         .collect();
 
     // Scan each file
@@ -82,19 +87,22 @@ pub async fn scan_code(path: &PathBuf, min_severity: &str, limit: usize) -> Resu
 
                     if pattern.is_match(line) {
                         let finding = Finding {
-                            id:             format!(r#"pattern-{:x}"#, Sha256::digest(line.as_bytes())),
-                            title:          title.to_string(),
-                            description:    format!(r#"Found potential security issue: {}"#, title),
-                            severity:       *severity,
-                            file:           file_path.display().to_string(),
-                            line:           Some(line_num as u32 + 1),
-                            column:         None,
-                            category:       "Code Pattern".to_string(),
-                            remediation:    format!(r#"Review and secure the following code: {}"#, line.trim()),
-                            cwe_id:         *cwe_id,
+                            id: format!(r#"pattern-{:x}"#, Sha256::digest(line.as_bytes())),
+                            title: title.to_string(),
+                            description: format!(r#"Found potential security issue: {}"#, title),
+                            severity: *severity,
+                            file: file_path.display().to_string(),
+                            line: Some(line_num as u32 + 1),
+                            column: None,
+                            category: "Code Pattern".to_string(),
+                            remediation: format!(
+                                r#"Review and secure the following code: {}"#,
+                                line.trim()
+                            ),
+                            cwe_id: *cwe_id,
                             owasp_category: owasp.map(|s| s.to_string()),
-                            metadata:       HashMap::new(),
-                            source:         "owasp-scanner".to_string(),
+                            metadata: HashMap::new(),
+                            source: "owasp-scanner".to_string(),
                         };
                         findings.push(finding);
 
@@ -129,14 +137,14 @@ pub async fn scan_code(path: &PathBuf, min_severity: &str, limit: usize) -> Resu
 /// Visits AST nodes to detect security issues
 struct SecurityVisitor {
     file_path: PathBuf,
-    findings:  Vec<Finding>,
+    findings: Vec<Finding>,
 }
 
 impl SecurityVisitor {
     fn new(file_path: &Path) -> Self {
         Self {
             file_path: file_path.to_path_buf(),
-            findings:  Vec::new(),
+            findings: Vec::new(),
         }
     }
 
@@ -167,7 +175,8 @@ impl<'ast> syn::visit::Visit<'ast> for SecurityVisitor {
                 line: Some(line as u32),
                 column: Some(column as u32),
                 category: "Code Quality".to_string(),
-                remediation: "Consider adding proper error handling and security checks".to_string(),
+                remediation: "Consider adding proper error handling and security checks"
+                    .to_string(),
                 cwe_id: None,
                 owasp_category: None,
                 metadata,
@@ -177,7 +186,8 @@ impl<'ast> syn::visit::Visit<'ast> for SecurityVisitor {
 
         // Check for unsafe blocks in the function body
         {
-            let mut unsafe_visitor = UnsafeBlockVisitor::new(&self.file_path, &item_fn.sig.ident.to_string());
+            let mut unsafe_visitor =
+                UnsafeBlockVisitor::new(&self.file_path, &item_fn.sig.ident.to_string());
             syn::visit::visit_item_fn(&mut unsafe_visitor, item_fn);
             self.findings.extend(unsafe_visitor.findings);
         }
@@ -190,16 +200,16 @@ impl<'ast> syn::visit::Visit<'ast> for SecurityVisitor {
 /// Visits unsafe blocks in the code
 struct UnsafeBlockVisitor {
     file_path: PathBuf,
-    context:   String,
-    findings:  Vec<Finding>,
+    context: String,
+    findings: Vec<Finding>,
 }
 
 impl UnsafeBlockVisitor {
     fn new(file_path: &Path, context: &str) -> Self {
         Self {
             file_path: file_path.to_path_buf(),
-            context:   context.to_string(),
-            findings:  Vec::new(),
+            context: context.to_string(),
+            findings: Vec::new(),
         }
     }
 

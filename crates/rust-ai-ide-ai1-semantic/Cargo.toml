@@ -22,3 +22,5 @@ tree-sitter-rust = { workspace = true }
 rust-ai-ide-core = { path = "../rust-ai-ide-core" }
 rust-ai-ide-types = { path = "../rust-ai-ide-types" }
 rust-ai-ide-shared-types = { path = "../rust-ai-ide-shared-types" }
+chrono.workspace = true
+thiserror.workspace = true

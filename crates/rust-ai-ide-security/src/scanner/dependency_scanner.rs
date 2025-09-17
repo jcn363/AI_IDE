@@ -12,7 +12,11 @@ use tokio::process::Command as AsyncCommand;
 use super::types::{Finding, Severity};
 
 /// Scans project dependencies for known vulnerabilities
-pub async fn scan_dependencies(path: &std::path::Path, min_severity: &str, limit: usize) -> Result<Vec<Finding>> {
+pub async fn scan_dependencies(
+    path: &std::path::Path,
+    min_severity: &str,
+    limit: usize,
+) -> Result<Vec<Finding>> {
     let min_severity: Severity = min_severity.parse().unwrap_or(Severity::Medium);
     let mut findings = Vec::new();
 
@@ -67,7 +71,11 @@ pub async fn scan_dependencies(path: &std::path::Path, min_severity: &str, limit
 }
 
 /// Parses cargo-audit JSON output into Findings
-fn parse_cargo_audit(json_str: &str, min_severity: Severity, _limit: usize) -> Result<Vec<Finding>> {
+fn parse_cargo_audit(
+    json_str: &str,
+    min_severity: Severity,
+    _limit: usize,
+) -> Result<Vec<Finding>> {
     let mut findings = Vec::new();
 
     let json: Value = serde_json::from_str(json_str)?;
@@ -158,7 +166,8 @@ fn parse_cargo_deny(json_str: &str, min_severity: Severity, _limit: usize) -> Re
 
     // Process advisories
     if let Some(advisories) = json.get("advisories") {
-        for (pkg_name, pkg_advisories) in advisories.as_object().unwrap_or(&serde_json::Map::new()) {
+        for (pkg_name, pkg_advisories) in advisories.as_object().unwrap_or(&serde_json::Map::new())
+        {
             for advisory in pkg_advisories.as_array().unwrap_or(&vec![]) {
                 let severity = advisory
                     .get("advisory")
@@ -287,7 +296,9 @@ fn parse_cargo_deny(json_str: &str, min_severity: Severity, _limit: usize) -> Re
                                 .unwrap_or("")
                         ),
                         cwe_id: None,
-                        owasp_category: Some("A9:2021-Security Logging & Monitoring Failures".to_string()),
+                        owasp_category: Some(
+                            "A9:2021-Security Logging & Monitoring Failures".to_string(),
+                        ),
                         metadata: HashMap::new(),
                         source: "cargo-deny".to_string(),
                     };

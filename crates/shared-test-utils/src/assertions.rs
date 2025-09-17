@@ -61,7 +61,10 @@ pub mod collections {
     }
 
     /// Assert that collections are equal ignoring order
-    pub fn assert_equal_unordered<T: PartialEq + Debug + Clone + Eq + std::hash::Hash>(left: &[T], right: &[T]) {
+    pub fn assert_equal_unordered<T: PartialEq + Debug + Clone + Eq + std::hash::Hash>(
+        left: &[T],
+        right: &[T],
+    ) {
         assert_eq!(
             left.len(),
             right.len(),
@@ -132,7 +135,10 @@ pub mod network {
     }
 
     /// Assert that an HTTP response contains expected headers
-    pub fn assert_headers_contain(response_headers: &HashMap<String, String>, expected: &HashMap<String, String>) {
+    pub fn assert_headers_contain(
+        response_headers: &HashMap<String, String>,
+        expected: &HashMap<String, String>,
+    ) {
         for (key, expected_value) in expected {
             match response_headers.get(key) {
                 Some(actual_value) => assert_eq!(
@@ -282,7 +288,8 @@ pub mod filesystem {
 
     /// Assert that a file contains expected text
     pub fn assert_file_contains(path: &Path, expected_text: &str) {
-        let content = fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read file: {}", path.display()));
+        let content = fs::read_to_string(path)
+            .unwrap_or_else(|_| panic!("Failed to read file: {}", path.display()));
 
         assert!(
             content.contains(expected_text),
@@ -299,15 +306,18 @@ pub mod filesystem {
 
         match format.to_lowercase().as_str() {
             "json" => {
-                serde_json::from_str::<serde_json::Value>(&content).map_err(|e| TestError::Json(e.to_string()))?;
+                serde_json::from_str::<serde_json::Value>(&content)
+                    .map_err(|e| TestError::Json(e.to_string()))?;
                 Ok(())
             }
             "yaml" | "yml" => {
-                serde_yaml::from_str::<serde_yaml::Value>(&content).map_err(|e| TestError::Yaml(e.to_string()))?;
+                serde_yaml::from_str::<serde_yaml::Value>(&content)
+                    .map_err(|e| TestError::Yaml(e.to_string()))?;
                 Ok(())
             }
             "toml" => {
-                toml::from_str::<toml::Value>(&content).map_err(|e| TestError::Toml(e.to_string()))?;
+                toml::from_str::<toml::Value>(&content)
+                    .map_err(|e| TestError::Toml(e.to_string()))?;
                 Ok(())
             }
             _ => Err(TestError::Validation(
@@ -362,7 +372,11 @@ pub mod database {
 
     /// Assert that a table contains expected data
     #[cfg(feature = "database")]
-    pub fn assert_table_contains(conn: &Connection, table: &str, conditions: &[(&str, &str)]) -> Result<(), TestError> {
+    pub fn assert_table_contains(
+        conn: &Connection,
+        table: &str,
+        conditions: &[(&str, &str)],
+    ) -> Result<(), TestError> {
         let mut query = format!("SELECT COUNT(*) FROM {} WHERE ", table);
         let mut params = Vec::new();
 
@@ -374,7 +388,8 @@ pub mod database {
             params.push(*value);
         }
 
-        let count: i64 = conn.query_row(&query, rusqlite::params_from_iter(params), |row| row.get(0))?;
+        let count: i64 =
+            conn.query_row(&query, rusqlite::params_from_iter(params), |row| row.get(0))?;
         if count == 0 {
             return Err(TestError::Validation(
                 crate::ValidationError::invalid_setup(format!(
@@ -416,7 +431,8 @@ pub mod text {
 
     /// Assert that text matches a regular expression
     pub fn assert_matches_pattern(text: &str, pattern: &str) {
-        let regex = Regex::new(pattern).unwrap_or_else(|_| panic!("Invalid regex pattern: {}", pattern));
+        let regex =
+            Regex::new(pattern).unwrap_or_else(|_| panic!("Invalid regex pattern: {}", pattern));
         assert!(
             regex.is_match(text),
             "Text '{}' does not match pattern '{}'",
@@ -529,7 +545,7 @@ pub mod async_ops {
 
 /// Custom assertion builder for fluent testing
 pub struct AssertionBuilder<T> {
-    value:       T,
+    value: T,
     description: Option<String>,
 }
 

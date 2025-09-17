@@ -8,9 +8,9 @@ use crate::filesystem::TempWorkspace;
 /// Supports multiple test contexts through type parameter T
 #[derive(Clone, Debug)]
 pub struct TestFixtureBuilder<T> {
-    files:        HashMap<PathBuf, String>,
-    directories:  Vec<PathBuf>,
-    metadata:     HashMap<String, String>,
+    files: HashMap<PathBuf, String>,
+    directories: Vec<PathBuf>,
+    metadata: HashMap<String, String>,
     context_data: Option<T>,
 }
 
@@ -18,9 +18,9 @@ impl<T> TestFixtureBuilder<T> {
     /// Creates a new generic fixture builder
     pub fn new() -> Self {
         Self {
-            files:        HashMap::new(),
-            directories:  Vec::new(),
-            metadata:     HashMap::new(),
+            files: HashMap::new(),
+            directories: Vec::new(),
+            metadata: HashMap::new(),
             context_data: None,
         }
     }
@@ -75,9 +75,9 @@ impl<T> TestFixtureBuilder<T> {
         }
 
         Ok(TestFixture {
-            files:        self.files,
-            directories:  self.directories,
-            metadata:     self.metadata,
+            files: self.files,
+            directories: self.directories,
+            metadata: self.metadata,
             context_data: self.context_data,
         })
     }
@@ -85,9 +85,9 @@ impl<T> TestFixtureBuilder<T> {
     /// Builds the fixture without a workspace (for testing context only)
     pub fn build_context_only(self) -> TestFixture<T> {
         TestFixture {
-            files:        self.files,
-            directories:  self.directories,
-            metadata:     self.metadata,
+            files: self.files,
+            directories: self.directories,
+            metadata: self.metadata,
             context_data: self.context_data,
         }
     }
@@ -96,9 +96,9 @@ impl<T> TestFixtureBuilder<T> {
 /// A completed generic test fixture
 #[derive(Clone, Debug)]
 pub struct TestFixture<T> {
-    pub files:        HashMap<PathBuf, String>,
-    pub directories:  Vec<PathBuf>,
-    pub metadata:     HashMap<String, String>,
+    pub files: HashMap<PathBuf, String>,
+    pub directories: Vec<PathBuf>,
+    pub metadata: HashMap<String, String>,
     pub context_data: Option<T>,
 }
 
@@ -170,9 +170,9 @@ impl FixtureBuilderFactory {
 
 /// Type-erased fixture for dynamic contexts
 pub struct DynamicTestFixture {
-    files:             HashMap<PathBuf, String>,
-    directories:       Vec<PathBuf>,
-    metadata:          HashMap<String, String>,
+    files: HashMap<PathBuf, String>,
+    directories: Vec<PathBuf>,
+    metadata: HashMap<String, String>,
     context_type_name: String,
 }
 
@@ -180,9 +180,9 @@ impl DynamicTestFixture {
     /// Creates a dynamic fixture from any typed fixture
     pub fn from_fixture<T>(fixture: TestFixture<T>) -> Self {
         Self {
-            files:             fixture.files,
-            directories:       fixture.directories,
-            metadata:          fixture.metadata,
+            files: fixture.files,
+            directories: fixture.directories,
+            metadata: fixture.metadata,
             context_type_name: std::any::type_name::<T>().to_string(),
         }
     }
@@ -248,12 +248,15 @@ macro_rules! quick_fixture {
 // Backward compatibility for existing TestFixtureBuilder
 impl TestFixtureBuilder<()> {
     /// Convert to old-style non-generic fixture (for backward compatibility)
-    pub fn as_legacy(self, workspace: &TempWorkspace) -> Result<crate::fixtures::TestFixture, TestError> {
+    pub fn as_legacy(
+        self,
+        workspace: &TempWorkspace,
+    ) -> Result<crate::fixtures::TestFixture, TestError> {
         let typed_fixture = self.build(workspace)?;
         Ok(crate::fixtures::TestFixture {
-            files:       typed_fixture.files,
+            files: typed_fixture.files,
             directories: typed_fixture.directories,
-            metadata:    typed_fixture.metadata,
+            metadata: typed_fixture.metadata,
         })
     }
 }

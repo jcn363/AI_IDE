@@ -12,10 +12,10 @@ use crate::types::*;
 
 #[derive(Clone)]
 pub struct TrendAnalyzer {
-    pub time_series_analyzer:   Arc<RwLock<TimeSeriesAnalyzer>>,
-    pub forecasting_engine:     Arc<RwLock<QualityForecaster>>,
-    pub benchmark_comparer:     Arc<RwLock<BenchmarkComparator>>,
-    pub threshold_optimizer:    Arc<RwLock<ThresholdOptimizer>>,
+    pub time_series_analyzer: Arc<RwLock<TimeSeriesAnalyzer>>,
+    pub forecasting_engine: Arc<RwLock<QualityForecaster>>,
+    pub benchmark_comparer: Arc<RwLock<BenchmarkComparator>>,
+    pub threshold_optimizer: Arc<RwLock<ThresholdOptimizer>>,
     pub intervention_suggester: Arc<RwLock<InterventionSuggester>>,
 }
 
@@ -33,10 +33,10 @@ pub struct InterventionSuggester;
 impl TrendAnalyzer {
     pub async fn new(_config: Arc<RwLock<DashboardConfiguration>>) -> TrendAnalyzer {
         TrendAnalyzer {
-            time_series_analyzer:   Arc::new(RwLock::new(TimeSeriesAnalyzer)),
-            forecasting_engine:     Arc::new(RwLock::new(QualityForecaster)),
-            benchmark_comparer:     Arc::new(RwLock::new(BenchmarkComparator)),
-            threshold_optimizer:    Arc::new(RwLock::new(ThresholdOptimizer)),
+            time_series_analyzer: Arc::new(RwLock::new(TimeSeriesAnalyzer)),
+            forecasting_engine: Arc::new(RwLock::new(QualityForecaster)),
+            benchmark_comparer: Arc::new(RwLock::new(BenchmarkComparator)),
+            threshold_optimizer: Arc::new(RwLock::new(ThresholdOptimizer)),
             intervention_suggester: Arc::new(RwLock::new(InterventionSuggester)),
         }
     }

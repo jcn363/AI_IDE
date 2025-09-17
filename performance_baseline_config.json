@@ -1,0 +1,86 @@
+{
+  "baseline_configuration": {
+    "version": "1.0",
+    "description": "Performance baseline configuration for Rust AI IDE",
+    "created_at": "2025-09-16T15:28:32.726Z",
+    "environment": "development"
+  },
+  "monitoring_settings": {
+    "enabled": true,
+    "monitoring_integration": true,
+    "alert_on_regression": true,
+    "regression_threshold_percent": 5.0,
+    "enable_baseline_comparison": true,
+    "baseline_update_strategy": "moving_average",
+    "baseline_learning_rate": 0.1
+  },
+  "performance_targets": {
+    "sync_workload_ops_per_second": {
+      "target": 10000,
+      "warning_threshold": 8000,
+      "critical_threshold": 5000,
+      "current_baseline": 0
+    },
+    "async_workload_ops_per_second": {
+      "target": 500,
+      "warning_threshold": 400,
+      "critical_threshold": 200,
+      "current_baseline": 0
+    },
+    "memory_usage_mb": {
+      "target": 100,
+      "warning_threshold": 150,
+      "critical_threshold": 200,
+      "current_baseline": 0
+    },
+    "build_time_ms": {
+      "target": 30000,
+      "warning_threshold": 45000,
+      "critical_threshold": 60000,
+      "current_baseline": 0
+    }
+  },
+  "test_configuration": {
+    "iterations": 10000,
+    "enable_profiling": false,
+    "profile": "release",
+    "enable_incremental": true,
+    "timeout_seconds": 300,
+    "excluded_crates": [
+      "test-performance-analyzer",
+      "integration-tests"
+    ],
+    "parallel_collection": true
+  },
+  "alert_configuration": {
+    "email_alerts": {
+      "enabled": false,
+      "recipients": []
+    },
+    "slack_alerts": {
+      "enabled": false,
+      "webhook_url": "",
+      "channel": "#performance-alerts"
+    },
+    "dashboard_alerts": {
+      "enabled": true,
+      "dashboard_url": "http://localhost:3000/performance"
+    }
+  },
+  "automation_settings": {
+    "auto_update_baseline": true,
+    "baseline_update_interval_hours": 24,
+    "continuous_monitoring": false,
+    "ci_integration": {
+      "enabled": true,
+      "fail_on_regression": true,
+      "store_historical_data": true
+    }
+  },
+  "system_requirements": {
+    "min_cpu_cores": 2,
+    "min_memory_gb": 4,
+    "recommended_os": ["linux", "macos", "windows"],
+    "supported_architectures": ["x86_64", "aarch64"]
+  }
+}

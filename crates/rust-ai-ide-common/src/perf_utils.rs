@@ -9,22 +9,22 @@ use std::time::{Duration, Instant};
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
     pub operation_name: String,
-    pub duration:       Duration,
-    pub started_at:     Instant,
-    pub finished_at:    Instant,
+    pub duration: Duration,
+    pub started_at: Instant,
+    pub finished_at: Instant,
 }
 
 /// Timing result from measuring an operation
 #[derive(Debug, Clone)]
 pub struct TimedOperation<T> {
-    pub result:  T,
+    pub result: T,
     pub metrics: PerformanceMetrics,
 }
 
 /// Timer for measuring operation duration
 #[derive(Debug)]
 pub struct Timer {
-    started_at:     Instant,
+    started_at: Instant,
     operation_name: String,
 }
 
@@ -32,7 +32,7 @@ impl Timer {
     /// Start a new timer
     pub fn start(operation_name: impl Into<String>) -> Self {
         Self {
-            started_at:     Instant::now(),
+            started_at: Instant::now(),
             operation_name: operation_name.into(),
         }
     }
@@ -61,7 +61,7 @@ impl Timer {
 /// Scoped timer that automatically finishes when dropped
 pub struct ScopedTimer {
     operation_name: String,
-    started_at:     Instant,
+    started_at: Instant,
 }
 
 impl ScopedTimer {
@@ -98,7 +98,10 @@ where
 }
 
 /// Measure the execution time of an asynchronous operation
-pub async fn time_async_operation<T, F, Fut>(operation_name: impl Into<String>, operation: F) -> TimedOperation<T>
+pub async fn time_async_operation<T, F, Fut>(
+    operation_name: impl Into<String>,
+    operation: F,
+) -> TimedOperation<T>
 where
     F: FnOnce() -> Fut,
     Fut: Future<Output = T>,
@@ -113,8 +116,8 @@ where
 /// Performance marker for observability
 #[derive(Debug, Clone)]
 pub struct PerformanceMarker {
-    pub name:      String,
-    pub tags:      std::collections::HashMap<String, String>,
+    pub name: String,
+    pub tags: std::collections::HashMap<String, String>,
     pub timestamp: Instant,
 }
 
@@ -122,8 +125,8 @@ impl PerformanceMarker {
     /// Create a new performance marker
     pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name:      name.into(),
-            tags:      std::collections::HashMap::new(),
+            name: name.into(),
+            tags: std::collections::HashMap::new(),
             timestamp: Instant::now(),
         }
     }
@@ -158,11 +161,15 @@ pub mod markers {
 
     /// Mark LSP request start
     pub fn lsp_request_start(request_type: &str) -> PerformanceMarker {
-        PerformanceMarker::new(format!("lsp_request_start_{}", request_type)).with_tag("request_type", request_type)
+        PerformanceMarker::new(format!("lsp_request_start_{}", request_type))
+            .with_tag("request_type", request_type)
     }
 
     /// Mark LSP request complete
-    pub fn lsp_request_complete(request_type: &str, duration: std::time::Duration) -> PerformanceMarker {
+    pub fn lsp_request_complete(
+        request_type: &str,
+        duration: std::time::Duration,
+    ) -> PerformanceMarker {
         PerformanceMarker::new(format!("lsp_request_complete_{}", request_type))
             .with_tag("request_type", request_type)
             .with_tag("duration_ms", duration.as_millis().to_string())
@@ -177,7 +184,8 @@ pub mod markers {
 
     /// Mark filesystem operation
     pub fn filesystem_operation(operation: &str, bytes: Option<u64>) -> PerformanceMarker {
-        let mut marker = PerformanceMarker::new("filesystem_operation").with_tag("operation", operation);
+        let mut marker =
+            PerformanceMarker::new("filesystem_operation").with_tag("operation", operation);
 
         if let Some(bytes) = bytes {
             marker = marker.with_tag("bytes", bytes.to_string());
@@ -188,7 +196,8 @@ pub mod markers {
 
     /// Mark workspace operation
     pub fn workspace_operation(operation: &str, path_count: Option<usize>) -> PerformanceMarker {
-        let mut marker = PerformanceMarker::new("workspace_operation").with_tag("operation", operation);
+        let mut marker =
+            PerformanceMarker::new("workspace_operation").with_tag("operation", operation);
 
         if let Some(count) = path_count {
             marker = marker.with_tag("path_count", count.to_string());
@@ -201,7 +210,7 @@ pub mod markers {
 /// Collect performance metrics for a batch of operations
 #[derive(Debug, Default)]
 pub struct PerformanceCollector {
-    pub operations:     Vec<PerformanceMetrics>,
+    pub operations: Vec<PerformanceMetrics>,
     pub total_duration: Duration,
 }
 
@@ -261,23 +270,23 @@ impl PerformanceCollector {
 /// Summary of performance metrics
 #[derive(Debug, Clone)]
 pub struct PerformanceSummary {
-    pub count:          usize,
+    pub count: usize,
     pub total_duration: Duration,
-    pub average:        Duration,
-    pub p50:            Duration,
-    pub p95:            Duration,
-    pub p99:            Duration,
+    pub average: Duration,
+    pub p50: Duration,
+    pub p95: Duration,
+    pub p99: Duration,
 }
 
 impl Default for PerformanceSummary {
     fn default() -> Self {
         Self {
-            count:          0,
+            count: 0,
             total_duration: Duration::ZERO,
-            average:        Duration::ZERO,
-            p50:            Duration::ZERO,
-            p95:            Duration::ZERO,
-            p99:            Duration::ZERO,
+            average: Duration::ZERO,
+            p50: Duration::ZERO,
+            p95: Duration::ZERO,
+            p99: Duration::ZERO,
         }
     }
 }

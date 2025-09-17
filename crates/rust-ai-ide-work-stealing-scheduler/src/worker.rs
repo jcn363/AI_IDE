@@ -14,15 +14,15 @@ use crate::SchedulerConfig;
 /// Task queue using crossbeam's work-stealing deque
 pub struct TaskQueue {
     /// Local worker deque for LIFO operations
-    local_worker:    DequeWorker<BoxedTask>,
+    local_worker: DequeWorker<BoxedTask>,
     /// Stealer for other workers to steal tasks
-    stealer:         Stealer<BoxedTask>,
+    stealer: Stealer<BoxedTask>,
     /// Global injector for task submission
     global_injector: Arc<Injector<BoxedTask>>,
     /// Current queue depth
-    depth:           AtomicUsize,
+    depth: AtomicUsize,
     /// Maximum queue size
-    max_size:        usize,
+    max_size: usize,
 }
 
 impl TaskQueue {
@@ -88,19 +88,19 @@ impl TaskQueue {
 /// Individual worker thread in the work-stealing scheduler
 pub struct Worker {
     /// Worker ID
-    id:            usize,
+    id: usize,
     /// Task queue
-    queue:         Arc<TaskQueue>,
+    queue: Arc<TaskQueue>,
     /// Worker statistics
-    stats:         Arc<RwLock<crate::metrics::WorkerStats>>,
+    stats: Arc<RwLock<crate::metrics::WorkerStats>>,
     /// Running flag
-    is_running:    Arc<AtomicBool>,
+    is_running: Arc<AtomicBool>,
     /// Result sender
-    result_tx:     mpsc::UnboundedSender<TaskResult<serde_json::Value>>,
+    result_tx: mpsc::UnboundedSender<TaskResult<serde_json::Value>>,
     /// Other workers for stealing (populated after construction)
     other_workers: parking_lot::RwLock<Vec<Arc<TaskQueue>>>,
     /// Configuration
-    config:        SchedulerConfig,
+    config: SchedulerConfig,
 }
 
 impl Worker {
@@ -114,12 +114,12 @@ impl Worker {
         let queue = Arc::new(TaskQueue::new(config.max_queue_size, global_injector));
 
         let stats = Arc::new(RwLock::new(crate::metrics::WorkerStats {
-            worker_id:        id,
-            tasks_executed:   0,
-            queue_depth:      0,
+            worker_id: id,
+            tasks_executed: 0,
+            queue_depth: 0,
             steals_performed: 0,
-            steals_received:  0,
-            uptime_seconds:   0,
+            steals_received: 0,
+            uptime_seconds: 0,
             cpu_time_seconds: 0.0,
         }));
 
@@ -240,14 +240,14 @@ impl Worker {
 
         // Send result
         let task_result = TaskResult {
-            task_id:           task_id.clone(),
-            result:            result.map_err(|e| SchedulerError::TaskExecutionTimeout {
+            task_id: task_id.clone(),
+            result: result.map_err(|e| SchedulerError::TaskExecutionTimeout {
                 task_id,
                 timeout_ms: execution_time,
             }),
             execution_time_ms: execution_time,
-            worker_id:         self.id,
-            completed_at:      chrono::Utc::now(),
+            worker_id: self.id,
+            completed_at: chrono::Utc::now(),
         };
 
         if let Err(e) = self.result_tx.send(task_result) {
@@ -259,12 +259,12 @@ impl Worker {
     pub async fn status(&self) -> WorkerStatus {
         let stats = self.stats.read().await;
         WorkerStatus {
-            worker_id:        self.id,
-            is_running:       self.is_running(),
-            queue_depth:      self.queue.depth(),
-            tasks_executed:   stats.tasks_executed,
+            worker_id: self.id,
+            is_running: self.is_running(),
+            queue_depth: self.queue.depth(),
+            tasks_executed: stats.tasks_executed,
             steals_performed: stats.steals_performed,
-            uptime_seconds:   stats.uptime_seconds,
+            uptime_seconds: stats.uptime_seconds,
         }
     }
 }
@@ -273,25 +273,25 @@ impl Worker {
 #[derive(Debug, Clone)]
 pub struct WorkerStatus {
     /// Worker ID
-    pub worker_id:        usize,
+    pub worker_id: usize,
     /// Whether worker is running
-    pub is_running:       bool,
+    pub is_running: bool,
     /// Current queue depth
-    pub queue_depth:      usize,
+    pub queue_depth: usize,
     /// Total tasks executed
-    pub tasks_executed:   u64,
+    pub tasks_executed: u64,
     /// Successful steals performed
     pub steals_performed: u64,
     /// Worker uptime in seconds
-    pub uptime_seconds:   u64,
+    pub uptime_seconds: u64,
 }
 
 /// Worker pool for managing multiple workers
 pub struct WorkerPool {
-    workers:         Vec<Arc<Worker>>,
+    workers: Vec<Arc<Worker>>,
     global_injector: Arc<Injector<BoxedTask>>,
-    result_rx:       mpsc::UnboundedReceiver<TaskResult<serde_json::Value>>,
-    result_tx:       mpsc::UnboundedSender<TaskResult<serde_json::Value>>,
+    result_rx: mpsc::UnboundedReceiver<TaskResult<serde_json::Value>>,
+    result_tx: mpsc::UnboundedSender<TaskResult<serde_json::Value>>,
 }
 
 impl WorkerPool {

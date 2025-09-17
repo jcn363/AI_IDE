@@ -578,6 +578,7 @@ mod comprehensive_tests {
             }
         }
     }
+    }
 
     /// Test integration between multiple components
     #[tokio::test]
@@ -1118,3 +1119,4 @@ mod comprehensive_tests {
                 .await
                 .unwrap();
         }
+}

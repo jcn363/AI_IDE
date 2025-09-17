@@ -20,23 +20,23 @@ use crate::types::*;
 #[derive(Debug)]
 pub struct BuildOptimizer {
     /// Current build configuration
-    build_config:        Arc<RwLock<BuildConfiguration>>,
+    build_config: Arc<RwLock<BuildConfiguration>>,
     /// Build cache state
-    build_cache:         Arc<RwLock<BuildCache>>,
+    build_cache: Arc<RwLock<BuildCache>>,
     /// Compilation metrics
     compilation_metrics: Arc<RwLock<HashMap<String, BuildMetrics>>>,
     /// Feature flag manager
-    feature_manager:     Arc<RwLock<FeatureFlagManager>>,
+    feature_manager: Arc<RwLock<FeatureFlagManager>>,
 }
 
 impl BuildOptimizer {
     /// Create a new build optimizer
     pub fn new() -> Self {
         Self {
-            build_config:        Arc::new(RwLock::new(BuildConfiguration::default())),
-            build_cache:         Arc::new(RwLock::new(BuildCache::default())),
+            build_config: Arc::new(RwLock::new(BuildConfiguration::default())),
+            build_cache: Arc::new(RwLock::new(BuildCache::default())),
             compilation_metrics: Arc::new(RwLock::new(HashMap::new())),
-            feature_manager:     Arc::new(RwLock::new(FeatureFlagManager::default())),
+            feature_manager: Arc::new(RwLock::new(FeatureFlagManager::default())),
         }
     }
 
@@ -82,7 +82,10 @@ impl BuildOptimizer {
     }
 
     /// Apply build optimizations
-    pub async fn apply_optimizations(&self, optimizations: BuildOptimization) -> OptimizerResult<BuildOptimization> {
+    pub async fn apply_optimizations(
+        &self,
+        optimizations: BuildOptimization,
+    ) -> OptimizerResult<BuildOptimization> {
         // Apply profile recommendations
         for recommendation in &optimizations.profile_recommendations {
             self.apply_profile_recommendation(recommendation).await?;
@@ -173,9 +176,9 @@ impl BuildOptimizer {
         let cache = self.build_cache.read().await;
         CacheStatistics {
             total_entries: cache.entries.len(),
-            hit_rate:      cache.hit_rate,
+            hit_rate: cache.hit_rate,
             total_size_mb: cache.total_size_mb,
-            last_cleanup:  cache.last_cleanup,
+            last_cleanup: cache.last_cleanup,
         }
     }
 
@@ -224,8 +227,8 @@ impl BuildOptimizer {
 
         // Development profile optimizations
         recommendations.push(ProfileRecommendation {
-            profile_name:         "dev".to_string(),
-            changes:              HashMap::from([
+            profile_name: "dev".to_string(),
+            changes: HashMap::from([
                 ("opt-level".to_string(), "1".to_string()),
                 ("codegen-units".to_string(), "16".to_string()),
                 ("debug".to_string(), "line-tables-only".to_string()),
@@ -235,8 +238,8 @@ impl BuildOptimizer {
 
         // Release profile optimizations
         recommendations.push(ProfileRecommendation {
-            profile_name:         "release".to_string(),
-            changes:              HashMap::from([
+            profile_name: "release".to_string(),
+            changes: HashMap::from([
                 ("lto".to_string(), "thin".to_string()),
                 ("codegen-units".to_string(), "1".to_string()),
             ]),
@@ -252,18 +255,18 @@ impl BuildOptimizer {
 
         // AI features optimization
         optimizations.push(FeatureOptimization {
-            crate_name:   "rust-ai-ide-ai".to_string(),
+            crate_name: "rust-ai-ide-ai".to_string(),
             feature_name: "ml".to_string(),
-            action:       FeatureAction::MakeOptional,
-            impact:       15.0,
+            action: FeatureAction::MakeOptional,
+            impact: 15.0,
         });
 
         // Security features optimization
         optimizations.push(FeatureOptimization {
-            crate_name:   "rust-ai-ide-security".to_string(),
+            crate_name: "rust-ai-ide-security".to_string(),
             feature_name: "crypto-heavy".to_string(),
-            action:       FeatureAction::Split,
-            impact:       10.0,
+            action: FeatureAction::Split,
+            impact: 10.0,
         });
 
         Ok(optimizations)
@@ -296,15 +299,15 @@ impl BuildOptimizer {
 
         // CPU core utilization improvement
         improvements.push(ParallelImprovement {
-            description:     "Optimize CPU core utilization".to_string(),
-            time_savings:    Duration::from_secs(45),
+            description: "Optimize CPU core utilization".to_string(),
+            time_savings: Duration::from_secs(45),
             affected_crates: vec!["rust-ai-ide-ai".to_string(), "rust-ai-ide-lsp".to_string()],
         });
 
         // Memory allocation optimization
         improvements.push(ParallelImprovement {
-            description:     "Reduce memory allocations during compilation".to_string(),
-            time_savings:    Duration::from_secs(30),
+            description: "Reduce memory allocations during compilation".to_string(),
+            time_savings: Duration::from_secs(30),
             affected_crates: vec!["rust-ai-ide-common".to_string()],
         });
 
@@ -312,13 +315,19 @@ impl BuildOptimizer {
     }
 
     /// Apply profile recommendation
-    async fn apply_profile_recommendation(&self, _recommendation: &ProfileRecommendation) -> OptimizerResult<()> {
+    async fn apply_profile_recommendation(
+        &self,
+        _recommendation: &ProfileRecommendation,
+    ) -> OptimizerResult<()> {
         // In a real implementation, this would modify Cargo.toml profiles
         Ok(())
     }
 
     /// Apply feature optimization
-    async fn apply_feature_optimization(&self, _optimization: &FeatureOptimization) -> OptimizerResult<()> {
+    async fn apply_feature_optimization(
+        &self,
+        _optimization: &FeatureOptimization,
+    ) -> OptimizerResult<()> {
         // In a real implementation, this would modify Cargo.toml features
         Ok(())
     }
@@ -337,17 +346,20 @@ impl BuildOptimizer {
     }
 
     /// Perform selective compilation
-    async fn perform_selective_compilation(&self, _crates: &[String]) -> OptimizerResult<BuildMetrics> {
+    async fn perform_selective_compilation(
+        &self,
+        _crates: &[String],
+    ) -> OptimizerResult<BuildMetrics> {
         // In a real implementation, this would run cargo build
         // with selective compilation flags
 
         Ok(BuildMetrics {
-            build_time:        Duration::from_secs(30),
-            memory_usage_mb:   256.0,
+            build_time: Duration::from_secs(30),
+            memory_usage_mb: 256.0,
             cpu_usage_percent: 75.0,
-            crates_compiled:   _crates.len(),
+            crates_compiled: _crates.len(),
             incremental_ratio: 0.8,
-            timestamp:         chrono::Utc::now(),
+            timestamp: chrono::Utc::now(),
         })
     }
 }
@@ -362,28 +374,28 @@ impl Default for BuildOptimizer {
 #[derive(Debug, Clone, Default)]
 pub struct BuildConfiguration {
     /// Current profile name
-    pub profile_name:     String,
+    pub profile_name: String,
     /// Optimization level
-    pub opt_level:        u8,
+    pub opt_level: u8,
     /// Debug symbols enabled
-    pub debug:            bool,
+    pub debug: bool,
     /// Enabled features
     pub enabled_features: HashMap<String, bool>,
     /// Target triple
-    pub target:           Option<String>,
+    pub target: Option<String>,
 }
 
 /// Build cache state
 #[derive(Debug, Clone, Default)]
 pub struct BuildCache {
     /// Cache entries
-    pub entries:       HashMap<String, CacheEntry>,
+    pub entries: HashMap<String, CacheEntry>,
     /// Cache hit rate
-    pub hit_rate:      f64,
+    pub hit_rate: f64,
     /// Total cache size in MB
     pub total_size_mb: f64,
     /// Last cleanup timestamp
-    pub last_cleanup:  Option<chrono::DateTime<chrono::Utc>>,
+    pub last_cleanup: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 impl BuildCache {
@@ -399,13 +411,13 @@ impl BuildCache {
 #[derive(Debug, Clone)]
 pub struct CacheEntry {
     /// Entry key
-    pub key:           String,
+    pub key: String,
     /// Entry size in MB
-    pub size_mb:       f64,
+    pub size_mb: f64,
     /// Last accessed timestamp
     pub last_accessed: chrono::DateTime<chrono::Utc>,
     /// Hit count
-    pub hit_count:     u64,
+    pub hit_count: u64,
 }
 
 /// Feature flag manager
@@ -418,12 +430,14 @@ pub struct FeatureFlagManager {
 impl FeatureFlagManager {
     /// Enable a feature
     pub fn enable_feature(&mut self, feature_name: &str) -> OptimizerResult<()> {
-        self.active_features
-            .insert(feature_name.to_string(), FeatureState {
-                name:         feature_name.to_string(),
-                enabled:      true,
+        self.active_features.insert(
+            feature_name.to_string(),
+            FeatureState {
+                name: feature_name.to_string(),
+                enabled: true,
                 dependencies: Vec::new(),
-            });
+            },
+        );
         Ok(())
     }
 
@@ -440,9 +454,9 @@ impl FeatureFlagManager {
 #[derive(Debug, Clone)]
 pub struct FeatureState {
     /// Feature name
-    pub name:         String,
+    pub name: String,
     /// Whether the feature is enabled
-    pub enabled:      bool,
+    pub enabled: bool,
     /// Dependent features
     pub dependencies: Vec<String>,
 }
@@ -453,11 +467,11 @@ pub struct CacheStatistics {
     /// Total number of cache entries
     pub total_entries: usize,
     /// Cache hit rate (0-1)
-    pub hit_rate:      f64,
+    pub hit_rate: f64,
     /// Total cache size in MB
     pub total_size_mb: f64,
     /// Last cleanup timestamp
-    pub last_cleanup:  Option<chrono::DateTime<chrono::Utc>>,
+    pub last_cleanup: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[cfg(test)]

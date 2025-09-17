@@ -1,0 +1,73 @@
+{
+  "defaults": {
+    "timeout": 10000,
+    "wait": 500,
+    "log": {
+      "debug": false,
+      "error": true,
+      "info": false
+    },
+    "chromeLaunchConfig": {
+      "args": ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+    }
+  },
+  "urls": [
+    {
+      "url": "http://localhost:5173",
+      "name": "Rust AI IDE - Main Page",
+      "wcag2a": true,
+      "wcag2aa": true,
+      "wcag2aaa": false,
+      "section508": true,
+      "level": "AA",
+      "standard": "WCAG2AA",
+      "runners": ["axe", "htmlcs"],
+      "ignore": [
+        "WCAG2AA.Principle1.Guideline1_3.1_3_1.F68",
+        "WCAG2AA.Principle1.Guideline1_3.1_3_1.H49",
+        "WCAG2AA.Principle1.Guideline1_4.1_4_3.G18"
+      ],
+      "rules": {
+        "axe": {
+          "enabled": true,
+          "options": {
+            "rules": {
+              "color-contrast": {
+                "enabled": true
+              },
+              "heading-order": {
+                "enabled": true
+              },
+              "html-has-lang": {
+                "enabled": true
+              },
+              "image-alt": {
+                "enabled": true
+              },
+              "link-name": {
+                "enabled": true
+              },
+              "button-name": {
+                "enabled": true
+              },
+              "landmark-one-main": {
+                "enabled": true
+              },
+              "region": {
+                "enabled": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "threshold": {
+    "error": 0,
+    "warning": 10,
+    "notice": 20
+  },
+  "screenCapture": "./accessibility-reports/pa11y-screenshot.png",
+  "reporter": ["cli", "json"],
+  "output": "./accessibility-reports/pa11y-results.json"
+}

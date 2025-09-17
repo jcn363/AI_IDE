@@ -21,8 +21,8 @@ use crate::graph::*;
 #[cfg(feature = "compression")]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CompressedEntry {
-    data:            Vec<u8>,
-    original_size:   usize,
+    data: Vec<u8>,
+    original_size: usize,
     compressed_size: usize,
 }
 
@@ -41,7 +41,9 @@ impl CompressedEntry {
         })
     }
 
-    fn decompress<T: serde::de::DeserializeOwned>(self) -> Result<T, Box<dyn std::error::Error + Send + Sync>> {
+    fn decompress<T: serde::de::DeserializeOwned>(
+        self,
+    ) -> Result<T, Box<dyn std::error::Error + Send + Sync>> {
         let decompressed = zstd::decode_all(&self.data[..])?;
         let result = bincode::deserialize(&decompressed)?;
         Ok(result)
@@ -55,28 +57,28 @@ impl CompressedEntry {
 /// Cache entry for package metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PackageMetadataEntry {
-    pub name:         String,
-    pub version:      String,
-    pub metadata:     serde_json::Value,
+    pub name: String,
+    pub version: String,
+    pub metadata: serde_json::Value,
     pub last_updated: chrono::DateTime<chrono::Utc>,
-    pub source:       String,
+    pub source: String,
 }
 
 /// Cache entry for dependency tree
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyTreeEntry {
     pub root_package: String,
-    pub tree:         Vec<serde_json::Value>,
+    pub tree: Vec<serde_json::Value>,
     pub last_updated: chrono::DateTime<chrono::Utc>,
-    pub hash:         u64, // Hash of the source manifest for cache validation
+    pub hash: u64, // Hash of the source manifest for cache validation
 }
 
 /// Cache key for dependency resolution
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyResolutionKey {
-    pub root_package:        String,
+    pub root_package: String,
     pub resolution_strategy: String,
-    pub constraints:         HashMap<String, String>,
+    pub constraints: HashMap<String, String>,
 }
 
 impl Hash for DependencyResolutionKey {
@@ -107,38 +109,38 @@ impl Eq for DependencyResolutionKey {}
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DependencyResolutionEntry {
     pub resolved_versions: HashMap<String, String>,
-    pub conflicts:         Vec<String>,
-    pub last_updated:      chrono::DateTime<chrono::Utc>,
+    pub conflicts: Vec<String>,
+    pub last_updated: chrono::DateTime<chrono::Utc>,
 }
 
 /// Main cache structure for dependency graph operations with compression support
 #[derive(Clone)]
 pub struct GraphCache {
     package_metadata_cache: Cache<String, PackageMetadataEntry>,
-    dependency_tree_cache:  Cache<String, DependencyTreeEntry>,
+    dependency_tree_cache: Cache<String, DependencyTreeEntry>,
     #[cfg(feature = "compression")]
-    compressed_tree_cache:  Option<Cache<String, CompressedEntry>>,
-    resolution_cache:       Cache<DependencyResolutionKey, DependencyResolutionEntry>,
-    config:                 CacheConfig,
+    compressed_tree_cache: Option<Cache<String, CompressedEntry>>,
+    resolution_cache: Cache<DependencyResolutionKey, DependencyResolutionEntry>,
+    config: CacheConfig,
 }
 
 #[derive(Debug, Clone)]
 pub struct CacheConfig {
     pub package_metadata_ttl: Duration,
-    pub dependency_tree_ttl:  Duration,
-    pub resolution_ttl:       Duration,
-    pub max_capacity:         u64,
-    pub enable_compression:   bool,
+    pub dependency_tree_ttl: Duration,
+    pub resolution_ttl: Duration,
+    pub max_capacity: u64,
+    pub enable_compression: bool,
 }
 
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
             package_metadata_ttl: Duration::from_secs(3600), // 1 hour
-            dependency_tree_ttl:  Duration::from_secs(1800), // 30 minutes
-            resolution_ttl:       Duration::from_secs(600),  // 10 minutes
-            max_capacity:         10000,
-            enable_compression:   true,
+            dependency_tree_ttl: Duration::from_secs(1800),  // 30 minutes
+            resolution_ttl: Duration::from_secs(600),        // 10 minutes
+            max_capacity: 10000,
+            enable_compression: true,
         }
     }
 }
@@ -242,7 +244,8 @@ impl GraphCache {
         entry.hash = hasher.finish();
 
         // Check if compression should be used for large trees
-        let tree_size_kb = (serde_json::to_string(&entry.tree).unwrap_or_default().len() / 1024) as usize;
+        let tree_size_kb =
+            (serde_json::to_string(&entry.tree).unwrap_or_default().len() / 1024) as usize;
 
         #[cfg(feature = "compression")]
         if self.config.enable_compression && CompressedEntry::should_compress(tree_size_kb, 50) {
@@ -289,12 +292,19 @@ impl GraphCache {
     }
 
     /// Get cached resolution result
-    pub async fn get_resolution(&self, key: &DependencyResolutionKey) -> Option<DependencyResolutionEntry> {
+    pub async fn get_resolution(
+        &self,
+        key: &DependencyResolutionKey,
+    ) -> Option<DependencyResolutionEntry> {
         self.resolution_cache.get(key).await
     }
 
     /// Put resolution result in cache
-    pub async fn put_resolution(&self, key: DependencyResolutionKey, entry: DependencyResolutionEntry) {
+    pub async fn put_resolution(
+        &self,
+        key: DependencyResolutionKey,
+        entry: DependencyResolutionEntry,
+    ) {
         info!("Caching resolution for {}", key.root_package);
         self.resolution_cache.insert(key, entry).await;
     }
@@ -336,8 +346,8 @@ impl GraphCache {
     pub async fn get_stats(&self) -> CacheStats {
         CacheStats {
             package_metadata_entries: self.package_metadata_cache.entry_count(),
-            dependency_tree_entries:  self.dependency_tree_cache.entry_count(),
-            resolution_entries:       self.resolution_cache.entry_count(),
+            dependency_tree_entries: self.dependency_tree_cache.entry_count(),
+            resolution_entries: self.resolution_cache.entry_count(),
         }
     }
 
@@ -371,7 +381,10 @@ impl CachedDependencyGraph {
     }
 
     /// Get package metadata with caching
-    pub async fn get_package_metadata_cached(&self, package_name: &str) -> DependencyResult<PackageMetadataEntry> {
+    pub async fn get_package_metadata_cached(
+        &self,
+        package_name: &str,
+    ) -> DependencyResult<PackageMetadataEntry> {
         if let Some(metadata) = self.cache.get_package_metadata(package_name).await {
             info!("Cache hit for package metadata: {}", package_name);
             return Ok(metadata);
@@ -383,7 +396,10 @@ impl CachedDependencyGraph {
     }
 
     /// Get dependency tree with caching
-    pub async fn get_dependency_tree_cached(&self, root_package: &str) -> DependencyResult<DependencyTreeEntry> {
+    pub async fn get_dependency_tree_cached(
+        &self,
+        root_package: &str,
+    ) -> DependencyResult<DependencyTreeEntry> {
         if let Some(tree) = self.cache.get_dependency_tree(root_package).await {
             info!("Cache hit for dependency tree: {}", root_package);
             return Ok(tree);
@@ -394,7 +410,10 @@ impl CachedDependencyGraph {
     }
 
     /// Get resolution with caching
-    pub async fn get_resolution_cached(&self, key: &DependencyResolutionKey) -> Option<DependencyResolutionEntry> {
+    pub async fn get_resolution_cached(
+        &self,
+        key: &DependencyResolutionKey,
+    ) -> Option<DependencyResolutionEntry> {
         self.cache.get_resolution(key).await
     }
 
@@ -407,15 +426,15 @@ impl CachedDependencyGraph {
         // Warm up package metadata for all packages
         for package in graph.get_all_packages() {
             let entry = PackageMetadataEntry {
-                name:         package.name.clone(),
-                version:      package.version.clone().unwrap_or_default(),
-                metadata:     serde_json::json!({
+                name: package.name.clone(),
+                version: package.version.clone().unwrap_or_default(),
+                metadata: serde_json::json!({
                     "name": package.name,
                     "description": package.description,
                     "license": package.license
                 }),
                 last_updated: chrono::Utc::now(),
-                source:       "crates.io".to_string(),
+                source: "crates.io".to_string(),
             };
 
             self.cache
@@ -446,8 +465,8 @@ impl CachedDependencyGraph {
 #[derive(Debug, Clone)]
 pub struct CacheStats {
     pub package_metadata_entries: u64,
-    pub dependency_tree_entries:  u64,
-    pub resolution_entries:       u64,
+    pub dependency_tree_entries: u64,
+    pub resolution_entries: u64,
 }
 
 impl std::fmt::Display for CacheStats {
@@ -464,7 +483,7 @@ impl std::fmt::Display for CacheStats {
 #[derive(Clone)]
 pub struct CachedDependencyResolver {
     resolver: Arc<super::resolver::DependencyResolver>,
-    cache:    Arc<GraphCache>,
+    cache: Arc<GraphCache>,
 }
 
 impl CachedDependencyResolver {

@@ -43,7 +43,8 @@ pub fn validate_path_security(path: &str) -> Result<(), String> {
 
 /// File size validation
 pub fn validate_file_size<P: AsRef<Path>>(path: P, max_size: u64) -> Result<(), String> {
-    let metadata = std::fs::metadata(path).map_err(|e| format!("Failed to check file metadata: {}", e))?;
+    let metadata =
+        std::fs::metadata(path).map_err(|e| format!("Failed to check file metadata: {}", e))?;
 
     if metadata.len() > max_size {
         return Err("File is too large".to_string());
@@ -69,7 +70,11 @@ pub fn validate_string_input(input: &str, max_length: usize) -> Result<(), Strin
 }
 
 /// Extended string input validation (for compatibility)
-pub fn validate_string_input_ext(input: &str, max_length: usize, allow_special_chars: bool) -> Result<(), String> {
+pub fn validate_string_input_ext(
+    input: &str,
+    max_length: usize,
+    allow_special_chars: bool,
+) -> Result<(), String> {
     validate_string_input(input, max_length)?;
 
     if !allow_special_chars {
@@ -82,7 +87,11 @@ pub fn validate_string_input_ext(input: &str, max_length: usize, allow_special_c
 }
 
 /// File size validation for content
-pub fn validate_file_size_content(content: &[u8], max_size_kb: usize, operation: &str) -> Result<(), String> {
+pub fn validate_file_size_content(
+    content: &[u8],
+    max_size_kb: usize,
+    operation: &str,
+) -> Result<(), String> {
     let size_kb = content.len() / 1024;
     if size_kb > max_size_kb {
         return Err(format!(
@@ -94,9 +103,13 @@ pub fn validate_file_size_content(content: &[u8], max_size_kb: usize, operation:
 }
 
 /// Validate file size with operation name
-pub fn validate_file_size_with_op(path: &str, max_size_kb: usize, operation: &str) -> Result<(), String> {
+pub fn validate_file_size_with_op(
+    path: &str,
+    max_size_kb: usize,
+    operation: &str,
+) -> Result<(), String> {
     match std::fs::metadata(path) {
-        Ok(metadata) =>
+        Ok(metadata) => {
             if metadata.is_file() {
                 validate_file_size_content(
                     &std::fs::read(path).map_err(|_| format!("Cannot read file: {}", path))?,
@@ -105,7 +118,8 @@ pub fn validate_file_size_with_op(path: &str, max_size_kb: usize, operation: &st
                 )
             } else {
                 Err(format!("{}: Path is not a file", operation))
-            },
+            }
+        }
         Err(_) => Err(format!("{}: Cannot access file {}", operation, path)),
     }
 }
@@ -185,10 +199,11 @@ pub fn validate_cargo_manifest<P: AsRef<Path>>(path: P) -> Result<(), String> {
 
     // Optional: Check if it's actually a valid Cargo.toml by attempting to read it
     match std::fs::read_to_string(path) {
-        Ok(content) =>
+        Ok(content) => {
             if !content.contains("[package]") {
                 return Err("Not a valid Cargo.toml - missing [package] section".to_string());
-            },
+            }
+        }
         Err(e) => return Err(format!("Failed to read Cargo.toml: {}", e)),
     }
 

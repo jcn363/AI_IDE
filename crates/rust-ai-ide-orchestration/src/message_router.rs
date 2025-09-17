@@ -10,7 +10,7 @@ use crate::types::{MessageType, ServiceId, ServiceMessage};
 #[derive(Debug, Clone)]
 pub struct MessageRouter {
     service_registry: Arc<ServiceRegistry>,
-    message_sender:   mpsc::Sender<ServiceMessage>,
+    message_sender: mpsc::Sender<ServiceMessage>,
     message_receiver: Arc<tokio::sync::Mutex<mpsc::Receiver<ServiceMessage>>>,
 }
 

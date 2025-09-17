@@ -17,57 +17,58 @@ use crate::impact_assessor::RefactoringImpactAssessor;
 use crate::safety_guard::RefactoringSafetyGuard;
 use crate::transformation_validator::TransformationValidator;
 use crate::types::{
-    AnalysisResult, ExecutionResult, ImpactAssessment, RefactoringConfig, RefactoringExecutionContext,
-    RefactoringSuggestion, RefactoringSummary, RefactoringTransformation, SafetyValidation, ValidationResult,
+    AnalysisResult, ExecutionResult, ImpactAssessment, RefactoringConfig,
+    RefactoringExecutionContext, RefactoringSuggestion, RefactoringSummary,
+    RefactoringTransformation, SafetyValidation, ValidationResult,
 };
 
 /// Main orchestrator for the Advanced Refactoring Pipeline
 pub struct AdvancedRefactoringEngine {
     /// AI-driven suggestion generation
-    suggester:    Arc<AiRefactoringSuggester>,
+    suggester: Arc<AiRefactoringSuggester>,
     /// Transformation validation system
-    validator:    Arc<TransformationValidator>,
+    validator: Arc<TransformationValidator>,
     /// Impact assessment component
-    assessor:     Arc<RefactoringImpactAssessor>,
+    assessor: Arc<RefactoringImpactAssessor>,
     /// Safety guard system
     safety_guard: Arc<RefactoringSafetyGuard>,
     /// Execution orchestrator
     orchestrator: Arc<RefactoringOrchestrator>,
 
     /// Configuration
-    config:               Arc<RwLock<RefactoringConfig>>,
+    config: Arc<RwLock<RefactoringConfig>>,
     /// Active execution contexts
-    execution_contexts:   Arc<RwLock<Vec<RefactoringExecutionContext>>>,
+    execution_contexts: Arc<RwLock<Vec<RefactoringExecutionContext>>>,
     /// LSP service for integration
-    lsp_service:          Arc<LSPService>,
+    lsp_service: Arc<LSPService>,
     /// Orchestrator for service coordination
     orchestrator_service: Arc<OrchestratorService>,
     /// Cache service
-    cache_service:        Arc<CacheService>,
+    cache_service: Arc<CacheService>,
 }
 
 /// Comprehensive refactoring request
 #[derive(Debug, Clone)]
 pub struct RefactoringRequest {
-    pub session_id:             Uuid,
-    pub target_file:            String,
-    pub target_content:         String,
-    pub project_root:           String,
-    pub refactoring_types:      Vec<String>,
+    pub session_id: Uuid,
+    pub target_file: String,
+    pub target_content: String,
+    pub project_root: String,
+    pub refactoring_types: Vec<String>,
     pub auto_approve_threshold: f64,
-    pub dry_run:                bool,
+    pub dry_run: bool,
 }
 
 /// Response containing refactoring results
 #[derive(Debug, Clone)]
 pub struct RefactoringResponse {
-    pub session_id:         Uuid,
-    pub suggestions:        Vec<RefactoringSuggestion>,
-    pub impact_assessment:  Option<ImpactAssessment>,
-    pub safety_validation:  Option<SafetyValidation>,
-    pub execution_context:  Option<RefactoringExecutionContext>,
-    pub summary:            Option<RefactoringSummary>,
-    pub warnings:           Vec<String>,
+    pub session_id: Uuid,
+    pub suggestions: Vec<RefactoringSuggestion>,
+    pub impact_assessment: Option<ImpactAssessment>,
+    pub safety_validation: Option<SafetyValidation>,
+    pub execution_context: Option<RefactoringExecutionContext>,
+    pub summary: Option<RefactoringSummary>,
+    pub warnings: Vec<String>,
     pub processing_time_ms: u128,
 }
 
@@ -120,15 +121,19 @@ impl AdvancedRefactoringEngine {
         // Generate AI-driven suggestions
         let suggestions = self
             .suggester
-            .generate_suggestions(&sanitized_path, &request.target_content, AnalysisContext {
-                project_root:           request.project_root.clone(),
-                project_type:           "rust".to_string(), // TODO: Detect project type
-                dependencies:           vec![],             // TODO: Extract dependencies
-                recent_changes:         vec![],             // TODO: Get recent changes
-                code_style_preferences: vec![],             // TODO: Load preferences
-                excluded_patterns:      vec![],
-                included_languages:     vec!["rust".to_string()],
-            })
+            .generate_suggestions(
+                &sanitized_path,
+                &request.target_content,
+                AnalysisContext {
+                    project_root: request.project_root.clone(),
+                    project_type: "rust".to_string(), // TODO: Detect project type
+                    dependencies: vec![],             // TODO: Extract dependencies
+                    recent_changes: vec![],           // TODO: Get recent changes
+                    code_style_preferences: vec![],   // TODO: Load preferences
+                    excluded_patterns: vec![],
+                    included_languages: vec!["rust".to_string()],
+                },
+            )
             .await?;
 
         // Filter out low-confidence suggestions
@@ -139,13 +144,13 @@ impl AdvancedRefactoringEngine {
 
         if filtered_suggestions.is_empty() {
             return Ok(RefactoringResponse {
-                session_id:         request.session_id,
-                suggestions:        vec![],
-                impact_assessment:  None,
-                safety_validation:  None,
-                execution_context:  None,
-                summary:            None,
-                warnings:           vec!["No suggestions meet the confidence threshold".to_string()],
+                session_id: request.session_id,
+                suggestions: vec![],
+                impact_assessment: None,
+                safety_validation: None,
+                execution_context: None,
+                summary: None,
+                warnings: vec!["No suggestions meet the confidence threshold".to_string()],
                 processing_time_ms: start_time.elapsed().as_millis(),
             });
         }
@@ -223,7 +228,10 @@ impl AdvancedRefactoringEngine {
     }
 
     /// Get execution status for a session
-    pub async fn get_execution_status(&self, session_id: Uuid) -> RefactoringResult<RefactoringExecutionContext> {
+    pub async fn get_execution_status(
+        &self,
+        session_id: Uuid,
+    ) -> RefactoringResult<RefactoringExecutionContext> {
         let contexts = self.execution_contexts.read().await;
         contexts
             .iter()
@@ -306,16 +314,16 @@ impl AdvancedRefactoringEngine {
         suggestions: &[RefactoringSuggestion],
     ) -> RefactoringResult<RefactoringSummary> {
         Ok(RefactoringSummary {
-            summary_id:                  Uuid::new_v4(),
-            session_id:                  request.session_id,
+            summary_id: Uuid::new_v4(),
+            session_id: request.session_id,
             total_suggestions_generated: suggestions.len(),
-            suggestions_accepted:        suggestions.len(), // In this simple case, all are accepted
-            suggestions_rejected:        0,
-            transformations_executed:    suggestions.len(),
+            suggestions_accepted: suggestions.len(), // In this simple case, all are accepted
+            suggestions_rejected: 0,
+            transformations_executed: suggestions.len(),
             transformations_rolled_back: 0,
-            overall_success_rate:        1.0,
-            time_saved_estimate:         None, // TODO: Calculate this
-            quality_improvements:        vec!["Code maintainability improved".to_string()],
+            overall_success_rate: 1.0,
+            time_saved_estimate: None, // TODO: Calculate this
+            quality_improvements: vec!["Code maintainability improved".to_string()],
         })
     }
 }

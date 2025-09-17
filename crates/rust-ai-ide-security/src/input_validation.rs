@@ -37,8 +37,8 @@ use uuid::Uuid;
 
 use crate::types::{NetworkContext, OperationType, ResourceContext, UserContext};
 use crate::{
-    AuditEventContext, AuditEventSeverity, AuditEventType, AuditLogger, ComponentStatus, OperationContext,
-    SecurityError, SecurityResult,
+    AuditEventContext, AuditEventSeverity, AuditEventType, AuditLogger, ComponentStatus,
+    OperationContext, SecurityError, SecurityResult,
 };
 
 /// Validation rule severity levels
@@ -80,32 +80,32 @@ pub enum ValidationFailureReason {
 /// Validation result with detailed information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationResult {
-    pub is_valid:        bool,
-    pub failure_reason:  Option<ValidationFailureReason>,
-    pub severity:        ValidationSeverity,
+    pub is_valid: bool,
+    pub failure_reason: Option<ValidationFailureReason>,
+    pub severity: ValidationSeverity,
     pub sanitized_value: Option<String>,
-    pub warnings:        Vec<String>,
-    pub metadata:        HashMap<String, String>,
+    pub warnings: Vec<String>,
+    pub metadata: HashMap<String, String>,
 }
 
 /// Path sanitization configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PathSanitizerConfig {
     pub allow_absolute_paths: bool,
-    pub allowed_base_paths:   Vec<PathBuf>,
-    pub max_path_length:      usize,
-    pub allow_symlinks:       bool,
-    pub normalize_paths:      bool,
+    pub allowed_base_paths: Vec<PathBuf>,
+    pub max_path_length: usize,
+    pub allow_symlinks: bool,
+    pub normalize_paths: bool,
 }
 
 /// Command sanitization configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CommandSanitizerConfig {
-    pub allowed_commands:           HashSet<String>,
-    pub max_command_length:         usize,
-    pub max_args_count:             usize,
+    pub allowed_commands: HashSet<String>,
+    pub max_command_length: usize,
+    pub max_args_count: usize,
     pub allow_shell_metacharacters: bool,
-    pub require_full_path:          bool,
+    pub require_full_path: bool,
 }
 
 /// Input validation configuration
@@ -113,30 +113,30 @@ pub struct CommandSanitizerConfig {
 pub struct InputValidatorConfig {
     pub enable_audit_logging: bool,
     pub enable_rate_limiting: bool,
-    pub cache_enabled:        bool,
-    pub cache_ttl_seconds:    u64,
-    pub max_cache_size:       usize,
+    pub cache_enabled: bool,
+    pub cache_ttl_seconds: u64,
+    pub max_cache_size: usize,
     pub graceful_degradation: bool,
-    pub path_config:          PathSanitizerConfig,
-    pub command_config:       CommandSanitizerConfig,
+    pub path_config: PathSanitizerConfig,
+    pub command_config: CommandSanitizerConfig,
 }
 
 /// Validation statistics for monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidationStats {
-    pub total_validations:          u64,
-    pub validations_passed:         u64,
-    pub validations_failed:         u64,
-    pub cache_hits:                 u64,
-    pub cache_misses:               u64,
-    pub rate_limit_hits:            u64,
+    pub total_validations: u64,
+    pub validations_passed: u64,
+    pub validations_failed: u64,
+    pub cache_hits: u64,
+    pub cache_misses: u64,
+    pub rate_limit_hits: u64,
     pub average_validation_time_ms: f64,
 }
 
 /// Path Sanitizer - Prevents directory traversal attacks
 pub struct PathSanitizer {
     config: PathSanitizerConfig,
-    cache:  RwLock<HashMap<String, (ValidationResult, Instant)>>,
+    cache: RwLock<HashMap<String, (ValidationResult, Instant)>>,
 }
 
 impl PathSanitizer {
@@ -159,12 +159,12 @@ impl PathSanitizer {
         }
 
         let mut result = ValidationResult {
-            is_valid:        true,
-            failure_reason:  None,
-            severity:        ValidationSeverity::Low,
+            is_valid: true,
+            failure_reason: None,
+            severity: ValidationSeverity::Low,
             sanitized_value: None,
-            warnings:        Vec::new(),
-            metadata:        HashMap::new(),
+            warnings: Vec::new(),
+            metadata: HashMap::new(),
         };
 
         // Length check
@@ -239,12 +239,13 @@ impl PathSanitizer {
         for part in parts {
             match part {
                 "." => continue,
-                ".." =>
+                ".." => {
                     if !normalized.is_empty() && normalized.last() != Some(&"..") {
                         normalized.pop();
                     } else {
                         normalized.push(part);
-                    },
+                    }
+                }
                 _ => normalized.push(part),
             }
         }
@@ -295,7 +296,7 @@ impl PathSanitizer {
 /// Command Sanitizer - Prevents command injection attacks
 pub struct CommandSanitizer {
     config: CommandSanitizerConfig,
-    cache:  RwLock<HashMap<String, (ValidationResult, Instant)>>,
+    cache: RwLock<HashMap<String, (ValidationResult, Instant)>>,
 }
 
 impl CommandSanitizer {
@@ -317,12 +318,12 @@ impl CommandSanitizer {
         }
 
         let mut result = ValidationResult {
-            is_valid:        true,
-            failure_reason:  None,
-            severity:        ValidationSeverity::Low,
+            is_valid: true,
+            failure_reason: None,
+            severity: ValidationSeverity::Low,
             sanitized_value: None,
-            warnings:        Vec::new(),
-            metadata:        HashMap::new(),
+            warnings: Vec::new(),
+            metadata: HashMap::new(),
         };
 
         // Length check
@@ -390,7 +391,8 @@ impl CommandSanitizer {
             .and_then(|n| n.to_str())
             .unwrap_or(command_name);
 
-        self.config.allowed_commands.contains(file_name) || self.config.allowed_commands.contains(command_name)
+        self.config.allowed_commands.contains(file_name)
+            || self.config.allowed_commands.contains(command_name)
     }
 
     fn contains_shell_metacharacters(&self, command: &str) -> bool {
@@ -427,12 +429,12 @@ impl SqlSanitizer {
     /// Validate SQL-like input for injection patterns
     pub async fn validate_sql_input(&self, input: &str) -> SecurityResult<ValidationResult> {
         let mut result = ValidationResult {
-            is_valid:        true,
-            failure_reason:  None,
-            severity:        ValidationSeverity::Low,
+            is_valid: true,
+            failure_reason: None,
+            severity: ValidationSeverity::Low,
             sanitized_value: Some(input.to_string()),
-            warnings:        Vec::new(),
-            metadata:        HashMap::new(),
+            warnings: Vec::new(),
+            metadata: HashMap::new(),
         };
 
         for pattern in &self.dangerous_patterns {
@@ -456,13 +458,13 @@ impl Default for SqlSanitizer {
 
 /// Main Input Validator - Coordinates all validation activities
 pub struct InputValidator {
-    config:            InputValidatorConfig,
-    path_sanitizer:    Arc<PathSanitizer>,
+    config: InputValidatorConfig,
+    path_sanitizer: Arc<PathSanitizer>,
     command_sanitizer: Arc<CommandSanitizer>,
-    sql_sanitizer:     Arc<SqlSanitizer>,
-    audit_logger:      Arc<dyn AuditLogger>,
-    stats:             Arc<RwLock<ValidationStats>>,
-    rate_limiter:      Option<Arc<crate::AuthRateLimiter>>,
+    sql_sanitizer: Arc<SqlSanitizer>,
+    audit_logger: Arc<dyn AuditLogger>,
+    stats: Arc<RwLock<ValidationStats>>,
+    rate_limiter: Option<Arc<crate::AuthRateLimiter>>,
 }
 
 impl InputValidator {
@@ -482,12 +484,12 @@ impl InputValidator {
             sql_sanitizer,
             audit_logger,
             stats: Arc::new(RwLock::new(ValidationStats {
-                total_validations:          0,
-                validations_passed:         0,
-                validations_failed:         0,
-                cache_hits:                 0,
-                cache_misses:               0,
-                rate_limit_hits:            0,
+                total_validations: 0,
+                validations_passed: 0,
+                validations_failed: 0,
+                cache_hits: 0,
+                cache_misses: 0,
+                rate_limit_hits: 0,
                 average_validation_time_ms: 0.0,
             })),
             rate_limiter,
@@ -518,10 +520,10 @@ impl InputValidator {
                     .unwrap_or_else(|| "unknown".to_string());
 
                 let user_context = crate::UserContext {
-                    user_id:    user_id.clone(),
-                    username:   user_id.clone(),
-                    email:      format!("{}@example.com", user_id),
-                    roles:      vec![],
+                    user_id: user_id.clone(),
+                    username: user_id.clone(),
+                    email: format!("{}@example.com", user_id),
+                    roles: vec![],
                     created_at: chrono::Utc::now(),
                     expires_at: None,
                 };
@@ -540,32 +542,38 @@ impl InputValidator {
                 if rate_limited.0 {
                     stats.rate_limit_hits += 1;
                     let result = ValidationResult {
-                        is_valid:        false,
-                        failure_reason:  Some(ValidationFailureReason::RateLimitExceeded),
-                        severity:        ValidationSeverity::High,
+                        is_valid: false,
+                        failure_reason: Some(ValidationFailureReason::RateLimitExceeded),
+                        severity: ValidationSeverity::High,
                         sanitized_value: None,
-                        warnings:        vec!["Rate limit exceeded".to_string()],
-                        metadata:        HashMap::new(),
+                        warnings: vec!["Rate limit exceeded".to_string()],
+                        metadata: HashMap::new(),
                     };
                     let context = OperationContext {
-                        operation_id:     Uuid::new_v4().to_string(),
-                        request_id:       Uuid::new_v4().to_string(),
-                        start_time:       Utc::now(),
-                        timestamp:        Utc::now(),
-                        network_context:  Some(NetworkContext {
-                            source_ip:  None,
-                            protocol:   None,
+                        operation_id: Uuid::new_v4().to_string(),
+                        request_id: Uuid::new_v4().to_string(),
+                        start_time: Utc::now(),
+                        timestamp: Utc::now(),
+                        network_context: Some(NetworkContext {
+                            source_ip: None,
+                            protocol: None,
                             user_agent: None,
                         }),
                         resource_context: Some(ResourceContext {
-                            resource_id:   "input_validation".to_string(),
+                            resource_id: "input_validation".to_string(),
                             resource_type: "validation".to_string(),
-                            action:        "validate_input".to_string(),
+                            action: "validate_input".to_string(),
                         }),
-                        operation_type:   OperationType::Authentication,
+                        operation_type: OperationType::Authentication,
                     };
-                    self.log_validation_result(&context, &result, start_time.elapsed(), "rate_limit", input)
-                        .await?;
+                    self.log_validation_result(
+                        &context,
+                        &result,
+                        start_time.elapsed(),
+                        "rate_limit",
+                        input,
+                    )
+                    .await?;
                     return Ok(result);
                 }
             }
@@ -589,7 +597,8 @@ impl InputValidator {
         }
 
         let elapsed = start_time.elapsed();
-        stats.average_validation_time_ms = (stats.average_validation_time_ms + elapsed.as_millis() as f64) / 2.0;
+        stats.average_validation_time_ms =
+            (stats.average_validation_time_ms + elapsed.as_millis() as f64) / 2.0;
 
         // Audit logging if enabled and validation failed or is critical
         if self.config.enable_audit_logging
@@ -605,12 +614,12 @@ impl InputValidator {
     /// Validate general input for XSS and dangerous patterns
     async fn validate_general_input(&self, input: &str) -> SecurityResult<ValidationResult> {
         let mut result = ValidationResult {
-            is_valid:        true,
-            failure_reason:  None,
-            severity:        ValidationSeverity::Low,
+            is_valid: true,
+            failure_reason: None,
+            severity: ValidationSeverity::Low,
             sanitized_value: Some(input.to_string()),
-            warnings:        Vec::new(),
-            metadata:        HashMap::new(),
+            warnings: Vec::new(),
+            metadata: HashMap::new(),
         };
 
         // Check for XSS patterns
@@ -743,11 +752,13 @@ macro_rules! sanitize_and_validate_command {
         let validation_result = $validator_method($input).await?;
         if !validation_result.is_valid {
             return Err(crate::SecurityError::ValidationError {
-                field:  "command".to_string(),
+                field: "command".to_string(),
                 reason: format!(
                     "{:?}",
                     validation_result.failure_reason.unwrap_or(
-                        crate::input_validation::ValidationFailureReason::Custom("Unknown".to_string())
+                        crate::input_validation::ValidationFailureReason::Custom(
+                            "Unknown".to_string()
+                        )
                     )
                 ),
             });
@@ -771,14 +782,14 @@ macro_rules! validate_secure_path {
             .await?;
         if !result.is_valid {
             return Err(crate::SecurityError::ValidationError {
-                field:  "path".to_string(),
+                field: "path".to_string(),
                 reason: format!(
                     "{:?}",
-                    result
-                        .failure_reason
-                        .unwrap_or(crate::input_validation::ValidationFailureReason::Custom(
+                    result.failure_reason.unwrap_or(
+                        crate::input_validation::ValidationFailureReason::Custom(
                             "Unknown".to_string()
-                        ))
+                        )
+                    )
                 ),
             });
         }
@@ -798,10 +809,10 @@ mod tests {
     async fn test_path_traversal_detection() {
         let config = PathSanitizerConfig {
             allow_absolute_paths: false,
-            allowed_base_paths:   vec![PathBuf::from("/safe")],
-            max_path_length:      1000,
-            allow_symlinks:       false,
-            normalize_paths:      true,
+            allowed_base_paths: vec![PathBuf::from("/safe")],
+            max_path_length: 1000,
+            allow_symlinks: false,
+            normalize_paths: true,
         };
 
         let sanitizer = PathSanitizer::new(config);
@@ -821,11 +832,11 @@ mod tests {
     #[async_test]
     async fn test_command_allowlist() {
         let config = CommandSanitizerConfig {
-            allowed_commands:           ["ls".to_string(), "cat".to_string()].into(),
-            max_command_length:         1000,
-            max_args_count:             10,
+            allowed_commands: ["ls".to_string(), "cat".to_string()].into(),
+            max_command_length: 1000,
+            max_args_count: 10,
             allow_shell_metacharacters: false,
-            require_full_path:          false,
+            require_full_path: false,
         };
 
         let sanitizer = CommandSanitizer::new(config);
@@ -871,23 +882,23 @@ mod tests {
         let config = InputValidatorConfig {
             enable_audit_logging: false,
             enable_rate_limiting: false,
-            cache_enabled:        true,
-            cache_ttl_seconds:    300,
-            max_cache_size:       1000,
+            cache_enabled: true,
+            cache_ttl_seconds: 300,
+            max_cache_size: 1000,
             graceful_degradation: true,
-            path_config:          PathSanitizerConfig {
+            path_config: PathSanitizerConfig {
                 allow_absolute_paths: false,
-                allowed_base_paths:   vec![],
-                max_path_length:      1000,
-                allow_symlinks:       false,
-                normalize_paths:      true,
+                allowed_base_paths: vec![],
+                max_path_length: 1000,
+                allow_symlinks: false,
+                normalize_paths: true,
             },
-            command_config:       CommandSanitizerConfig {
-                allowed_commands:           HashSet::new(),
-                max_command_length:         1000,
-                max_args_count:             10,
+            command_config: CommandSanitizerConfig {
+                allowed_commands: HashSet::new(),
+                max_command_length: 1000,
+                max_args_count: 10,
                 allow_shell_metacharacters: false,
-                require_full_path:          false,
+                require_full_path: false,
             },
         };
 

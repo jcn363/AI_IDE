@@ -1,0 +1,219 @@
+{{#if cfg}}
+#[cfg({{cfg}})]
+{{/if}}
+
+{{#each attributes}}
+{{{this}}}
+{{/each}}
+
+{{#if async}}
+#[tokio::test]
+{{else}}
+#[test]
+{{/if}}
+fn {{test_name}}() {
+{{#if fixtures}}
+    // Test fixtures
+{{#each fixtures}}
+    {{#if this.doc}}
+    {{{this.doc}}}
+    {{/if}}
+    let {{this.name}} = {{{this.value}}};
+{{/each}}
+{{/if}}
+
+{{#if setup}}
+    // Setup
+{{#each setup}}
+{{{this}}}
+{{/each}}
+{{/if}}
+
+{{#if mock_objects}}
+    // Mock objects
+{{#each mock_objects}}
+    {{#if this.doc}}
+    {{{this.doc}}}
+    {{/if}}
+{{{this.code}}}
+{{/each}}
+{{/if}}
+
+{{#if test_cases}}
+    // Test cases
+{{#each test_cases}}
+    {{#if this.description}}
+    // {{{this.description}}}
+    {{/if}}
+{{{this.code}}}
+{{/each}}
+{{else}}
+    // Test implementation
+{{#if test_body}}
+{{{test_body}}}
+{{else}}
+    todo!("Implement test: {{test_description}}")
+{{/if}}
+{{/if}}
+
+{{#if assertions}}
+    // Assertions
+{{#each assertions}}
+{{{this}}}
+{{/each}}
+{{/if}}
+
+{{#if error_cases}}
+    // Error cases
+{{#each error_cases}}
+    {{#if this.description}}
+    // {{{this.description}}}
+    {{/if}}
+{{{this.code}}}
+{{/each}}
+{{/if}}
+
+{{#if cleanup}}
+    // Cleanup
+{{#each cleanup}}
+{{{this}}}
+{{/each}}
+{{/if}}
+}
+
+{{#if parameterized_tests}}
+{{#each parameterized_tests}}
+{{#if async}}
+#[tokio::test]
+{{else}}
+#[test]
+{{/if}}
+fn {{this.test_name}}() {
+{{#if this.fixtures}}
+    // Test fixtures
+{{#each this.fixtures}}
+    {{#if this.doc}}
+    {{{this.doc}}}
+    {{/if}}
+    let {{this.name}} = {{{this.value}}};
+{{/each}}
+{{/if}}
+
+{{#if this.setup}}
+    // Setup
+{{#each this.setup}}
+{{{this}}}
+{{/each}}
+{{/if}}
+
+    // Test parameters: {{{this.parameters}}}
+{{{this.test_body}}}
+
+{{#if this.assertions}}
+    // Assertions
+{{#each this.assertions}}
+{{{this}}}
+{{/each}}
+{{/if}}
+}
+{{/each}}
+{{/if}}
+
+{{#if integration_tests}}
+#[cfg(test)]
+mod integration_tests {
+{{#each integration_tests}}
+    {{#if async}}
+    #[tokio::test]
+    {{else}}
+    #[test]
+    {{/if}}
+    fn {{this.test_name}}() {
+{{#if this.fixtures}}
+        // Test fixtures
+{{#each this.fixtures}}
+        {{#if this.doc}}
+        {{{this.doc}}}
+        {{/if}}
+        let {{this.name}} = {{{this.value}}};
+{{/each}}
+{{/if}}
+
+{{#if this.setup}}
+        // Setup
+{{#each this.setup}}
+{{{this}}}
+{{/each}}
+{{/if}}
+
+{{#if this.test_body}}
+{{{this.test_body}}}
+{{else}}
+        todo!("Implement integration test: {{this.test_description}}")
+{{/if}}
+
+{{#if this.assertions}}
+        // Assertions
+{{#each this.assertions}}
+{{{this}}}
+{{/each}}
+{{/if}}
+    }
+{{/each}}
+}
+{{/if}}
+
+{{#if async_tests}}
+#[cfg(test)]
+mod async_tests {
+{{#each async_tests}}
+    #[tokio::test]
+    async fn {{this.test_name}}() {
+{{#if this.fixtures}}
+        // Test fixtures
+{{#each this.fixtures}}
+        {{#if this.doc}}
+        {{{this.doc}}}
+        {{/if}}
+        let {{this.name}} = {{{this.value}}};
+{{/each}}
+{{/if}}
+
+{{#if this.setup}}
+        // Setup
+{{#each this.setup}}
+{{{this}}}
+{{/each}}
+{{/if}}
+
+{{#if this.test_body}}
+{{{this.test_body}}}
+{{else}}
+        todo!("Implement async test: {{this.test_description}}")
+{{/if}}
+
+{{#if this.assertions}}
+        // Assertions
+{{#each this.assertions}}
+{{{this}}}
+{{/each}}
+{{/if}}
+    }
+{{/each}}
+}
+{{/if}}
+
+{{#if mock_test_modules}}
+{{#each mock_test_modules}}
+mod {{this.name}} {
+    use super::*;
+
+    {{#each this.mocks}}
+    {{#if this.doc}}
+    {{{this.doc}}}
+    {{/if}}
+{{{this.code}}}
+    {{/each}}
+}
+{{/each}}
+{{/if}}

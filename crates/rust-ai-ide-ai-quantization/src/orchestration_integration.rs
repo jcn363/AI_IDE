@@ -14,13 +14,13 @@ use crate::IDEError;
 #[derive(Clone)]
 pub struct QuantizationOrchestrationIntegration {
     /// Memory manager for zero-copy operations
-    memory_manager:      Arc<crate::memory_manager::QuantizedMemoryManager>,
+    memory_manager: Arc<crate::memory_manager::QuantizedMemoryManager>,
     /// Context window manager for 32K→128K expansion
-    context_manager:     Arc<crate::context_window::ContextWindowManager>,
+    context_manager: Arc<crate::context_window::ContextWindowManager>,
     /// GGUF optimization engine
-    gguf_engine:         Arc<crate::gguf_optimization::GGUFOptimizationEngine>,
+    gguf_engine: Arc<crate::gguf_optimization::GGUFOptimizationEngine>,
     /// Benchmarking suite
-    benchmark_suite:     Arc<Mutex<crate::benchmark::QuantizationBenchmarkSuite>>,
+    benchmark_suite: Arc<Mutex<crate::benchmark::QuantizationBenchmarkSuite>>,
     /// Orchestration state
     orchestration_state: Arc<RwLock<OrchestrationState>>,
 }
@@ -33,97 +33,97 @@ pub struct OrchestrationState {
     /// Deployed models registry
     deployed_models: HashMap<String, ModelDeploymentInfo>,
     /// System performance metrics
-    system_metrics:  SystemPerformanceMetrics,
+    system_metrics: SystemPerformanceMetrics,
     /// Orchestrator configuration
-    config:          OrchestrationConfig,
+    config: OrchestrationConfig,
 }
 
 /// Session information for active users/sessions
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SessionInfo {
     /// Session identifier
-    session_id:          String,
+    session_id: String,
     /// User/context identifier
-    user_id:             String,
+    user_id: String,
     /// Current context window state
-    context_state:       crate::context_window::WindowState,
+    context_state: crate::context_window::WindowState,
     /// Active models for this session
-    active_models:       Vec<String>,
+    active_models: Vec<String>,
     /// Session performance metrics
     performance_metrics: SessionMetrics,
     /// Last activity timestamp
-    last_activity:       chrono::DateTime<chrono::Utc>,
+    last_activity: chrono::DateTime<chrono::Utc>,
 }
 
 /// Model deployment information
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelDeploymentInfo {
     /// Model identifier
-    model_id:            String,
+    model_id: String,
     /// Deployment timestamp
-    deployment_time:     chrono::DateTime<chrono::Utc>,
+    deployment_time: chrono::DateTime<chrono::Utc>,
     /// Current usage statistics
-    usage_stats:         ModelUsageStats,
+    usage_stats: ModelUsageStats,
     /// Performance metrics
     performance_metrics: ModelPerformanceStats,
     /// Health status
-    health_status:       ModelHealthStatus,
+    health_status: ModelHealthStatus,
 }
 
 /// System-wide performance metrics
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SystemPerformanceMetrics {
     /// Total memory allocated for quantization
-    total_memory_allocated_mb:  f64,
+    total_memory_allocated_mb: f64,
     /// Memory utilization percentage
     memory_utilization_percent: f32,
     /// Total deployed models
-    deployed_models_count:      usize,
+    deployed_models_count: usize,
     /// Active sessions count
-    active_sessions_count:      usize,
+    active_sessions_count: usize,
     /// Average inference latency (ms)
-    avg_inference_latency_ms:   f64,
+    avg_inference_latency_ms: f64,
     /// Total tokens processed
-    total_tokens_processed:     u64,
+    total_tokens_processed: u64,
 }
 
 /// Session performance metrics
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SessionMetrics {
     /// Total tokens processed in session
-    tokens_processed:            u64,
+    tokens_processed: u64,
     /// Average response time (ms)
-    avg_response_time_ms:        f64,
+    avg_response_time_ms: f64,
     /// Context window utilization
     context_utilization_percent: f32,
     /// Memory usage in session
-    memory_usage_mb:             f64,
+    memory_usage_mb: f64,
 }
 
 /// Model usage statistics
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelUsageStats {
     /// Number of active sessions using this model
-    active_sessions:     usize,
+    active_sessions: usize,
     /// Total requests served
-    total_requests:      u64,
+    total_requests: u64,
     /// Average requests per minute
     requests_per_minute: f64,
     /// Memory usage of model
-    memory_usage_mb:     f64,
+    memory_usage_mb: f64,
 }
 
 /// Model performance statistics
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModelPerformanceStats {
     /// Average inference time (ms)
-    avg_inference_time_ms:     f64,
+    avg_inference_time_ms: f64,
     /// Peak memory usage (MB)
-    peak_memory_usage_mb:      f64,
+    peak_memory_usage_mb: f64,
     /// Throughput (tokens/second)
     throughput_tokens_per_sec: f64,
     /// Error rate percentage
-    error_rate_percent:        f32,
+    error_rate_percent: f32,
 }
 
 /// Model health status
@@ -143,15 +143,15 @@ pub enum ModelHealthStatus {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OrchestrationConfig {
     /// Maximum concurrent sessions
-    max_concurrent_sessions:          usize,
+    max_concurrent_sessions: usize,
     /// Maximum context window per session
-    max_context_window_tokens:        usize,
+    max_context_window_tokens: usize,
     /// Memory threshold for cleanup (percent)
     memory_cleanup_threshold_percent: f32,
     /// Session timeout duration (seconds)
-    session_timeout_seconds:          u64,
+    session_timeout_seconds: u64,
     /// Health check interval (seconds)
-    health_check_interval_seconds:    u64,
+    health_check_interval_seconds: u64,
 }
 
 impl QuantizationOrchestrationIntegration {
@@ -169,8 +169,8 @@ impl QuantizationOrchestrationIntegration {
         let orchestration_state = Arc::new(RwLock::new(OrchestrationState {
             active_sessions: HashMap::new(),
             deployed_models: HashMap::new(),
-            system_metrics:  SystemPerformanceMetrics::default(),
-            config:          OrchestrationConfig::default(),
+            system_metrics: SystemPerformanceMetrics::default(),
+            config: OrchestrationConfig::default(),
         }));
 
         let integration = Self {
@@ -209,12 +209,12 @@ impl QuantizationOrchestrationIntegration {
         self.context_manager.create_session(&session_id).await?;
 
         let session_info = SessionInfo {
-            session_id:          session_id.clone(),
-            user_id:             user_id.to_string(),
-            context_state:       crate::context_window::WindowState::default(),
-            active_models:       Vec::new(),
+            session_id: session_id.clone(),
+            user_id: user_id.to_string(),
+            context_state: crate::context_window::WindowState::default(),
+            active_models: Vec::new(),
             performance_metrics: SessionMetrics::default(),
-            last_activity:       chrono::Utc::now(),
+            last_activity: chrono::Utc::now(),
         };
 
         state
@@ -226,7 +226,11 @@ impl QuantizationOrchestrationIntegration {
     }
 
     /// Process AI request with full quantization stack
-    pub async fn process_ai_request(&self, session_id: &str, request: AIRequest) -> Result<AIResponse, IDEError> {
+    pub async fn process_ai_request(
+        &self,
+        session_id: &str,
+        request: AIRequest,
+    ) -> Result<AIResponse, IDEError> {
         let start_time = std::time::Instant::now();
 
         // Validate session exists
@@ -254,11 +258,11 @@ impl QuantizationOrchestrationIntegration {
         let processing_time = start_time.elapsed().as_millis() as f64;
 
         Ok(AIResponse {
-            success:             true,
-            generated_tokens:    inference_result.generated_tokens,
-            inference_time_ms:   processing_time,
+            success: true,
+            generated_tokens: inference_result.generated_tokens,
+            inference_time_ms: processing_time,
             context_window_used: window_result.window_size,
-            memory_usage_mb:     window_result.memory_usage as f64 / (1024.0 * 1024.0),
+            memory_usage_mb: window_result.memory_usage as f64 / (1024.0 * 1024.0),
             performance_metrics: inference_result.performance_metrics,
         })
     }
@@ -280,21 +284,21 @@ impl QuantizationOrchestrationIntegration {
         let mut state = self.orchestration_state.write().await;
 
         let deployment_info = ModelDeploymentInfo {
-            model_id:            model_id.to_string(),
-            deployment_time:     chrono::Utc::now(),
-            usage_stats:         ModelUsageStats {
-                active_sessions:     0,
-                total_requests:      0,
+            model_id: model_id.to_string(),
+            deployment_time: chrono::Utc::now(),
+            usage_stats: ModelUsageStats {
+                active_sessions: 0,
+                total_requests: 0,
                 requests_per_minute: 0.0,
-                memory_usage_mb:     deployed_model.memory_footprint_mb,
+                memory_usage_mb: deployed_model.memory_footprint_mb,
             },
             performance_metrics: ModelPerformanceStats {
-                avg_inference_time_ms:     deployed_model.avg_inference_latency_ms,
-                peak_memory_usage_mb:      deployed_model.memory_footprint_mb,
+                avg_inference_time_ms: deployed_model.avg_inference_latency_ms,
+                peak_memory_usage_mb: deployed_model.memory_footprint_mb,
                 throughput_tokens_per_sec: 1000.0, // Placeholder
-                error_rate_percent:        0.0,
+                error_rate_percent: 0.0,
             },
-            health_status:       ModelHealthStatus::Healthy,
+            health_status: ModelHealthStatus::Healthy,
         };
 
         state
@@ -306,7 +310,9 @@ impl QuantizationOrchestrationIntegration {
     }
 
     /// Run comprehensive performance benchmarks
-    pub async fn run_performance_benchmarks(&self) -> Result<crate::benchmark::BenchmarkResults, IDEError> {
+    pub async fn run_performance_benchmarks(
+        &self,
+    ) -> Result<crate::benchmark::BenchmarkResults, IDEError> {
         let mut benchmark_suite = self.benchmark_suite.lock().await;
         benchmark_suite.run_all_benchmarks().await?;
         let results = benchmark_suite.get_results().await;
@@ -334,9 +340,9 @@ impl QuantizationOrchestrationIntegration {
         let memory_saved = memory_stats_before.total_allocated - memory_stats_after.total_allocated;
 
         Ok(MemoryOptimizationResult {
-            regions_cleaned:         cleanup_count,
-            memory_saved_bytes:      memory_saved,
-            sessions_optimized:      sessions.len(),
+            regions_cleaned: cleanup_count,
+            memory_saved_bytes: memory_saved,
+            sessions_optimized: sessions.len(),
             cache_hit_rate_improved: 0.0, // Would calculate actual improvement
         })
     }
@@ -354,7 +360,8 @@ impl QuantizationOrchestrationIntegration {
             .count();
 
         let memory_pressure = memory_stats.current_usage as f32 / memory_stats.peak_usage as f32;
-        let session_utilization = state.active_sessions.len() as f32 / state.config.max_concurrent_sessions as f32;
+        let session_utilization =
+            state.active_sessions.len() as f32 / state.config.max_concurrent_sessions as f32;
 
         let health_score = match (unhealthy_models, memory_pressure, session_utilization) {
             (0, pressure, util) if pressure < 0.8 && util < 0.9 => 100,
@@ -363,13 +370,13 @@ impl QuantizationOrchestrationIntegration {
         };
 
         SystemHealthStatus {
-            overall_health_score:        health_score,
-            memory_pressure_percent:     (memory_pressure * 100.0) as f32,
+            overall_health_score: health_score,
+            memory_pressure_percent: (memory_pressure * 100.0) as f32,
             session_utilization_percent: (session_utilization * 100.0) as f32,
-            unhealthy_models_count:      unhealthy_models,
-            active_sessions_count:       state.active_sessions.len(),
-            deployed_models_count:       state.deployed_models.len(),
-            recent_errors:               Vec::new(), // Would track actual errors
+            unhealthy_models_count: unhealthy_models,
+            active_sessions_count: state.active_sessions.len(),
+            deployed_models_count: state.deployed_models.len(),
+            recent_errors: Vec::new(), // Would track actual errors
         }
     }
 
@@ -407,7 +414,8 @@ impl QuantizationOrchestrationIntegration {
 
         // Check session timeout
         if let Some(session) = state.active_sessions.get(session_id) {
-            let timeout_duration = chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
+            let timeout_duration =
+                chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
             if chrono::Utc::now().signed_duration_since(session.last_activity) > timeout_duration {
                 return Err(IDEError::InvalidArgument(format!(
                     "Session {} has timed out",
@@ -434,7 +442,8 @@ impl QuantizationOrchestrationIntegration {
     ) -> Result<(), IDEError> {
         let mut state = self.orchestration_state.write().await;
         if let Some(session) = state.active_sessions.get_mut(session_id) {
-            session.performance_metrics.tokens_processed += inference_result.generated_tokens.len() as u64;
+            session.performance_metrics.tokens_processed +=
+                inference_result.generated_tokens.len() as u64;
             // Would update other metrics based on actual inference results
         }
         Ok(())
@@ -446,7 +455,8 @@ impl QuantizationOrchestrationIntegration {
     ) -> Result<(), IDEError> {
         let mut state = self.orchestration_state.write().await;
         state.system_metrics.total_tokens_processed += 1; // Simplified
-        state.system_metrics.total_memory_allocated_mb = window_result.memory_usage as f64 / (1024.0 * 1024.0);
+        state.system_metrics.total_memory_allocated_mb =
+            window_result.memory_usage as f64 / (1024.0 * 1024.0);
         Ok(())
     }
 
@@ -455,14 +465,17 @@ impl QuantizationOrchestrationIntegration {
         state.active_sessions.keys().cloned().collect()
     }
 
-    async fn perform_quantized_inference(&self, request: &AIRequest) -> Result<InferenceResult, IDEError> {
+    async fn perform_quantized_inference(
+        &self,
+        request: &AIRequest,
+    ) -> Result<InferenceResult, IDEError> {
         // Placeholder inference logic - would integrate with actual AI models
         Ok(InferenceResult {
-            generated_tokens:    vec![1, 2, 3, 4, 5], // Placeholder tokens
+            generated_tokens: vec![1, 2, 3, 4, 5], // Placeholder tokens
             performance_metrics: crate::gguf_optimization::GGUFPerformanceMetrics {
-                tokens_per_sec:             50.0,
-                memory_usage_mb:            100.0,
-                gpu_utilization_percent:    Some(75.0),
+                tokens_per_sec: 50.0,
+                memory_usage_mb: 100.0,
+                gpu_utilization_percent: Some(75.0),
                 accuracy_retention_percent: 95.0,
                 context_switch_overhead_us: 250,
             },
@@ -500,13 +513,15 @@ impl QuantizationOrchestrationIntegration {
         // Check session timeouts
         let expired_sessions = {
             let state = self.orchestration_state.read().await;
-            let timeout_duration = chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
+            let timeout_duration =
+                chrono::Duration::seconds(state.config.session_timeout_seconds as i64);
 
             state
                 .active_sessions
                 .iter()
                 .filter(|(_, session)| {
-                    chrono::Utc::now().signed_duration_since(session.last_activity) > timeout_duration
+                    chrono::Utc::now().signed_duration_since(session.last_activity)
+                        > timeout_duration
                 })
                 .map(|(id, _)| id.clone())
                 .collect::<Vec<_>>()
@@ -526,35 +541,35 @@ impl QuantizationOrchestrationIntegration {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AIRequest {
     /// Input tokens
-    pub tokens:           Vec<u32>,
+    pub tokens: Vec<u32>,
     /// Attention scores for tokens
     pub attention_scores: Vec<f32>,
     /// Maximum tokens to generate
-    pub max_tokens:       usize,
+    pub max_tokens: usize,
     /// Temperature for generation
-    pub temperature:      f32,
+    pub temperature: f32,
 }
 
 /// AI response structure
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AIResponse {
     /// Success status
-    pub success:             bool,
+    pub success: bool,
     /// Generated tokens
-    pub generated_tokens:    Vec<u32>,
+    pub generated_tokens: Vec<u32>,
     /// Total inference time
-    pub inference_time_ms:   f64,
+    pub inference_time_ms: f64,
     /// Context window size used
     pub context_window_used: usize,
     /// Memory usage for this request
-    pub memory_usage_mb:     f64,
+    pub memory_usage_mb: f64,
     /// Performance metrics
     pub performance_metrics: crate::gguf_optimization::GGUFPerformanceMetrics,
 }
 
 /// Inference result
 struct InferenceResult {
-    generated_tokens:    Vec<u32>,
+    generated_tokens: Vec<u32>,
     performance_metrics: crate::gguf_optimization::GGUFPerformanceMetrics,
 }
 
@@ -562,11 +577,11 @@ struct InferenceResult {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryOptimizationResult {
     /// Number of memory regions cleaned
-    pub regions_cleaned:         usize,
+    pub regions_cleaned: usize,
     /// Memory saved in bytes
-    pub memory_saved_bytes:      u64,
+    pub memory_saved_bytes: u64,
     /// Sessions optimized
-    pub sessions_optimized:      usize,
+    pub sessions_optimized: usize,
     /// Cache hit rate improvement
     pub cache_hit_rate_improved: f32,
 }
@@ -575,29 +590,29 @@ pub struct MemoryOptimizationResult {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SystemHealthStatus {
     /// Overall health score (0-100)
-    pub overall_health_score:        u32,
+    pub overall_health_score: u32,
     /// Memory pressure percentage
-    pub memory_pressure_percent:     f32,
+    pub memory_pressure_percent: f32,
     /// Session utilization percentage
     pub session_utilization_percent: f32,
     /// Number of unhealthy models
-    pub unhealthy_models_count:      usize,
+    pub unhealthy_models_count: usize,
     /// Active sessions count
-    pub active_sessions_count:       usize,
+    pub active_sessions_count: usize,
     /// Deployed models count
-    pub deployed_models_count:       usize,
+    pub deployed_models_count: usize,
     /// Recent errors
-    pub recent_errors:               Vec<String>,
+    pub recent_errors: Vec<String>,
 }
 
 impl Default for OrchestrationConfig {
     fn default() -> Self {
         Self {
-            max_concurrent_sessions:          100,
-            max_context_window_tokens:        131072, // 128K
+            max_concurrent_sessions: 100,
+            max_context_window_tokens: 131072, // 128K
             memory_cleanup_threshold_percent: 75.0,
-            session_timeout_seconds:          3600, // 1 hour
-            health_check_interval_seconds:    30,
+            session_timeout_seconds: 3600, // 1 hour
+            health_check_interval_seconds: 30,
         }
     }
 }
@@ -605,12 +620,12 @@ impl Default for OrchestrationConfig {
 impl Default for SystemPerformanceMetrics {
     fn default() -> Self {
         Self {
-            total_memory_allocated_mb:  0.0,
+            total_memory_allocated_mb: 0.0,
             memory_utilization_percent: 0.0,
-            deployed_models_count:      0,
-            active_sessions_count:      0,
-            avg_inference_latency_ms:   0.0,
-            total_tokens_processed:     0,
+            deployed_models_count: 0,
+            active_sessions_count: 0,
+            avg_inference_latency_ms: 0.0,
+            total_tokens_processed: 0,
         }
     }
 }
@@ -618,10 +633,10 @@ impl Default for SystemPerformanceMetrics {
 impl Default for SessionMetrics {
     fn default() -> Self {
         Self {
-            tokens_processed:            0,
-            avg_response_time_ms:        0.0,
+            tokens_processed: 0,
+            avg_response_time_ms: 0.0,
             context_utilization_percent: 0.0,
-            memory_usage_mb:             0.0,
+            memory_usage_mb: 0.0,
         }
     }
 }

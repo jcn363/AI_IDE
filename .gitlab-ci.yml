@@ -2,13 +2,14 @@
 # Includes automated vulnerability scanning, patching, and security reporting
 
 stages:
-  - setup
-  - security_scan
-  - security_patch
-  - security_audit
-  - security_report
-  - security_notify
-  - deploy
+   - setup
+   - security_scan
+   - security_patch
+   - security_audit
+   - security_report
+   - security_notify
+   - accessibility_test
+   - deploy
 
 variables:
   # Security configuration
@@ -383,25 +384,28 @@ build:rust:
       - develop
 
 build:web:
-   stage: deploy
-   image: node:latest
-   dependencies:
-     - setup:environment
-   before_script:
-     - cd web && npm ci
-   script:
-     - echo "Building web frontend..."
-     - cd web && npm run build
-     - cd web && npm run type-check
-     - cd web && npm test
-   artifacts:
-     paths:
-       - web/dist/
-     expire_in: 1 week
-   only:
-     - merge_requests
-     - main
-     - develop
+    stage: deploy
+    image: node:latest
+    dependencies:
+      - setup:environment
+    before_script:
+      - cd web && npm ci
+    script:
+      - echo "Building web frontend..."
+      - cd web && npm run build
+      - cd web && npm run type-check
+      - cd web && npm test
+      - echo "Running accessibility tests in development workflow..."
+      - cd web && npm run accessibility:test:all
+    artifacts:
+      paths:
+        - web/dist/
+        - web/accessibility-reports/
+      expire_in: 1 week
+    only:
+      - merge_requests
+      - main
+      - develop
 
 # Build individual crates
 build:crates:
@@ -741,37 +745,259 @@ security:emergency:rollback:
     - main
     - develop
 
-# Security gate - Block deployment if critical vulnerabilities exist
-security:gate:
-  stage: deploy
-  image: rust:latest
+# Accessibility testing stage - Automated WCAG compliance testing
+accessibility:test:axe:
+  stage: accessibility_test
+  image: node:latest
   dependencies:
-    - security:report:comprehensive
+    - build:web
+    - setup:environment
+  before_script:
+    - cd web && npm ci
+    - mkdir -p accessibility-reports
   script:
-    - echo "Checking security gate..."
+    - echo "Running Axe-core accessibility tests..."
+    - cd web && npm run accessibility:test:axe
+  artifacts:
+    reports:
+      junit: web/accessibility-reports/axe-results.xml
+    paths:
+      - web/accessibility-reports/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+accessibility:test:lighthouse:
+  stage: accessibility_test
+  image: node:latest
+  dependencies:
+    - build:web
+    - setup:environment
+  services:
+    - docker:dind
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
+    - cd web && npm ci
+    - mkdir -p accessibility-reports
+  script:
+    - echo "Running Lighthouse accessibility audit..."
+    - cd web && npm run build
     - |
-      if [ -f "${SECURITY_REPORT_DIR}/comprehensive/security-status.json" ]; then
-        CRITICAL_VULNS=$(jq -r '.vulnerabilities.critical // 0' "${SECURITY_REPORT_DIR}/comprehensive/security-status.json")
-        SECURITY_SCORE=$(jq -r '.security_score // 0' "${SECURITY_REPORT_DIR}/comprehensive/security-status.json")
+      # Start a simple HTTP server to serve the built files
+      cd web/dist && python3 -m http.server 8080 &
+      SERVER_PID=$!
 
-        echo "Critical vulnerabilities: $CRITICAL_VULNS"
-        echo "Security score: $SECURITY_SCORE"
+      # Wait for server to start
+      sleep 3
 
-        if [ "$CRITICAL_VULNS" -gt "${SECURITY_CRITICAL_THRESHOLD}" ] || [ "$SECURITY_SCORE" -lt 50 ]; then
-          echo "❌ Security gate FAILED - Blocking deployment"
-          echo "Critical vulnerabilities or low security score detected"
-          exit 1
+      # Run lighthouse audit
+      cd .. && npm run accessibility:test:lighthouse
+
+      # Kill the server
+      kill $SERVER_PID
+  artifacts:
+    paths:
+      - web/accessibility-reports/lighthouse-report.json
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+accessibility:test:pa11y:
+  stage: accessibility_test
+  image: node:latest
+  dependencies:
+    - build:web
+    - setup:environment
+  services:
+    - docker:dind
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq docker.io
+    - cd web && npm ci
+    - mkdir -p accessibility-reports
+  script:
+    - echo "Running Pa11y accessibility audit..."
+    - cd web && npm run build
+    - |
+      # Start a simple HTTP server to serve the built files
+      cd web/dist && python3 -m http.server 8080 &
+      SERVER_PID=$!
+
+      # Wait for server to start
+      sleep 3
+
+      # Run pa11y audit
+      cd .. && npm run accessibility:test:pa11y
+
+      # Kill the server
+      kill $SERVER_PID
+  artifacts:
+    paths:
+      - web/accessibility-reports/pa11y-results.json
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - merge_requests
+    - main
+    - develop
+
+accessibility:report:
+  stage: accessibility_test
+  image: node:latest
+  dependencies:
+    - accessibility:test:axe
+    - accessibility:test:lighthouse
+    - accessibility:test:pa11y
+  before_script:
+    - cd web && npm ci
+  script:
+    - echo "Generating accessibility compliance report..."
+    - cd web && npm run accessibility:report
+    - echo "Processing accessibility alerts..."
+    - cd web && npm run accessibility:alert
+  artifacts:
+    paths:
+      - web/accessibility-reports/generated/
+      - web/accessibility-reports/accessibility-alerts.json
+      - web/accessibility-reports/accessibility-alerts.log
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Accessibility gate - Block deployment if WCAG compliance fails
+accessibility:gate:
+  stage: deploy
+  image: node:latest
+  dependencies:
+    - accessibility:report
+  script:
+    - echo "Checking accessibility gate..."
+    - |
+      if [ -f "web/accessibility-reports/generated/accessibility-report-*.json" ]; then
+        # Find the latest report
+        LATEST_REPORT=$(ls -t web/accessibility-reports/generated/accessibility-report-*.json | head -1)
+
+        if [ -n "$LATEST_REPORT" ]; then
+          ACCESSIBILITY_SCORE=$(jq -r '.summary.overallScore // 0' "$LATEST_REPORT")
+          CRITICAL_ISSUES=$(jq -r '.summary.criticalIssues // 0' "$LATEST_REPORT")
+          COMPLIANCE_PERCENTAGE=$(jq -r '.summary.compliancePercentage // 0' "$LATEST_REPORT")
+
+          echo "Accessibility Score: $ACCESSIBILITY_SCORE/100"
+          echo "Critical Issues: $CRITICAL_ISSUES"
+          echo "Compliance Percentage: $COMPLIANCE_PERCENTAGE%"
+
+          # WCAG AA compliance threshold: 85%
+          if [ "$ACCESSIBILITY_SCORE" -lt 85 ] || [ "$CRITICAL_ISSUES" -gt 0 ]; then
+            echo "❌ Accessibility gate FAILED - Blocking deployment"
+            echo "WCAG AA compliance not met (score < 85% or critical issues found)"
+            exit 1
+          else
+            echo "✅ Accessibility gate PASSED - Allowing deployment"
+          fi
         else
-          echo "✅ Security gate PASSED - Allowing deployment"
+          echo "⚠️ No accessibility report found - Allowing deployment with warning"
         fi
       else
-        echo "⚠️ Security status not available - Allowing deployment with warning"
+        echo "⚠️ Accessibility report not available - Allowing deployment with warning"
       fi
   allow_failure: true
   only:
     - main
     - develop
 
+# Security gate - Block deployment if critical vulnerabilities exist
+security:gate:
+   stage: deploy
+   image: rust:latest
+   dependencies:
+     - security:report:comprehensive
+   script:
+     - echo "Checking security gate..."
+     - |
+       if [ -f "${SECURITY_REPORT_DIR}/comprehensive/security-status.json" ]; then
+         CRITICAL_VULNS=$(jq -r '.vulnerabilities.critical // 0' "${SECURITY_REPORT_DIR}/comprehensive/security-status.json")
+         SECURITY_SCORE=$(jq -r '.security_score // 0' "${SECURITY_REPORT_DIR}/comprehensive/security-status.json")
+
+         echo "Critical vulnerabilities: $CRITICAL_VULNS"
+         echo "Security score: $SECURITY_SCORE"
+
+         if [ "$CRITICAL_VULNS" -gt "${SECURITY_CRITICAL_THRESHOLD}" ] || [ "$SECURITY_SCORE" -lt 50 ]; then
+           echo "❌ Security gate FAILED - Blocking deployment"
+           echo "Critical vulnerabilities or low security score detected"
+           exit 1
+         else
+           echo "✅ Security gate PASSED - Allowing deployment"
+         fi
+       else
+         echo "⚠️ Security status not available - Allowing deployment with warning"
+       fi
+   allow_failure: true
+   only:
+     - main
+     - develop
+
 # Include security rules
 include:
   - local: '.gitlab/ci/security-rules.yml'
+
+# Scheduled accessibility monitoring jobs
+accessibility:monitor:hourly:
+  stage: accessibility_test
+  image: node:latest
+  before_script:
+    - cd web && npm ci
+  script:
+    - echo "Running hourly accessibility monitoring..."
+    - cd web && npm run accessibility:monitor
+  artifacts:
+    paths:
+      - web/accessibility-reports/accessibility-monitoring.json
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    schedules:
+      - cron: "0 * * * *"  # Every hour
+
+accessibility:monitor:daily:
+  stage: accessibility_test
+  image: node:latest
+  before_script:
+    - cd web && npm ci
+  script:
+    - echo "Running daily accessibility monitoring..."
+    - cd web && npm run accessibility:monitor
+  artifacts:
+    paths:
+      - web/accessibility-reports/accessibility-monitoring.json
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    schedules:
+      - cron: "0 6 * * *"  # Daily at 6 AM
+
+accessibility:monitor:weekly:
+  stage: accessibility_test
+  image: node:latest
+  before_script:
+    - cd web && npm ci
+  script:
+    - echo "Running weekly accessibility monitoring and report..."
+    - cd web && npm run accessibility:monitor
+    - echo "Generating comprehensive accessibility status report..."
+    - cd web && npm run accessibility:monitor:status > accessibility-weekly-status.json
+  artifacts:
+    paths:
+      - web/accessibility-reports/accessibility-monitoring.json
+      - web/accessibility-reports/accessibility-weekly-status.json
+    expire_in: 1 month
+  allow_failure: true
+  only:
+    schedules:
+      - cron: "0 6 * * 1"  # Weekly on Monday at 6 AM

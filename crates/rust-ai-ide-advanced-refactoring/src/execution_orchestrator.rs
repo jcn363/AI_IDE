@@ -8,7 +8,8 @@ use uuid::Uuid;
 
 use crate::error::{ExecutionError, ExecutionResult};
 use crate::types::{
-    ExecutionResult as ExecResult, ExecutionStatus, RefactoringExecutionContext, RefactoringTransformation,
+    ExecutionResult as ExecResult, ExecutionStatus, RefactoringExecutionContext,
+    RefactoringTransformation,
 };
 
 /// Orchestrator for executing refactoring transformations
@@ -100,14 +101,20 @@ impl RefactoringOrchestrator {
     }
 
     /// Cancel execution for the given context
-    pub async fn cancel_execution(&self, context: &mut RefactoringExecutionContext) -> ExecutionResult<()> {
+    pub async fn cancel_execution(
+        &self,
+        context: &mut RefactoringExecutionContext,
+    ) -> ExecutionResult<()> {
         context.status = ExecutionStatus::Cancelled;
         context.last_updated = chrono::Utc::now();
         Ok(())
     }
 
     /// Rollback completed transformations
-    pub async fn rollback_execution(&self, context: &mut RefactoringExecutionContext) -> ExecutionResult<()> {
+    pub async fn rollback_execution(
+        &self,
+        context: &mut RefactoringExecutionContext,
+    ) -> ExecutionResult<()> {
         // Reverse the execution order and undo each transformation
         for transformation_id in context.execution_order.iter().rev() {
             if let Some(transformation) = context
@@ -127,30 +134,36 @@ impl RefactoringOrchestrator {
     }
 
     /// Apply a single transformation using syn visitor pattern
-    async fn apply_transformation(&self, transformation: &RefactoringTransformation) -> ExecutionResult<()> {
+    async fn apply_transformation(
+        &self,
+        transformation: &RefactoringTransformation,
+    ) -> ExecutionResult<()> {
         // Read the file content
-        let content = std::fs::read_to_string(&transformation.file_path).map_err(|e| ExecutionError::FileSystem {
-            operation: "read".to_string(),
-            path:      transformation.file_path.clone(),
-            source:    e,
+        let content = std::fs::read_to_string(&transformation.file_path).map_err(|e| {
+            ExecutionError::FileSystem {
+                operation: "read".to_string(),
+                path: transformation.file_path.clone(),
+                source: e,
+            }
         })?;
 
         // Parse the file into AST
-        let mut syntax_tree: SynFile = parse_file(&content).map_err(|e| ExecutionError::Syntax {
-            file:    transformation.file_path.clone(),
-            message: e.to_string(),
-        })?;
+        let mut syntax_tree: SynFile =
+            parse_file(&content).map_err(|e| ExecutionError::Syntax {
+                file: transformation.file_path.clone(),
+                message: e.to_string(),
+            })?;
 
         // Apply transformation based on operation type
         match transformation.operation_type {
             crate::types::TransformationOperation::ReplaceText => {
                 // Use syn visitor to replace text at specific location
                 let mut visitor = TextReplacementVisitor {
-                    line_number:   transformation.line_number,
+                    line_number: transformation.line_number,
                     column_number: transformation.column_number,
-                    old_text:      transformation.original_text.clone(),
-                    new_text:      transformation.transformed_text.clone(),
-                    applied:       false,
+                    old_text: transformation.original_text.clone(),
+                    new_text: transformation.transformed_text.clone(),
+                    applied: false,
                 };
 
                 visitor.visit_file_mut(&mut syntax_tree);
@@ -158,10 +171,10 @@ impl RefactoringOrchestrator {
             crate::types::TransformationOperation::InsertText => {
                 // Insert text at specific location
                 let mut visitor = TextInsertionVisitor {
-                    line_number:    transformation.line_number,
-                    column_number:  transformation.column_number,
+                    line_number: transformation.line_number,
+                    column_number: transformation.column_number,
                     text_to_insert: transformation.transformed_text.clone(),
-                    applied:        false,
+                    applied: false,
                 };
 
                 visitor.visit_file_mut(&mut syntax_tree);
@@ -169,10 +182,10 @@ impl RefactoringOrchestrator {
             crate::types::TransformationOperation::DeleteText => {
                 // Delete text at specific location
                 let mut visitor = TextDeletionVisitor {
-                    line_number:    transformation.line_number,
-                    column_number:  transformation.column_number,
+                    line_number: transformation.line_number,
+                    column_number: transformation.column_number,
                     text_to_delete: transformation.original_text.clone(),
-                    applied:        false,
+                    applied: false,
                 };
 
                 visitor.visit_file_mut(&mut syntax_tree);
@@ -187,36 +200,46 @@ impl RefactoringOrchestrator {
 
         // Write the modified file back
         let modified_content = prettyplease::unparse(&syntax_tree);
-        std::fs::write(&transformation.file_path, modified_content).map_err(|e| ExecutionError::FileSystem {
-            operation: "write".to_string(),
-            path:      transformation.file_path.clone(),
-            source:    e,
+        std::fs::write(&transformation.file_path, modified_content).map_err(|e| {
+            ExecutionError::FileSystem {
+                operation: "write".to_string(),
+                path: transformation.file_path.clone(),
+                source: e,
+            }
         })?;
 
         Ok(())
     }
 
     /// Rollback a single transformation
-    async fn rollback_transformation(&self, transformation: &RefactoringTransformation) -> ExecutionResult<()> {
+    async fn rollback_transformation(
+        &self,
+        transformation: &RefactoringTransformation,
+    ) -> ExecutionResult<()> {
         // For rollback, we essentially do the reverse operation
         let reverse_transformation = RefactoringTransformation {
-            id:               Uuid::new_v4(),
-            suggestion_id:    transformation.suggestion_id,
-            operation_type:   match transformation.operation_type {
-                crate::types::TransformationOperation::ReplaceText =>
-                    crate::types::TransformationOperation::ReplaceText,
-                crate::types::TransformationOperation::InsertText => crate::types::TransformationOperation::DeleteText,
-                crate::types::TransformationOperation::DeleteText => crate::types::TransformationOperation::InsertText,
+            id: Uuid::new_v4(),
+            suggestion_id: transformation.suggestion_id,
+            operation_type: match transformation.operation_type {
+                crate::types::TransformationOperation::ReplaceText => {
+                    crate::types::TransformationOperation::ReplaceText
+                }
+                crate::types::TransformationOperation::InsertText => {
+                    crate::types::TransformationOperation::DeleteText
+                }
+                crate::types::TransformationOperation::DeleteText => {
+                    crate::types::TransformationOperation::InsertText
+                }
                 _ => transformation.operation_type.clone(),
             },
-            file_path:        transformation.file_path.clone(),
-            line_number:      transformation.line_number,
-            column_number:    transformation.column_number,
-            original_text:    transformation.transformed_text.clone(), // Swap for rollback
-            transformed_text: transformation.original_text.clone(),    // Swap for rollback
-            dependencies:     vec![],
-            rollback_steps:   vec![],
-            validation_hash:  String::new(),
+            file_path: transformation.file_path.clone(),
+            line_number: transformation.line_number,
+            column_number: transformation.column_number,
+            original_text: transformation.transformed_text.clone(), // Swap for rollback
+            transformed_text: transformation.original_text.clone(), // Swap for rollback
+            dependencies: vec![],
+            rollback_steps: vec![],
+            validation_hash: String::new(),
         };
 
         self.apply_transformation(&reverse_transformation).await
@@ -225,11 +248,11 @@ impl RefactoringOrchestrator {
 
 /// Visitor for text replacement using syn 2.x APIs
 struct TextReplacementVisitor {
-    line_number:   usize,
+    line_number: usize,
     column_number: usize,
-    old_text:      String,
-    new_text:      String,
-    applied:       bool,
+    old_text: String,
+    new_text: String,
+    applied: bool,
 }
 
 impl VisitMut for TextReplacementVisitor {
@@ -258,10 +281,10 @@ impl VisitMut for TextReplacementVisitor {
 
 /// Visitor for text insertion
 struct TextInsertionVisitor {
-    line_number:    usize,
-    column_number:  usize,
+    line_number: usize,
+    column_number: usize,
     text_to_insert: String,
-    applied:        bool,
+    applied: bool,
 }
 
 impl VisitMut for TextInsertionVisitor {
@@ -275,10 +298,10 @@ impl VisitMut for TextInsertionVisitor {
 
 /// Visitor for text deletion
 struct TextDeletionVisitor {
-    line_number:    usize,
-    column_number:  usize,
+    line_number: usize,
+    column_number: usize,
     text_to_delete: String,
-    applied:        bool,
+    applied: bool,
 }
 
 impl VisitMut for TextDeletionVisitor {

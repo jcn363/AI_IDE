@@ -14,17 +14,17 @@ use crate::interfaces::{PluginCapabilities, PluginMetadata};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginVersioning {
     /// Semantic version of the plugin
-    pub version:              Version,
+    pub version: Version,
     /// Minimum IDE version required
-    pub min_ide_version:      Option<Version>,
+    pub min_ide_version: Option<Version>,
     /// Maximum IDE version supported (for compatibility checking)
-    pub max_ide_version:      Option<Version>,
+    pub max_ide_version: Option<Version>,
     /// Minimum Rust version required
-    pub min_rust_version:     Option<String>,
+    pub min_rust_version: Option<String>,
     /// Target platforms/architectures supported
-    pub supported_platforms:  HashSet<String>,
+    pub supported_platforms: HashSet<String>,
     /// Deprecated versions that should be upgraded from
-    pub deprecated_versions:  HashSet<Version>,
+    pub deprecated_versions: HashSet<Version>,
     /// Breaking change compatibility matrix
     pub compatibility_matrix: HashMap<String, VersionReq>,
 }
@@ -33,13 +33,13 @@ pub struct PluginVersioning {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginDependency {
     /// ID of the required plugin
-    pub plugin_id:           String,
+    pub plugin_id: String,
     /// Version requirement (semantic versioning)
-    pub version_req:         VersionReq,
+    pub version_req: VersionReq,
     /// Whether this dependency is optional
-    pub optional:            bool,
+    pub optional: bool,
     /// Description of what this dependency provides
-    pub description:         Option<String>,
+    pub description: Option<String>,
     /// Conflict resolution strategy
     pub conflict_resolution: ConflictResolution,
 }
@@ -80,30 +80,30 @@ pub enum PluginCategory {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LifecycleHooks {
     /// Pre-installation hook command
-    pub pre_install:    Option<String>,
+    pub pre_install: Option<String>,
     /// Post-installation hook command
-    pub post_install:   Option<String>,
+    pub post_install: Option<String>,
     /// Pre-uninstallation hook command
-    pub pre_uninstall:  Option<String>,
+    pub pre_uninstall: Option<String>,
     /// Post-uninstallation hook command
     pub post_uninstall: Option<String>,
     /// Health check command
-    pub health_check:   Option<String>,
+    pub health_check: Option<String>,
 }
 
 /// Enhanced plugin capabilities with advanced features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnhancedPluginCapabilities {
     /// Base capabilities (inherited from core system)
-    pub base_capabilities:    PluginCapabilities,
+    pub base_capabilities: PluginCapabilities,
     /// Advanced permissions required
-    pub permissions:          HashSet<PluginPermission>,
+    pub permissions: HashSet<PluginPermission>,
     /// Plugin resources (files, services, ports)
-    pub resources:            PluginResources,
+    pub resources: PluginResources,
     /// Interaction patterns supported
     pub interaction_patterns: HashSet<InteractionPattern>,
     /// Performance characteristics
-    pub performance_profile:  PerformanceProfile,
+    pub performance_profile: PerformanceProfile,
 }
 
 /// Advanced plugin permissions
@@ -111,21 +111,18 @@ pub struct EnhancedPluginCapabilities {
 pub enum PluginPermission {
     /// File system access permissions
     Filesystem {
-        path:   String,
+        path: String,
         access: FilesystemAccess,
     },
     /// Network access permissions
     Network {
-        host:       String,
+        host: String,
         port_range: Option<String>,
     },
     /// System command execution
     SystemCommand { command: String },
     /// Environment variable access
-    EnvironmentVariable {
-        name:       String,
-        read_write: bool,
-    },
+    EnvironmentVariable { name: String, read_write: bool },
     /// Database access
     Database { connection_string: String },
     /// External service integration
@@ -144,11 +141,11 @@ pub enum FilesystemAccess {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginResources {
     /// Static files provided by the plugin
-    pub static_files:  HashSet<String>,
+    pub static_files: HashSet<String>,
     /// Directory space required (in KB)
     pub disk_space_kb: Option<u64>,
     /// Memory usage estimate (in MB)
-    pub memory_mb:     Option<u64>,
+    pub memory_mb: Option<u64>,
     /// CPU usage pattern
     pub cpu_intensity: Option<String>,
 }
@@ -174,55 +171,55 @@ pub struct PerformanceProfile {
     /// Startup time (in seconds)
     pub startup_time_seconds: Option<f64>,
     /// Memory usage pattern
-    pub memory_pattern:       String,
+    pub memory_pattern: String,
     /// CPU usage pattern
-    pub cpu_pattern:          String,
+    pub cpu_pattern: String,
     /// I/O pattern
-    pub io_pattern:           String,
+    pub io_pattern: String,
 }
 
 /// Enhanced plugin metadata with enterprise features
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnhancedPluginMetadata {
     /// Core plugin metadata (inherited)
-    pub core:                  PluginMetadata,
+    pub core: PluginMetadata,
     /// Enhanced versioning information
-    pub versioning:            PluginVersioning,
+    pub versioning: PluginVersioning,
     /// Plugin category
-    pub category:              PluginCategory,
+    pub category: PluginCategory,
     /// Plugin dependencies
-    pub dependencies:          Vec<PluginDependency>,
+    pub dependencies: Vec<PluginDependency>,
     /// Plugins this conflicts with
-    pub conflicts:             Vec<String>,
+    pub conflicts: Vec<String>,
     /// Plugin lifecycle hooks
-    pub lifecycle_hooks:       Option<LifecycleHooks>,
+    pub lifecycle_hooks: Option<LifecycleHooks>,
     /// Enhanced capabilities
     pub enhanced_capabilities: EnhancedPluginCapabilities,
     /// Plugin tags for discovery
-    pub tags:                  HashSet<String>,
+    pub tags: HashSet<String>,
     /// Security checksum (SHA256 of plugin files)
-    pub security_checksum:     Option<String>,
+    pub security_checksum: Option<String>,
     /// Marketplace metadata
-    pub marketplace:           Option<MarketplaceMetadata>,
+    pub marketplace: Option<MarketplaceMetadata>,
     /// Telemetry preferences
-    pub telemetry:             PluginTelemetryPrefs,
+    pub telemetry: PluginTelemetryPrefs,
 }
 
 /// Marketplace-specific metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketplaceMetadata {
     /// Downloads count
-    pub downloads:      u64,
+    pub downloads: u64,
     /// Rating (0.0 - 5.0)
-    pub rating:         f64,
+    pub rating: f64,
     /// Review count
-    pub reviews:        u32,
+    pub reviews: u32,
     /// Publisher information
-    pub publisher:      String,
+    pub publisher: String,
     /// Licensing information
-    pub license:        String,
+    pub license: String,
     /// Last update timestamp
-    pub updated_at:     Option<String>,
+    pub updated_at: Option<String>,
     /// Repository URL
     pub repository_url: Option<String>,
 }
@@ -231,13 +228,13 @@ pub struct MarketplaceMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginTelemetryPrefs {
     /// Whether telemetry is enabled
-    pub enabled:    bool,
+    pub enabled: bool,
     /// What telemetry data to collect
     pub data_types: HashSet<String>,
     /// Data collection frequency
-    pub frequency:  String,
+    pub frequency: String,
     /// Whether to anonymize data
-    pub anonymize:  bool,
+    pub anonymize: bool,
 }
 
 impl EnhancedPluginMetadata {
@@ -330,8 +327,8 @@ impl EnhancedPluginMetadataBuilder {
 
         Self {
             metadata: EnhancedPluginMetadata {
-                core:                  core_metadata,
-                versioning:            PluginVersioning {
+                core: core_metadata,
+                versioning: PluginVersioning {
                     version,
                     min_ide_version: None,
                     max_ide_version: None,
@@ -340,35 +337,35 @@ impl EnhancedPluginMetadataBuilder {
                     deprecated_versions: Default::default(),
                     compatibility_matrix: Default::default(),
                 },
-                category:              PluginCategory::Utility,
-                dependencies:          Vec::new(),
-                conflicts:             Vec::new(),
-                lifecycle_hooks:       None,
+                category: PluginCategory::Utility,
+                dependencies: Vec::new(),
+                conflicts: Vec::new(),
+                lifecycle_hooks: None,
                 enhanced_capabilities: EnhancedPluginCapabilities {
-                    base_capabilities:    PluginCapabilities::new(),
-                    permissions:          Default::default(),
-                    resources:            PluginResources {
-                        static_files:  Default::default(),
+                    base_capabilities: PluginCapabilities::new(),
+                    permissions: Default::default(),
+                    resources: PluginResources {
+                        static_files: Default::default(),
                         disk_space_kb: None,
-                        memory_mb:     None,
+                        memory_mb: None,
                         cpu_intensity: None,
                     },
                     interaction_patterns: Default::default(),
-                    performance_profile:  PerformanceProfile {
+                    performance_profile: PerformanceProfile {
                         startup_time_seconds: None,
-                        memory_pattern:       "unknown".to_string(),
-                        cpu_pattern:          "unknown".to_string(),
-                        io_pattern:           "unknown".to_string(),
+                        memory_pattern: "unknown".to_string(),
+                        cpu_pattern: "unknown".to_string(),
+                        io_pattern: "unknown".to_string(),
                     },
                 },
-                tags:                  Default::default(),
-                security_checksum:     None,
-                marketplace:           None,
-                telemetry:             PluginTelemetryPrefs {
-                    enabled:    true,
+                tags: Default::default(),
+                security_checksum: None,
+                marketplace: None,
+                telemetry: PluginTelemetryPrefs {
+                    enabled: true,
                     data_types: HashSet::from(["usage".to_string(), "performance".to_string()]),
-                    frequency:  "hourly".to_string(),
-                    anonymize:  true,
+                    frequency: "hourly".to_string(),
+                    anonymize: true,
                 },
             },
         }
@@ -481,9 +478,10 @@ mod tests {
         let min_compat = Version::parse("0.5.0").unwrap();
         let max_compat = Version::parse("2.0.0").unwrap();
 
-        let plugin = EnhancedPluginMetadata::builder("test".to_string(), "Test".to_string(), version)
-            .min_ide_version(min_compat.clone())
-            .build();
+        let plugin =
+            EnhancedPluginMetadata::builder("test".to_string(), "Test".to_string(), version)
+                .min_ide_version(min_compat.clone())
+                .build();
 
         // Manually set max version as builder doesn't have this method yet
         let plugin = EnhancedPluginMetadata {

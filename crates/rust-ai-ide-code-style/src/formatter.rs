@@ -9,7 +9,7 @@ use super::StyleCheckError;
 /// Rust code formatter
 #[derive(Clone)]
 pub struct RustFormatter {
-    use_rustfmt:   bool,
+    use_rustfmt: bool,
     custom_config: Option<String>,
 }
 
@@ -17,7 +17,7 @@ impl RustFormatter {
     /// Create a new Rust formatter
     pub fn new() -> Self {
         Self {
-            use_rustfmt:   true,
+            use_rustfmt: true,
             custom_config: None,
         }
     }
@@ -25,7 +25,7 @@ impl RustFormatter {
     /// Create formatter with custom configuration
     pub fn with_config(config: &str) -> Self {
         Self {
-            use_rustfmt:   true,
+            use_rustfmt: true,
             custom_config: Some(config.to_string()),
         }
     }
@@ -53,9 +53,9 @@ impl RustFormatter {
         if let Some(config) = &self.custom_config {
             // Write config to temporary file (simplified)
             let config_path = "/tmp/rustfmt.toml";
-            tokio::fs::write(config_path, config)
-                .await
-                .map_err(|e| StyleCheckError::ConfigError(format!("Failed to write config: {}", e)))?;
+            tokio::fs::write(config_path, config).await.map_err(|e| {
+                StyleCheckError::ConfigError(format!("Failed to write config: {}", e))
+            })?;
             command.arg("--config-path").arg(config_path);
         }
 
@@ -72,13 +72,14 @@ impl RustFormatter {
         if let Some(mut stdin) = child.stdin.take() {
             tokio::io::AsyncWriteExt::write_all(&mut stdin, content.as_bytes())
                 .await
-                .map_err(|e| StyleCheckError::FormatError(format!("Failed to write to rustfmt: {}", e)))?;
+                .map_err(|e| {
+                    StyleCheckError::FormatError(format!("Failed to write to rustfmt: {}", e))
+                })?;
         }
 
-        let output = child
-            .wait_with_output()
-            .await
-            .map_err(|e| StyleCheckError::FormatError(format!("rustfmt execution failed: {}", e)))?;
+        let output = child.wait_with_output().await.map_err(|e| {
+            StyleCheckError::FormatError(format!("rustfmt execution failed: {}", e))
+        })?;
 
         if output.status.success() {
             let formatted = String::from_utf8_lossy(&output.stdout).to_string();
@@ -168,7 +169,10 @@ impl RustFormatter {
         let operators = ["+", "-", "*", "/", "=", "==", "!=", "<", ">", "<=", ">="];
 
         for op in &operators {
-            if line.contains(op) && !line.contains(&format!(" {}", op)) && !line.contains(&format!("{} ", op)) {
+            if line.contains(op)
+                && !line.contains(&format!(" {}", op))
+                && !line.contains(&format!("{} ", op))
+            {
                 result = result.replace(op, &format!(" {} ", op));
                 // Clean up extra spaces
                 result = result.replace(&format!("  {}  ", op), &format!(" {} ", op));

@@ -136,8 +136,8 @@ impl LanguageDetector {
 
         // Initialize all pattern maps
         detector.init_extension_map();
-        detector.content_patterns = Self::init_pattern_map();
-        detector.shebang_patterns = Self::init_shebang_patterns();
+        detector.content_patterns = init_pattern_map();
+        detector.shebang_patterns = init_shebang_patterns();
 
         detector
     }
@@ -183,6 +183,27 @@ impl LanguageDetector {
         extension_map.insert("swift".to_string(), vec![("swift".to_string(), 1.0)]);
         extension_map.insert("rb".to_string(), vec![("ruby".to_string(), 1.0)]);
         extension_map.insert("php".to_string(), vec![("php".to_string(), 1.0)]);
+
+        // Additional extensions
+        extension_map.insert("xhtml".to_string(), vec![("html".to_string(), 1.0)]);
+        extension_map.insert("sql".to_string(), vec![("sql".to_string(), 1.0)]);
+        extension_map.insert("mysql".to_string(), vec![("sql".to_string(), 0.95)]);
+        extension_map.insert("pgsql".to_string(), vec![("sql".to_string(), 0.95)]);
+        extension_map.insert("postgres".to_string(), vec![("sql".to_string(), 0.95)]);
+        extension_map.insert("psql".to_string(), vec![("sql".to_string(), 0.95)]);
+        extension_map.insert("yml".to_string(), vec![("yaml".to_string(), 1.0)]);
+        extension_map.insert("fish".to_string(), vec![("fish".to_string(), 1.0)]);
+        extension_map.insert("kotlin".to_string(), vec![("kotlin".to_string(), 1.0)]);
+        extension_map.insert("scala".to_string(), vec![("scala".to_string(), 1.0)]);
+        extension_map.insert("cc".to_string(), vec![("cpp".to_string(), 0.95)]);
+        extension_map.insert("cxx".to_string(), vec![("cpp".to_string(), 0.95)]);
+        extension_map.insert("c".to_string(), vec![("c".to_string(), 1.0)]);
+        extension_map.insert("hpp".to_string(), vec![("cpp".to_string(), 0.8)]);
+        extension_map.insert(
+            "h".to_string(),
+            vec![("c".to_string(), 0.7), ("cpp".to_string(), 0.7)],
+        );
+        extension_map.insert("cs".to_string(), vec![("csharp".to_string(), 1.0)]);
     }
 
     /// Set minimum confidence threshold for language detection
@@ -232,7 +253,7 @@ impl LanguageDetector {
         if let Some(content) = content {
             // Skip very large files
             if content.len() <= self.max_file_size {
-                detections.extend(self.detect_by_content(content).await);
+                detections.extend(self.detect_by_content(content));
             }
         }
 
@@ -251,150 +272,65 @@ impl LanguageDetector {
         detections
     }
 
-    /// Initialize content pattern mapping
-    fn init_pattern_map() -> Vec<(Regex, String, f64)> {
-        vec![
-            // Rust patterns
-            (
-                Regex::new(r"#\[[a-zA-Z_][a-zA-Z0-9_]*]").unwrap(),
-                "rust".to_string(),
-                0.9,
-            ),
-            (
-                Regex::new(r"fn\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(").unwrap(),
-                "rust".to_string(),
-                0.8,
-            ),
-            (
-                Regex::new(r"impl\s+[a-zA-Z_][a-zA-Z0-9_]*").unwrap(),
-                "rust".to_string(),
-                0.8,
-            ),
-            (
-                Regex::new(r"match\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\{").unwrap(),
-                "rust".to_string(),
-                0.8,
-            ),
-            // TypeScript/JavaScript patterns
-            (
-                Regex::new(r#"import\s+(.*)\s+from\s+['"](.*)['"]"#).unwrap(),
-                "javascript".to_string(),
-                0.9,
-            ),
-            (
-                Regex::new(r"function\s+[a-zA-Z_$][a-zA-Z0-9_$]*\s*\(").unwrap(),
-                "javascript".to_string(),
-                0.7,
-            ),
-            (
-                Regex::new(r"class\s+[a-zA-Z_$][a-zA-Z0-9_$]*").unwrap(),
-                "javascript".to_string(),
-                0.8,
-            ),
-            (
-                Regex::new(r"<[a-zA-Z][a-zA-Z0-9]*[^>]*>").unwrap(),
-                "typescript".to_string(),
-                0.6,
-            ), // TSX
-            // Python patterns
-            (
-                Regex::new(r"def\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(").unwrap(),
-                "python".to_string(),
-                0.8,
-            ),
-            (
-                Regex::new(r"class\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(").unwrap(),
-                "python".to_string(),
-                0.8,
-            ),
-            (
-                Regex::new(r"import\s+[a-zA-Z_][a-zA-Z0-9_]*").unwrap(),
-                "python".to_string(),
-                0.7,
-            ),
-            // Go patterns
-            (
-                Regex::new(r"package\s+[a-zA-Z_][a-zA-Z0-9_]*").unwrap(),
-                "go".to_string(),
-                0.9,
-            ),
-            (
-                Regex::new(r"func\s+[a-zA-Z_][a-zA-Z0-9_]*\s*\(").unwrap(),
-                "go".to_string(),
-                0.8,
-            ),
-            (
-                Regex::new(r"var\s+[a-zA-Z_][a-zA-Z0-9_]*\s+[a-zA-Z]").unwrap(),
-                "go".to_string(),
-                0.8,
-            ),
-        ]
+    /// Detect language from content using patterns and shebang
+    pub fn detect_by_content(&self, content: &str) -> Vec<LanguageDetection> {
+        let mut detections = Vec::new();
+
+        // First, check for shebang
+        for (regex, lang, confidence) in &self.shebang_patterns {
+            if regex.is_match(content) {
+                detections.push(LanguageDetection {
+                    language: lang.clone(),
+                    confidence: *confidence,
+                    source: DetectionSource::Shebang,
+                    extra_metadata: HashMap::new(),
+                });
+                break; // Only one shebang match
+            }
+        }
+
+        // Then, check content patterns
+        for (regex, lang, confidence) in &self.content_patterns {
+            if regex.is_match(content) {
+                detections.push(LanguageDetection {
+                    language: lang.clone(),
+                    confidence: *confidence,
+                    source: DetectionSource::Content,
+                    extra_metadata: HashMap::new(),
+                });
+            }
+        }
+
+        detections
     }
 
-    /// Initialize shebang pattern mapping
-    shebang_map.insert(
-        vec![
-            ("typescript".to_string(), 1.0),
-            ("javascript".to_string(), 0.8),
-        ],
-    );
-    extension_map.insert("js".to_string(), vec![("javascript".to_string(), 1.0)]);
-    extension_map.insert("jsx".to_string(), vec![("javascript".to_string(), 1.0)]);
-    extension_map.insert("py".to_string(), vec![("python".to_string(), 1.0)]);
-    extension_map.insert("go".to_string(), vec![("go".to_string(), 1.0)]);
+    /// Get list of supported languages
+    pub fn supported_languages(&self) -> Vec<String> {
+        let mut languages = std::collections::HashSet::new();
 
-    // Web technologies
-    extension_map.insert("html".to_string(), vec![("html".to_string(), 1.0)]);
-    extension_map.insert("htm".to_string(), vec![("html".to_string(), 1.0)]);
-    extension_map.insert("xhtml".to_string(), vec![("html".to_string(), 1.0)]);
-    extension_map.insert("css".to_string(), vec![("css".to_string(), 1.0)]);
-    extension_map.insert("scss".to_string(), vec![("css".to_string(), 0.95)]);
-    extension_map.insert("sass".to_string(), vec![("css".to_string(), 0.95)]);
-    extension_map.insert("less".to_string(), vec![("css".to_string(), 0.95)]);
-    extension_map.insert("sql".to_string(), vec![("sql".to_string(), 1.0)]);
-    extension_map.insert("mysql".to_string(), vec![("sql".to_string(), 0.95)]);
-    extension_map.insert("pgsql".to_string(), vec![("sql".to_string(), 0.95)]);
-    extension_map.insert("postgres".to_string(), vec![("sql".to_string(), 0.95)]);
-    extension_map.insert("psql".to_string(), vec![("sql".to_string(), 0.95)]);
-    extension_map.insert("scss".to_string(), vec![("scss".to_string(), 1.0)]);
-    extension_map.insert("sass".to_string(), vec![("sass".to_string(), 1.0)]);
-    extension_map.insert("less".to_string(), vec![("less".to_string(), 1.0)]);
+        // From extensions
+        for langs in self.extension_map.values() {
+            for (lang, _) in langs {
+                languages.insert(lang.clone());
+            }
+        }
 
-    // Data/Config formats
-    extension_map.insert("json".to_string(), vec![("json".to_string(), 1.0)]);
-    extension_map.insert("yaml".to_string(), vec![("yaml".to_string(), 1.0)]);
-    extension_map.insert("yml".to_string(), vec![("yaml".to_string(), 1.0)]);
-    extension_map.insert("toml".to_string(), vec![("toml".to_string(), 1.0)]);
-    extension_map.insert("xml".to_string(), vec![("xml".to_string(), 1.0)]);
+        // From content patterns
+        for (_, lang, _) in &self.content_patterns {
+            languages.insert(lang.clone());
+        }
 
-    // Shell scripts
-    extension_map.insert(
-        "sh".to_string(),
-        vec![("bash".to_string(), 0.8), ("shell".to_string(), 0.7)],
-    );
-    extension_map.insert("bash".to_string(), vec![("bash".to_string(), 1.0)]);
-    extension_map.insert("zsh".to_string(), vec![("zsh".to_string(), 1.0)]);
-    extension_map.insert("fish".to_string(), vec![("fish".to_string(), 1.0)]);
+        // From shebang patterns
+        for (_, lang, _) in &self.shebang_patterns {
+            languages.insert(lang.clone());
+        }
 
-    // Other languages
-    extension_map.insert("java".to_string(), vec![("java".to_string(), 1.0)]);
-    extension_map.insert("kt".to_string(), vec![("kotlin".to_string(), 1.0)]);
-    extension_map.insert("kotlin".to_string(), vec![("kotlin".to_string(), 1.0)]);
-    extension_map.insert("scala".to_string(), vec![("scala".to_string(), 1.0)]);
-    extension_map.insert("cpp".to_string(), vec![("cpp".to_string(), 1.0)]);
-    extension_map.insert("cc".to_string(), vec![("cpp".to_string(), 1.0)]);
-    extension_map.insert("cxx".to_string(), vec![("cpp".to_string(), 1.0)]);
-    extension_map.insert("c".to_string(), vec![("c".to_string(), 1.0)]);
-    extension_map.insert("hpp".to_string(), vec![("cpp".to_string(), 0.8)]);
-    extension_map.insert(
-        "h".to_string(),
-        vec![("c".to_string(), 0.7), ("cpp".to_string(), 0.7)],
-    );
-    extension_map.insert("cs".to_string(), vec![("csharp".to_string(), 1.0)]);
-    extension_map.insert("php".to_string(), vec![("php".to_string(), 1.0)]);
-    extension_map.insert("rb".to_string(), vec![("ruby".to_string(), 1.0)]);
-    extension_map.insert("swift".to_string(), vec![("swift".to_string(), 1.0)]);
-}
+        let mut result: Vec<String> = languages.into_iter().collect();
+        result.sort();
+        result
+    }
+
+
 
 /// Initialize content pattern mapping
 fn init_pattern_map() -> Vec<(Regex, String, f64)> {
@@ -540,18 +476,18 @@ fn init_pattern_map() -> Vec<(Regex, String, f64)> {
 }
 
 /// Initialize shebang pattern mapping
-fn init_shebang_patterns() -> Vec<(Regex, String)> {
+fn init_shebang_patterns() -> Vec<(Regex, String, f64)> {
     vec![
-        (Regex::new(r"#!/bin/bash").unwrap(), "bash".to_string()),
-        (Regex::new(r"#!/usr/bin/bash").unwrap(), "bash".to_string()),
-        (Regex::new(r"#!/bin/sh").unwrap(), "shell".to_string()),
-        (Regex::new(r"#!/usr/bin/sh").unwrap(), "shell".to_string()),
-        (Regex::new(r"#!/bin/zsh").unwrap(), "zsh".to_string()),
-        (Regex::new(r"#!/usr/bin/zsh").unwrap(), "zsh".to_string()),
-        (Regex::new(r"#!/usr/bin/env\s+python").unwrap(), "python".to_string()),
-        (Regex::new(r"#!/usr/bin/env\s+python3").unwrap(), "python".to_string()),
-        (Regex::new(r"#!/usr/bin/env\s+node").unwrap(), "javascript".to_string()),
-        (Regex::new(r"#!/usr/bin/env\s+node").unwrap(), "typescript".to_string()),
+        (Regex::new(r"#!/bin/bash").unwrap(), "bash".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/bash").unwrap(), "bash".to_string(), 1.0),
+        (Regex::new(r"#!/bin/sh").unwrap(), "shell".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/sh").unwrap(), "shell".to_string(), 1.0),
+        (Regex::new(r"#!/bin/zsh").unwrap(), "zsh".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/zsh").unwrap(), "zsh".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/env\s+python").unwrap(), "python".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/env\s+python3").unwrap(), "python".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/env\s+node").unwrap(), "javascript".to_string(), 1.0),
+        (Regex::new(r"#!/usr/bin/env\s+node").unwrap(), "typescript".to_string(), 0.8),
     ]
 }
 

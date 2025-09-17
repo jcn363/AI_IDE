@@ -15,40 +15,40 @@ use crate::IDEError;
 #[derive(Clone)]
 pub struct QuantizedMemoryManager {
     /// Memory-mapped regions for zero-copy access
-    memory_regions:  Arc<Mutex<HashMap<String, MemoryRegion>>>,
+    memory_regions: Arc<Mutex<HashMap<String, MemoryRegion>>>,
     /// Tensor registry for cleanup
     tensor_registry: Arc<Mutex<HashMap<String, Vec<Arc<Tensor>>>>>,
     /// Memory allocator statistics
     allocator_stats: Arc<Mutex<AllocatorStats>>,
     /// LRU cache for frequently accessed quantized tensors
-    tensor_cache:    MokaCache<String, Arc<Tensor>>,
+    tensor_cache: MokaCache<String, Arc<Tensor>>,
     /// Memory pool configuration
-    config:          MemoryManagerConfig,
+    config: MemoryManagerConfig,
 }
 
 /// Configuration for memory manager
 #[derive(Clone, Debug)]
 pub struct MemoryManagerConfig {
     /// Maximum memory pool size in bytes
-    pub max_memory_pool:    u64,
+    pub max_memory_pool: u64,
     /// Tensor cache size limit
     pub tensor_cache_limit: u64,
     /// Cache TTL duration
-    pub cache_ttl_seconds:  u64,
+    pub cache_ttl_seconds: u64,
     /// Enable zero-copy operations
-    pub enable_zero_copy:   bool,
+    pub enable_zero_copy: bool,
     /// Memory alignment for SIMD operations
-    pub memory_alignment:   usize,
+    pub memory_alignment: usize,
 }
 
 impl Default for MemoryManagerConfig {
     fn default() -> Self {
         Self {
-            max_memory_pool:    4 * 1024 * 1024 * 1024, // 4GB
+            max_memory_pool: 4 * 1024 * 1024 * 1024,    // 4GB
             tensor_cache_limit: 2 * 1024 * 1024 * 1024, // 2GB
-            cache_ttl_seconds:  1800,                   // 30 minutes
-            enable_zero_copy:   true,
-            memory_alignment:   64, // AVX512 alignment
+            cache_ttl_seconds: 1800,                    // 30 minutes
+            enable_zero_copy: true,
+            memory_alignment: 64, // AVX512 alignment
         }
     }
 }
@@ -56,13 +56,13 @@ impl Default for MemoryManagerConfig {
 /// Memory region for zero-copy tensor access
 struct MemoryRegion {
     /// Pointer to memory-mapped data
-    ptr:       *mut u8,
+    ptr: *mut u8,
     /// Size of the region
-    size:      usize,
+    size: usize,
     /// Device associated with the region
-    device:    Device,
+    device: Device,
     /// Whether this region is pinned in memory
-    pinned:    bool,
+    pinned: bool,
     /// Reference count for cleanup
     ref_count: usize,
 }
@@ -71,17 +71,17 @@ struct MemoryRegion {
 #[derive(Clone, Debug, Default)]
 pub struct AllocatorStats {
     /// Total allocated memory in bytes
-    pub total_allocated:     u64,
+    pub total_allocated: u64,
     /// Peak memory usage in bytes
-    pub peak_usage:          u64,
+    pub peak_usage: u64,
     /// Current memory usage in bytes
-    pub current_usage:       u64,
+    pub current_usage: u64,
     /// Number of active allocations
-    pub active_allocations:  u64,
+    pub active_allocations: u64,
     /// Allocation failures
     pub allocation_failures: u64,
     /// Cache hit ratio
-    pub cache_hit_ratio:     f64,
+    pub cache_hit_ratio: f64,
 }
 
 impl QuantizedMemoryManager {
@@ -174,7 +174,11 @@ impl QuantizedMemoryManager {
     }
 
     /// Allocate memory region with alignment and pinning
-    async fn allocate_memory_region(&self, size: usize, device: Device) -> Result<MemoryRegion, IDEError> {
+    async fn allocate_memory_region(
+        &self,
+        size: usize,
+        device: Device,
+    ) -> Result<MemoryRegion, IDEError> {
         if !self.config.enable_zero_copy {
             return Err(IDEError::InvalidArgument(
                 "Zero-copy operations are disabled in configuration".to_string(),
@@ -312,8 +316,12 @@ impl QuantizedMemoryManager {
         for key in regions_to_remove {
             if let Some(region) = regions.remove(&key) {
                 // Deallocate memory
-                let layout =
-                    unsafe { std::alloc::Layout::from_size_align_unchecked(region.size, self.config.memory_alignment) };
+                let layout = unsafe {
+                    std::alloc::Layout::from_size_align_unchecked(
+                        region.size,
+                        self.config.memory_alignment,
+                    )
+                };
                 unsafe {
                     std::alloc::dealloc(region.ptr, layout);
                 }
@@ -333,7 +341,10 @@ impl QuantizedMemoryManager {
     }
 
     /// Optimize memory layout for quantized operations
-    pub async fn optimize_memory_layout(&self, tensors: &mut HashMap<String, Arc<Tensor>>) -> Result<(), IDEError> {
+    pub async fn optimize_memory_layout(
+        &self,
+        tensors: &mut HashMap<String, Arc<Tensor>>,
+    ) -> Result<(), IDEError> {
         // Reorder tensors for better memory access patterns
         // Group by access frequency and tensor size
 
@@ -401,10 +412,10 @@ impl MemoryRegion {
 impl Clone for MemoryRegion {
     fn clone(&self) -> Self {
         Self {
-            ptr:       self.ptr,
-            size:      self.size,
-            device:    self.device.clone(),
-            pinned:    self.pinned,
+            ptr: self.ptr,
+            size: self.size,
+            device: self.device.clone(),
+            pinned: self.pinned,
             ref_count: self.ref_count + 1, // Increment ref count on clone
         }
     }

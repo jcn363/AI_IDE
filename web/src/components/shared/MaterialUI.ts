@@ -3,7 +3,7 @@
 
 import React from 'react';
 
-// Core Material UI components - frequently used
+// Core Material UI components - frequently used (optimized for tree shaking)
 export {
   Box,
   Button,
@@ -57,7 +57,7 @@ export {
   useMediaQuery,
 } from '@mui/material';
 
-// Material UI Icons - commonly used icons
+// Material UI Icons - commonly used icons (optimized for tree shaking)
 export {
   Home as HomeIcon,
   Code as CodeIcon,
@@ -94,12 +94,41 @@ export type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
 export const createOptimizedTheme = (options: any) => createTheme(options);
 
 // Lazy load heavy components that might not be needed immediately
+// These components are code-split to reduce initial bundle size
 export const LazyTextField = React.lazy(() =>
   import('@mui/material').then((module) => ({ default: module.TextField }))
 );
+
 export const LazyDialog = React.lazy(() =>
   import('@mui/material').then((module) => ({ default: module.Dialog }))
 );
+
 export const LazyMenu = React.lazy(() =>
   import('@mui/material').then((module) => ({ default: module.Menu }))
 );
+
+// Additional performance-optimized components for code splitting
+export const LazySelect = React.lazy(() =>
+  import('@mui/material').then((module) => ({ default: module.Select }))
+);
+
+export const LazyFormControl = React.lazy(() =>
+  import('@mui/material').then((module) => ({ default: module.FormControl }))
+);
+
+export const LazyInputLabel = React.lazy(() =>
+  import('@mui/material').then((module) => ({ default: module.InputLabel }))
+);
+
+// Performance monitoring utility
+export const MATERIAL_UI_PERFORMANCE_CONFIG = {
+  // Enable tree shaking hints for build tools
+  treeShake: true,
+  // Components that should be lazy-loaded by default
+  lazyComponents: ['Select', 'FormControl', 'InputLabel', 'Autocomplete'],
+  // Bundle size thresholds for monitoring
+  sizeThresholds: {
+    warning: 500, // KB
+    error: 1000, // KB
+  },
+};

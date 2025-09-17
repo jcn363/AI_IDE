@@ -27,7 +27,7 @@ impl VectorDispatcher {
         if lhs.len() != rhs.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: lhs.len(),
-                actual:   rhs.len(),
+                actual: rhs.len(),
             });
         }
 
@@ -72,7 +72,7 @@ impl VectorDispatcher {
         if lhs.len() != rhs.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: lhs.len(),
-                actual:   rhs.len(),
+                actual: rhs.len(),
             });
         }
 
@@ -101,7 +101,14 @@ impl VectorDispatcher {
     }
 
     /// Matrix multiplication dispatcher optimized for SIMD
-    pub fn matrix_multiply_dispatch(&self, a: &[f32], b: &[f32], m: usize, n: usize, k: usize) -> SIMDResult<Vec<f32>> {
+    pub fn matrix_multiply_dispatch(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        m: usize,
+        n: usize,
+        k: usize,
+    ) -> SIMDResult<Vec<f32>> {
         let caps = get_cached_capabilities();
 
         if m * n != a.len() || n * k != b.len() {
@@ -121,7 +128,12 @@ impl VectorDispatcher {
     }
 
     /// AVX512 distance computation dispatcher
-    pub fn avx512_distance_dispatch(&self, query: &[f32], database: &[f32], dimension: usize) -> SIMDResult<Vec<f32>> {
+    pub fn avx512_distance_dispatch(
+        &self,
+        query: &[f32],
+        database: &[f32],
+        dimension: usize,
+    ) -> SIMDResult<Vec<f32>> {
         let caps = get_cached_capabilities();
         if !caps.has_avx512f {
             return Err(SIMDError::SIMDUnavailable);
@@ -137,7 +149,7 @@ impl VectorDispatcher {
         if query.len() % dimension != 0 || database.len() % dimension != 0 {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: query_vectors * dimension,
-                actual:   query.len(),
+                actual: query.len(),
             });
         }
 
@@ -162,7 +174,12 @@ impl VectorDispatcher {
     }
 
     /// AVX2 distance computation dispatcher
-    pub fn avx2_distance_dispatch(&self, query: &[f32], database: &[f32], dimension: usize) -> SIMDResult<Vec<f32>> {
+    pub fn avx2_distance_dispatch(
+        &self,
+        query: &[f32],
+        database: &[f32],
+        dimension: usize,
+    ) -> SIMDResult<Vec<f32>> {
         let caps = get_cached_capabilities();
         if !caps.has_avx2 {
             return Err(SIMDError::SIMDUnavailable);
@@ -198,7 +215,7 @@ impl VectorDispatcher {
         if a.len() != b.len() {
             return Err(SIMDError::VectorSizeMismatch {
                 expected: a.len(),
-                actual:   b.len(),
+                actual: b.len(),
             });
         }
 
@@ -291,7 +308,14 @@ impl VectorDispatcher {
     }
 
     /// AVX matrix multiplication implementation
-    fn matrix_multiply_avx2(&self, a: &[f32], b: &[f32], m: usize, n: usize, k: usize) -> SIMDResult<Vec<f32>> {
+    fn matrix_multiply_avx2(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        m: usize,
+        n: usize,
+        k: usize,
+    ) -> SIMDResult<Vec<f32>> {
         #[cfg(target_arch = "x86_64")]
         {
             use std::arch::x86_64::*;
@@ -345,13 +369,27 @@ impl VectorDispatcher {
     }
 
     /// AVX matrix multiplication (fallback for specific AVX without AVX2)
-    fn matrix_multiply_avx(&self, a: &[f32], b: &[f32], m: usize, n: usize, k: usize) -> SIMDResult<Vec<f32>> {
+    fn matrix_multiply_avx(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        m: usize,
+        n: usize,
+        k: usize,
+    ) -> SIMDResult<Vec<f32>> {
         // Simplified AVX version - in practice this would be more optimized
         self.matrix_multiply_scalar(a, b, m, n, k)
     }
 
     /// Scalar fallback matrix multiplication
-    fn matrix_multiply_scalar(&self, a: &[f32], b: &[f32], m: usize, n: usize, k: usize) -> SIMDResult<Vec<f32>> {
+    fn matrix_multiply_scalar(
+        &self,
+        a: &[f32],
+        b: &[f32],
+        m: usize,
+        n: usize,
+        k: usize,
+    ) -> SIMDResult<Vec<f32>> {
         let mut result = vec![0.0; m * k];
 
         // i-k-j loop order for better cache locality

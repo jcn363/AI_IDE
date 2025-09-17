@@ -11,5 +11,6 @@ pub use commands::*;
 // Re-export finetune functionality explicitly to avoid conflicts
 pub use services::finetune;
 pub use services::{
-    AIServiceRegistry, AIServiceTrait, PoolGuard, PoolStatus, PooledServiceConfig, WrappedAIService, GLOBAL_AI_REGISTRY,
+    AIServiceRegistry, AIServiceTrait, PoolGuard, PoolStatus, PooledServiceConfig,
+    WrappedAIService, GLOBAL_AI_REGISTRY,
 };

@@ -13,7 +13,7 @@ use chrono::Utc;
 
 use crate::advanced_error_analysis::*;
 use crate::error_resolution::ErrorContext;
-use crate::learning::types::AIContext;
+use crate::learning::AIContext;
 
 #[cfg(test)]
 mod advanced_error_analysis_tests {
@@ -560,7 +560,7 @@ mod integration_tests {
         let tracker = EvolutionTracker::new();
 
         // Simulate error evolution over time
-        let mut errors = vec![];
+        let mut tracking = vec![];
 
         for i in 0..5 {
             let error_context = ErrorContext {

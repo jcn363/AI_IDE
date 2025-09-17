@@ -1,0 +1,16 @@
+{{#if cfg}}
+#[cfg({{cfg}})]
+{{/if}}
+
+{{#if derives}}
+#[derive({{#each derives}}{{this}}{{#unless @last}}, {{/unless}}{{/each}})]
+{{/if}}
+
+pub struct {{struct_name}}{{#if generics}}<{{generics}}>{{/if}} {
+{{#each fields}}
+{{#if this.doc}}
+    {{{this.doc}}}
+{{/if}}
+    {{#if this.visibility}}{{this.visibility}} {{/if}}{{this.name}}: {{this.type}},
+{{/each}}
+}

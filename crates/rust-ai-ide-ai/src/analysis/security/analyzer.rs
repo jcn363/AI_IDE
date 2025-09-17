@@ -2,16 +2,19 @@ use anyhow::Result;
 use syn::File;
 
 use super::{
-    AdvancedPatternDetector, ConcurrencySecurityAnalyzer, CryptographicAnalyzer, InputValidationAnalyzer, SecurityIssue,
+    AdvancedPatternDetector, ConcurrencySecurityAnalyzer, CryptographicAnalyzer,
+    InputValidationAnalyzer, SecurityIssue,
 };
-use crate::analysis::{AnalysisCategory, AnalysisFinding, AnalysisPreferences, Analyzer, AnalyzerExt};
+use crate::analysis::{
+    AnalysisCategory, AnalysisFinding, AnalysisPreferences, Analyzer, AnalyzerExt,
+};
 
 /// Security analyzer that integrates all security-related analysis components
 #[derive(Debug)]
 pub struct SecurityAnalyzer {
-    pattern_detector:     AdvancedPatternDetector,
-    crypto_analyzer:      CryptographicAnalyzer,
-    input_analyzer:       InputValidationAnalyzer,
+    pattern_detector: AdvancedPatternDetector,
+    crypto_analyzer: CryptographicAnalyzer,
+    input_analyzer: InputValidationAnalyzer,
     concurrency_analyzer: ConcurrencySecurityAnalyzer,
 }
 
@@ -19,9 +22,9 @@ impl SecurityAnalyzer {
     /// Create a new instance of the security analyzer
     pub fn new() -> Result<Self> {
         Ok(Self {
-            pattern_detector:     AdvancedPatternDetector::new()?,
-            crypto_analyzer:      CryptographicAnalyzer::new()?,
-            input_analyzer:       InputValidationAnalyzer::new()?,
+            pattern_detector: AdvancedPatternDetector::new()?,
+            crypto_analyzer: CryptographicAnalyzer::new()?,
+            input_analyzer: InputValidationAnalyzer::new()?,
             concurrency_analyzer: ConcurrencySecurityAnalyzer::new()?,
         })
     }

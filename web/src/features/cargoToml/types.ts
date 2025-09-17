@@ -45,7 +45,131 @@ export interface DependencyGraphData {
   loading: boolean;
   error: string | null;
   refresh: () => void;
-  manifest?: any; // TODO: Define proper Cargo.toml manifest type
+  manifest?: {
+    package?: {
+      name: string;
+      version: string;
+      edition?: string;
+      authors?: string[];
+      description?: string;
+      license?: string;
+      repository?: string;
+      documentation?: string;
+      readme?: string;
+      homepage?: string;
+      keywords?: string[];
+      categories?: string[];
+      publish?: boolean | string[];
+      default_run?: string;
+      autobins?: boolean;
+      autoexamples?: boolean;
+      autotests?: boolean;
+      autobenches?: boolean;
+      resolver?: string;
+      rust_version?: string;
+      exclude?: string[];
+      include?: string[];
+      workspace?: string;
+      build?: string;
+      links?: string;
+    };
+    dependencies?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+    'dev-dependencies'?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+    'build-dependencies'?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+    features?: Record<string, string[]>;
+    target?: Record<string, {
+      dependencies?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+      'dev-dependencies'?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+      'build-dependencies'?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+      features?: Record<string, string[]>;
+    }>;
+    workspace?: {
+      members?: string[];
+      exclude?: string[];
+      default_members?: string[];
+      package?: {
+        version?: string;
+        authors?: string[];
+        description?: string;
+        homepage?: string;
+        documentation?: string;
+        readme?: string;
+        keywords?: string[];
+        categories?: string[];
+        license?: string;
+        repository?: string;
+        edition?: string;
+        rust_version?: string;
+      };
+      metadata?: Record<string, unknown>;
+      dependencies?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+      'dev-dependencies'?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+      'build-dependencies'?: Record<string, string | { version?: string; path?: string; features?: string[]; optional?: boolean; default_features?: boolean }>;
+      features?: Record<string, string[]>;
+    };
+    lib?: {
+      name?: string;
+      path?: string;
+      crate_type?: string | string[];
+      test?: boolean;
+      doctest?: boolean;
+      bench?: boolean;
+      doc?: boolean;
+      plugin?: boolean;
+      proc_macro?: boolean;
+      harness?: boolean;
+      required_features?: string[];
+    };
+    bin?: Array<{
+      name: string;
+      path?: string;
+      test?: boolean;
+      doctest?: boolean;
+      bench?: boolean;
+      doc?: boolean;
+      plugin?: boolean;
+      proc_macro?: boolean;
+      harness?: boolean;
+      required_features?: string[];
+    }>;
+    test?: Array<{
+      name: string;
+      path?: string;
+      test?: boolean;
+      doctest?: boolean;
+      bench?: boolean;
+      doc?: boolean;
+      plugin?: boolean;
+      proc_macro?: boolean;
+      harness?: boolean;
+      required_features?: string[];
+    }>;
+    bench?: Array<{
+      name: string;
+      path?: string;
+      test?: boolean;
+      doctest?: boolean;
+      bench?: boolean;
+      doc?: boolean;
+      plugin?: boolean;
+      proc_macro?: boolean;
+      harness?: boolean;
+      required_features?: string[];
+    }>;
+    example?: Array<{
+      name: string;
+      path?: string;
+      test?: boolean;
+      doctest?: boolean;
+      bench?: boolean;
+      doc?: boolean;
+      plugin?: boolean;
+      proc_macro?: boolean;
+      harness?: boolean;
+      required_features?: string[];
+    }>;
+    [key: string]: unknown;
+  };
 }
 
 export interface DependencyGraphVisualizationProps {

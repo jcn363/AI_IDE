@@ -22,20 +22,20 @@ use crate::types::*;
 #[derive(Debug, Clone)]
 pub struct DependencyAnalyzer {
     /// Cached workspace metadata
-    metadata_cache:   Arc<RwLock<Option<cargo_metadata::Metadata>>>,
+    metadata_cache: Arc<RwLock<Option<cargo_metadata::Metadata>>>,
     /// Dependency graph
     dependency_graph: Arc<RwLock<Option<Graph<String, DependencyKind>>>>,
     /// Analysis results cache
-    analysis_cache:   Arc<RwLock<Option<DependencyAnalysis>>>,
+    analysis_cache: Arc<RwLock<Option<DependencyAnalysis>>>,
 }
 
 impl DependencyAnalyzer {
     /// Create a new dependency analyzer
     pub fn new() -> Self {
         Self {
-            metadata_cache:   Arc::new(RwLock::new(None)),
+            metadata_cache: Arc::new(RwLock::new(None)),
             dependency_graph: Arc::new(RwLock::new(None)),
-            analysis_cache:   Arc::new(RwLock::new(None)),
+            analysis_cache: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -44,7 +44,9 @@ impl DependencyAnalyzer {
         let metadata = MetadataCommand::new()
             .manifest_path("./Cargo.toml")
             .exec()
-            .map_err(|e| OptimizerError::cargo_metadata_error(format!("Failed to get metadata: {}", e)))?;
+            .map_err(|e| {
+                OptimizerError::cargo_metadata_error(format!("Failed to get metadata: {}", e))
+            })?;
 
         // Build dependency graph
         let graph = self.build_dependency_graph(&metadata)?;
@@ -111,7 +113,10 @@ impl DependencyAnalyzer {
     }
 
     /// Apply optimization recommendations to fix dependency issues
-    pub async fn apply_optimizations(&self, analysis: DependencyAnalysis) -> OptimizerResult<DependencyAnalysis> {
+    pub async fn apply_optimizations(
+        &self,
+        analysis: DependencyAnalysis,
+    ) -> OptimizerResult<DependencyAnalysis> {
         let mut applied_analysis = analysis.clone();
 
         // For now, just mark optimizations as applied

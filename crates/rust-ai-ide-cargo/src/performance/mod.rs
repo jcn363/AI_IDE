@@ -14,28 +14,29 @@ pub use build_cache::{CachedBuildResult, CargoBuildCache};
 pub use build_metrics::{BuildMetrics, BuildMetricsCollector, CrateMetrics};
 use serde::{Deserialize, Serialize};
 pub use visualization::{
-    generate_dependency_graph, generate_flamegraph, generate_html_report, generate_optimization_suggestions,
+    generate_dependency_graph, generate_flamegraph, generate_html_report,
+    generate_optimization_suggestions,
 };
 
 /// Performance metrics for a build
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PerformanceMetrics {
     /// Total build time
-    pub total_time:      Duration,
+    pub total_time: Duration,
     /// Time spent in dependency resolution
     pub resolution_time: Duration,
     /// Time spent in compilation
-    pub compile_time:    Duration,
+    pub compile_time: Duration,
     /// Time spent in code generation
-    pub codegen_time:    Duration,
+    pub codegen_time: Duration,
     /// Time spent in linking
-    pub link_time:       Duration,
+    pub link_time: Duration,
     /// Time spent in each compilation unit
-    pub crates:          HashMap<String, CrateMetrics>,
+    pub crates: HashMap<String, CrateMetrics>,
     /// Dependencies and their build times
-    pub dependencies:    HashMap<String, Duration>,
+    pub dependencies: HashMap<String, Duration>,
     /// Feature flags used during the build
-    pub features:        HashMap<String, Vec<String>>,
+    pub features: HashMap<String, Vec<String>>,
 }
 
 // CrateMetrics is now defined in build_metrics.rs
@@ -44,8 +45,8 @@ pub struct PerformanceMetrics {
 #[derive(Debug)]
 pub struct PerformanceAnalyzer<'a> {
     project_path: &'a Path,
-    release:      bool,
-    incremental:  bool,
+    release: bool,
+    incremental: bool,
 }
 
 impl<'a> PerformanceAnalyzer<'a> {
@@ -60,7 +61,8 @@ impl<'a> PerformanceAnalyzer<'a> {
 
     /// Run a build with timing information
     pub async fn analyze_build(&self) -> Result<BuildMetrics> {
-        let collector = BuildMetricsCollector::new(self.project_path, self.release, self.incremental);
+        let collector =
+            BuildMetricsCollector::new(self.project_path, self.release, self.incremental);
         collector.collect().await
     }
 
@@ -119,7 +121,10 @@ impl<'a> PerformanceAnalyzer<'a> {
     }
 
     /// Get optimization suggestions based on build metrics
-    pub async fn get_optimization_suggestions(&self, metrics: &BuildMetrics) -> Vec<OptimizationSuggestion> {
+    pub async fn get_optimization_suggestions(
+        &self,
+        metrics: &BuildMetrics,
+    ) -> Vec<OptimizationSuggestion> {
         let mut suggestions = Vec::new();
 
         // Check for slow builds
@@ -257,26 +262,27 @@ mod tests {
     #[test]
     fn test_optimization_suggestions() {
         let mut metrics = BuildMetrics {
-            total_time:   Duration::from_secs(120),
-            crates:       HashMap::new(),
+            total_time: Duration::from_secs(120),
+            crates: HashMap::new(),
             dependencies: HashMap::new(),
-            features:     HashMap::new(),
+            features: HashMap::new(),
         };
 
         // Add a crate with many codegen units
-        metrics
-            .crates
-            .insert("test_crate".to_string(), CrateMetrics {
-                name:                "test_crate".to_string(),
-                version:             "0.1.0".to_string(),
-                build_time:          Duration::from_secs(30),
+        metrics.crates.insert(
+            "test_crate".to_string(),
+            CrateMetrics {
+                name: "test_crate".to_string(),
+                version: "0.1.0".to_string(),
+                build_time: Duration::from_secs(30),
                 is_workspace_member: true,
-                dependencies:        vec!["dep1".to_string()],
-                codegen_time:        Duration::from_secs(15),
-                codegen_units:       32,
-                incremental:         false,
-                features:            vec!["default".to_string(), "feature1".to_string()],
-            });
+                dependencies: vec!["dep1".to_string()],
+                codegen_time: Duration::from_secs(15),
+                codegen_units: 32,
+                incremental: false,
+                features: vec!["default".to_string(), "feature1".to_string()],
+            },
+        );
 
         let suggestions = metrics.get_optimization_suggestions();
         assert!(!suggestions.is_empty(), "Expected optimization suggestions");
@@ -285,7 +291,8 @@ mod tests {
         assert!(suggestions.len() >= 2, "Expected at least 2 suggestions");
 
         // Convert suggestions to strings for easier assertions
-        let suggestion_strings: Vec<String> = suggestions.iter().map(|s| format!("{:?}", s)).collect();
+        let suggestion_strings: Vec<String> =
+            suggestions.iter().map(|s| format!("{:?}", s)).collect();
 
         // Check for expected suggestions
         assert!(

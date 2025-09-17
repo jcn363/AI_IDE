@@ -75,10 +75,10 @@ impl RefactoringOperation for ExtractVariableOperation {
 
     async fn is_applicable(
         &self,
-        context: &RefactoringContext,
-        options: Option<&RefactoringOptions>,
+        _context: &RefactoringContext,
+        _options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(context.selection.is_some() && context.symbol_kind == Some(SymbolKind::Variable))
+        Ok(_context.selection.is_some() && _context.symbol_kind == Some(SymbolKind::Variable))
     }
 
     fn refactoring_type(&self) -> RefactoringType {

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { CodeGenerator, GeneratedCode, CodeGenerationOptions } from './CodeGenerator';
 import type { AICollaborator, CollaborationSession, CodeReview, UserPresence } from '../types';
+import { useAuth } from '../../../contexts/AuthContext';
 
 // Import collaboration types and services
 import type { CollaborationRoom, EditingSession } from '../../collaboration/types';
@@ -318,6 +319,7 @@ interface SharedPrompt {
   id: string;
   prompt: string;
   author: string;
+  authorId: string;
   timestamp: number;
   votes: number;
 }
@@ -348,9 +350,10 @@ export const CodeGenerationPanel: React.FC<CodeGenerationProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Refs for managing subscriptions
-  const codeGeneratorRef = useRef<CodeGenerator | null>(null);
+  const [collaborationManager, setCollaborationManager] = useState<CollaborationManager | null>(null);
   const collaborationManagerRef = useRef<CollaborationManager | null>(null);
-  const unsubscribeRefs = useRef<(() => void)[]>([]);
+  const [collaborationSession, setCollaborationSession] = useState<CollaborationSession | null>(null);
+  const { user } = useAuth();
 
   // Initialize services
   useEffect(() => {
@@ -501,13 +504,18 @@ export const CodeGenerationPanel: React.FC<CodeGenerationProps> = ({
 
       // Broadcast to collaborators
       if (collaborationManagerRef.current && collaborationRoom) {
-        await collaborationManagerRef.current.broadcastEvent({
-          type: 'code_generation_completed',
-          sessionId: collaborationRoom.id,
-          userId: 'current-user', // TODO: Get actual user ID
-          timestamp: Date.now(),
-          data: { generatedCode, prompt: currentPrompt },
-        });
+        if (user) {
+          await collaborationManagerRef.current.broadcastEvent({
+            type: 'code_generation_completed',
+            sessionId: collaborationRoom.id,
+            userId: user.id,
+            userName: user.username,
+            timestamp: Date.now(),
+            data: { generatedCode, prompt: currentPrompt },
+          });
+        } else {
+          console.warn('Cannot broadcast code generation: User not authenticated');
+        }
       }
     } catch (err) {
       console.error('Code generation failed:', err);
@@ -568,7 +576,8 @@ export const CodeGenerationPanel: React.FC<CodeGenerationProps> = ({
       const sharedPrompt: SharedPrompt = {
         id: `prompt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         prompt: currentPrompt,
-        author: 'current-user', // TODO: Get actual user name
+        author: user?.username || 'Anonymous',
+        authorId: user?.id || 'anonymous',
         timestamp: Date.now(),
         votes: 0,
       };

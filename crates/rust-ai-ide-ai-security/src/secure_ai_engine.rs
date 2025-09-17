@@ -25,21 +25,21 @@ pub enum AIProvider {
 /// Secure AI inference request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AIInferenceRequest {
-    pub model:         String,
-    pub prompt:        String,
+    pub model: String,
+    pub prompt: String,
     pub privacy_level: PrivacyLevel,
-    pub provider:      AIProvider,
-    pub max_tokens:    Option<u16>,
-    pub temperature:   Option<f32>,
+    pub provider: AIProvider,
+    pub max_tokens: Option<u16>,
+    pub temperature: Option<f32>,
 }
 
 /// Encrypted AI response with metadata
 #[derive(Debug, Clone)]
 pub struct SecureAIResult {
     pub encrypted_result: Vec<u8>,
-    pub signature:        Vec<u8>,
-    pub model_version:    String,
-    pub request_id:       String,
+    pub signature: Vec<u8>,
+    pub model_version: String,
+    pub request_id: String,
 }
 
 /// Main secure AI engine integrating Wave 3 security
@@ -54,9 +54,9 @@ impl SecureAIEngine {
         // Placeholder implementation
         Ok(SecureAIResult {
             encrypted_result: vec![],
-            signature:        vec![],
-            model_version:    "test".to_string(),
-            request_id:       "test".to_string(),
+            signature: vec![],
+            model_version: "test".to_string(),
+            request_id: "test".to_string(),
         })
     }
 

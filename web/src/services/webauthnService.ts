@@ -99,7 +99,7 @@ class WebAuthnService {
    * Initiates the process of authenticating with an existing WebAuthn credential
    */
   async startAuthentication(
-    request: StartAuthenticationRequest
+    request: StartAuthenticationRequest,
   ): Promise<WebAuthnChallengeResponse> {
     try {
       console.log('Starting WebAuthn authentication for user:', request.user_id);
@@ -191,7 +191,7 @@ class WebAuthnService {
       console.log('Cleaning up expired WebAuthn challenges');
       const result = await invoke<{ cleaned_challenges: number; status: string }>(
         'webauthn_cleanup_expired_challenges',
-        {}
+        {},
       );
       console.log(`Cleaned up ${result.cleaned_challenges} expired challenges`);
       return result;
@@ -316,8 +316,10 @@ export async function checkWebAuthnSupport(): Promise<WebAuthnBrowserSupport> {
       support.platformAuthenticator =
         await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
 
-      // Cross-platform is always assumed available if WebAuthn is supported
-      support.crossPlatformAuthenticator = true;
+      // Check cross-platform authenticator if the browser exposes a check
+      if (typeof (PublicKeyCredential as any).isConditionalMediationAvailable === 'function') {
+        support.crossPlatformAuthenticator = await (PublicKeyCredential as any).isConditionalMediationAvailable();
+      }
     }
   } catch (error) {
     console.warn('WebAuthn support check failed:', error);
@@ -333,7 +335,7 @@ export function base64UrlToUint8Array(base64Url: string): Uint8Array {
   const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
+  for (let i = 0; i < binary.length; i+=1) {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;

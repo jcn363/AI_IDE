@@ -6,12 +6,80 @@ use syn::visit_mut::VisitMut;
 use syn::Ident;
 
 use crate::ast_utils::*;
+use crate::signature_operations::ConvertToAsyncOperation;
 use crate::types::*;
 use crate::utils::*;
 use crate::RefactoringOperation;
 
-/// Convert to Async operation - converts a function to async
-pub struct ConvertToAsyncOperation;
+/// Visitor that adds .await to function calls that return futures
+struct AwaitVisitor {
+    target_function: String,
+}
+
+impl AwaitVisitor {
+    fn new(target_function: &str) -> Self {
+        AwaitVisitor {
+            target_function: target_function.to_string(),
+        }
+    }
+}
+
+impl VisitMut for AwaitVisitor {
+    fn visit_expr_mut(&mut self, i: &mut syn::Expr) {
+        // Check if this is a call to our target function
+        if let syn::Expr::Call(syn::ExprCall { func, .. }) = i {
+            if let syn::Expr::Path(path) = &**func {
+                if let Some(ident) = path.path.get_ident() {
+                    if ident == &self.target_function {
+                        // Wrap the call in an async block with .await
+                        let call = std::mem::replace(i, syn::Expr::Verbatim(Default::default()));
+                        *i = syn::parse_quote! {
+                            { #call.await }
+                        };
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // Check for method calls that might be on our target function
+        if let syn::Expr::MethodCall(syn::ExprMethodCall { method, receiver, .. }) = i {
+            if let syn::Expr::Path(path) = &**receiver {
+                if let Some(ident) = path.path.get_ident() {
+                    if ident == &self.target_function && method == "await" {
+                        // Already has .await, no need to add another one
+                        return;
+                    }
+                }
+            }
+        }
+        
+        // Visit nested expressions
+        syn::visit_mut::visit_expr_mut(self, i);
+    }
+    
+    fn visit_item_fn_mut(&mut self, i: &mut syn::ItemFn) {
+        // Update the return type to be a Future if it's our target function
+        if i.sig.ident == self.target_function {
+            match &i.sig.output {
+                syn::ReturnType::Default => {
+                    i.sig.output = syn::parse_quote!(-> impl std::future::Future<Output = ()>);
+                }
+                syn::ReturnType::Type(rarrow, ty) => {
+                    if !matches!(**ty, syn::Type::ImplTrait(_)) {
+                        i.sig.output = syn::parse_quote!(#rarrow impl std::future::Future<Output = #ty>);
+                    }
+                }
+            }
+            
+            // Add async to the function signature
+            i.sig.asyncness = Some(syn::token::Async::default());
+        }
+        
+        // Visit the function body
+        syn::visit_mut::visit_item_fn_mut(self, i);
+    }
+}
 
 /// Analyzed function information for async conversion
 struct AsyncConversionInfo {
@@ -197,7 +265,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
     async fn execute(
         &self,
         context: &RefactoringContext,
-        options: &RefactoringOptions,
+        _options: &RefactoringOptions,
     ) -> Result<RefactoringResult, Box<dyn std::error::Error + Send + Sync>> {
         println!("Advanced convert to async operation executing");
 
@@ -205,7 +273,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
 
         // Read and parse file
         let content = fs::read_to_string(file_path)?;
-        let mut syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
+        let syntax: syn::File = syn::parse_file(&content)?;
 
         // Get target function name
         let function_name = context
@@ -269,14 +337,12 @@ impl RefactoringOperation for ConvertToAsyncOperation {
         }
 
         // Apply AST transformation
-        let mut visitor = AsyncFunctionVisitor {
-            target_name: function_name.to_string(),
-            should_make_async: true,
-        };
-        visitor.visit_file_mut(&mut syntax);
+        let mut visitor = AwaitVisitor::new(function_name);
+        let mut syntax_clone = syntax.clone();
+        visitor.visit_file_mut(&mut syntax_clone);
 
         // Generate modified content
-        let modified_content = prettyplease::unparse(&syntax);
+        let modified_content = prettyplease::unparse(&syntax_clone);
 
         // Find callers that need .await
         let caller_updates = self.find_callers_needing_await(&syntax, function_name);
@@ -322,7 +388,7 @@ impl RefactoringOperation for ConvertToAsyncOperation {
     ) -> Result<RefactoringAnalysis, Box<dyn std::error::Error + Send + Sync>> {
         // Parse file to analyze function
         let content = fs::read_to_string(&context.file_path)?;
-        let syntax: syn::File = syn::parse_str::<syn::File>(syn::parse_str::<syn::File>(&content)??content)?;
+        let syntax: syn::File = syn::parse_file(&content)?;
 
         let function_name = context.symbol_name.clone().unwrap_or_default();
         let analysis = match self.analyze_function_for_async(&syntax, &function_name) {
@@ -383,10 +449,10 @@ impl RefactoringOperation for ConvertToAsyncOperation {
 
     async fn is_applicable(
         &self,
-        context: &RefactoringContext,
-        options: Option<&RefactoringOptions>,
+        _context: &RefactoringContext,
+        _options: Option<&RefactoringOptions>,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        Ok(context.symbol_kind == Some(SymbolKind::Function) && context.symbol_name.is_some())
+        Ok(_context.symbol_kind == Some(SymbolKind::Function) && _context.symbol_name.is_some())
     }
 
     fn refactoring_type(&self) -> RefactoringType {
@@ -394,11 +460,11 @@ impl RefactoringOperation for ConvertToAsyncOperation {
     }
 
     fn name(&self) -> &str {
-        "Convert to Async "
+        "Convert to Async"
     }
 
     fn description(&self) -> &str {
-        "Converts a synchronous function to async with proper Future return types "
+        "Converts a synchronous function to async with proper Future return types"
     }
 }
 

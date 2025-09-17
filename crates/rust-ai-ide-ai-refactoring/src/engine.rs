@@ -238,8 +238,7 @@ impl RefactoringEngine {
         let content = std::fs::read_to_string(&request.context.file_path)
             .map_err(|e| format!("Failed to read source file: {}", e))?;
 
-        let syntax =
-            syn::parse_str::<syn::File>(&content)?.map_err(|e| format!("Failed to parse Rust syntax: {}", e))?;
+        let syntax = syn::parse_str::<syn::File>(&content).map_err(|e| format!("Failed to parse Rust syntax: {}", e))?;
 
         // Analyze symbols and dependencies
         let symbols_affected = self.extract_symbols(&syntax, request)?;
@@ -439,7 +438,8 @@ impl RefactoringEngine {
                 &convert_request_to_context(request),
                 &convert_options_to_refactoring_options(&request.options),
             )
-            .await?;
+            .await
+            .map_err(|e| e.to_string())?;
 
         Ok(result)
     }

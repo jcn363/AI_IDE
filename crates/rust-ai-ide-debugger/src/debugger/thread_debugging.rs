@@ -167,7 +167,7 @@ pub struct ThreadDebugger {
     /// Next task ID to assign
     next_task_id: u32,
     /// Event sender for debugger integration
-    event_sender: Option<mpsc::UnboundedSender<ThreadDebuggerEvent>>,
+    pub event_sender: Option<mpsc::UnboundedSender<ThreadDebuggerEvent>>,
     /// Last update timestamp
     last_update:  Instant,
 }
@@ -283,9 +283,10 @@ impl ThreadDebugger {
 
         // Update timeline if we have a thread
         if let Some(tid) = thread_id {
+            let timestamp = self.get_timestamp();
             if let Some(timeline) = self.timelines.get_mut(&tid) {
                 timeline.events.push(TimelineEvent {
-                    timestamp:   self.get_timestamp(),
+                    timestamp,
                     event_type:  TimelineEventType::TaskStarted,
                     description: format!("Async task '{}' started", task_name),
                     task_id:     Some(task_id),
@@ -307,9 +308,10 @@ impl ThreadDebugger {
             thread.state = new_state.clone();
 
             // Update timeline
+            let timestamp = self.get_timestamp();
             if let Some(timeline) = self.timelines.get_mut(&thread_id) {
                 timeline.events.push(TimelineEvent {
-                    timestamp:   self.get_timestamp(),
+                    timestamp,
                     event_type:  TimelineEventType::TaskStarted, // Using as generic thread event
                     description: format!("Thread state: {:?} -> {:?}", old_state, new_state),
                     task_id:     None,
@@ -332,8 +334,11 @@ impl ThreadDebugger {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         if let Some(task) = self.tasks.get_mut(&task_id) {
             let old_state = task.state.clone();
+            let thread_id = task.thread_id;
+            let task_name = task.name.clone();
             task.state = new_state.clone();
 
+            // Send events before modifying timeline to avoid borrow checker issues
             self.send_event(ThreadDebuggerEvent::TaskStateChanged {
                 task_id,
                 new_state: new_state.clone(),
@@ -348,7 +353,8 @@ impl ThreadDebugger {
             }
 
             // Update timeline if we have a thread
-            if let Some(thread_id) = task.thread_id {
+            if let Some(thread_id) = thread_id {
+                let timestamp = self.get_timestamp();
                 if let Some(timeline) = self.timelines.get_mut(&thread_id) {
                     let event_type = match new_state {
                         AsyncTaskState::Suspended => TimelineEventType::TaskSuspended,
@@ -358,11 +364,11 @@ impl ThreadDebugger {
                     };
 
                     timeline.events.push(TimelineEvent {
-                        timestamp: self.get_timestamp(),
+                        timestamp,
                         event_type,
                         description: format!(
                             "Task '{}' state: {:?} -> {:?}",
-                            task.name, old_state, new_state
+                            task_name, old_state, new_state
                         ),
                         task_id: Some(task_id),
                     });
@@ -396,9 +402,10 @@ impl ThreadDebugger {
         self.locks.insert(lock_id, Some(thread_id));
 
         // Update timeline
+        let timestamp = self.get_timestamp();
         if let Some(timeline) = self.timelines.get_mut(&thread_id) {
             timeline.events.push(TimelineEvent {
-                timestamp:   self.get_timestamp(),
+                timestamp,
                 event_type:  TimelineEventType::LockAcquired(lock_id),
                 description: format!("Lock {} acquired", lock_id),
                 task_id:     self.threads.get(&thread_id).and_then(|t| t.current_task),
@@ -425,9 +432,10 @@ impl ThreadDebugger {
         }
 
         // Update timeline
+        let timestamp = self.get_timestamp();
         if let Some(timeline) = self.timelines.get_mut(&thread_id) {
             timeline.events.push(TimelineEvent {
-                timestamp:   self.get_timestamp(),
+                timestamp,
                 event_type:  TimelineEventType::LockReleased(lock_id),
                 description: format!("Lock {} released", lock_id),
                 task_id:     self.threads.get(&thread_id).and_then(|t| t.current_task),
@@ -451,9 +459,10 @@ impl ThreadDebugger {
         }
 
         // Update timeline
+        let timestamp = self.get_timestamp();
         if let Some(timeline) = self.timelines.get_mut(&thread_id) {
             timeline.events.push(TimelineEvent {
-                timestamp:   self.get_timestamp(),
+                timestamp,
                 event_type:  TimelineEventType::LockWaiting(lock_id),
                 description: format!("Waiting for lock {}", lock_id),
                 task_id:     self.threads.get(&thread_id).and_then(|t| t.current_task),

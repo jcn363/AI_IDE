@@ -55,7 +55,7 @@ log = "0.4"
 env_logger = "0.10"
 
 # Metrics collection
-prometheus = "0.13"
+prometheus = "0.14.0"
 lazy_static = "1.4"
 
 # Hash functions for pattern analysis

@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "📝 Validating commit message..."
+npx --no -- commitlint --edit "${1}"
+if [ $? -ne 0 ]; then
+  echo "❌ Commit message validation failed. Please follow the conventional commit format."
+  echo "Examples:"
+  echo "  feat: add new feature"
+  echo "  fix: resolve bug in component"
+  echo "  docs: update README"
+  echo "  chore: update dependencies"
+  exit 1
+fi
+
+echo "✅ Commit message is valid!"

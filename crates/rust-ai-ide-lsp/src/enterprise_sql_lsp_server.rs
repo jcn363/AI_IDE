@@ -6,8 +6,10 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{info, debug};
+use std::collections::HashMap;
 
 use crate::sql_lsp_server::*;
+use crate::pool::{LanguageServerPool, ServerLoadMetrics, PoolStatistics};
 #[cfg(feature = "enterprise-monitoring")]
 use crate::enterprise_monitoring_impl::*;
 
@@ -42,6 +44,15 @@ pub struct HorizontalScaler {
 
     /// Auto-scaling policy
     pub auto_scaling_policy: AutoScalingPolicy,
+
+    /// Reference to the language server pool for metrics
+    pub pool: Arc<LanguageServerPool>,
+}
+
+/// Instance registry for tracking available LSP instances
+pub struct InstanceRegistry {
+    /// List of instance URLs/endpoints
+    pub instances: Vec<String>,
 }
 
 /// Security enhancements for enterprise deployments
@@ -352,11 +363,14 @@ impl EnterpriseSqlLspServer {
 /// Implementation for Horizontal scaling support
 impl HorizontalScaler {
     pub async fn new_production(config: SqlLspConfig) -> Result<Self, SqlLspError> {
+        // Create a pool for the scaler - in a real implementation this would be shared
+        let pool = Arc::new(LanguageServerPool::new());
+
         Ok(Self {
             instance_registry: Arc::new(Mutex::new(InstanceRegistry {
                 instances: config.scaling_endpoints,
             })),
-            load_balancer: Arc::new(Mutex::new(LoadBalancerStrategy::RoundRobin)),
+            load_balancer: Arc::new(Mutex::new(LoadBalancerStrategy::Intelligent)),
             session_stickiness: config.session_stickiness_config,
             auto_scaling_policy: AutoScalingPolicy {
                 min_instances: 1,
@@ -365,7 +379,57 @@ impl HorizontalScaler {
                 scale_down_threshold: 0.2,
                 cooldown_minutes: 5,
             },
+            pool,
         })
+    }
+
+    /// Select an instance for a request using load balancing
+    pub async fn select_instance(&self, request_context: &str) -> Result<String, SqlLspError> {
+        let instances = {
+            let registry = self.instance_registry.lock().await;
+            registry.instances.clone()
+        };
+
+        if instances.is_empty() {
+            return Err(SqlLspError::Other("No instances available in registry".to_string()));
+        }
+
+        let load_balancer = self.load_balancer.lock().await;
+        let selected_instance = load_balancer.select_instance(&self.pool, &instances).await?;
+
+        info!("Selected instance {} for request context: {}", selected_instance, request_context);
+        Ok(selected_instance)
+    }
+
+    /// Check if scaling is needed based on current metrics
+    pub async fn should_scale(&self) -> Result<bool, SqlLspError> {
+        let instances = {
+            let registry = self.instance_registry.lock().await;
+            registry.instances.clone()
+        };
+
+        let load_balancer = self.load_balancer.lock().await;
+        let should_scale = load_balancer.should_scale(&self.pool, &instances).await;
+
+        Ok(should_scale)
+    }
+
+    /// Add a new instance to the registry
+    pub async fn add_instance(&self, instance_url: String) -> Result<(), SqlLspError> {
+        let mut registry = self.instance_registry.lock().await;
+        if !registry.instances.contains(&instance_url) {
+            registry.instances.push(instance_url.clone());
+            info!("Added new instance: {}", instance_url);
+        }
+        Ok(())
+    }
+
+    /// Remove an instance from the registry
+    pub async fn remove_instance(&self, instance_url: &str) -> Result<(), SqlLspError> {
+        let mut registry = self.instance_registry.lock().await;
+        registry.instances.retain(|instance| instance != instance_url);
+        info!("Removed instance: {}", instance_url);
+        Ok(())
     }
 
     async fn get_health(&self) -> Result<ComponentHealth, SqlLspError> {
@@ -449,11 +513,196 @@ impl ComplianceMonitoring {
     }
 }
 
-// Type definitions and placeholder implementations
-pub struct LoadBalancerStrategy(pub String);
+// Load balancing strategy that integrates with pool metrics
+#[derive(Debug, Clone)]
+pub enum LoadBalancerStrategy {
+    /// Round-robin between available instances
+    RoundRobin,
+    /// Select least loaded instance based on pool metrics
+    LeastLoaded,
+    /// Health-based selection prioritizing healthy instances
+    HealthBased,
+    /// Intelligent load balancing using multiple metrics
+    Intelligent,
+}
 
 impl LoadBalancerStrategy {
-    const RoundRobin: LoadBalancerStrategy = LoadBalancerStrategy("round_robin".to_string());
+    /// Select an instance based on the load balancing strategy
+    pub async fn select_instance(
+        &self,
+        pool: &Arc<LanguageServerPool>,
+        instances: &[String],
+    ) -> Result<String, SqlLspError> {
+        if instances.is_empty() {
+            return Err(SqlLspError::Other("No instances available".to_string()));
+        }
+
+        match self {
+            LoadBalancerStrategy::RoundRobin => {
+                // Simple round-robin - in real implementation would track state
+                Ok(instances[0].clone())
+            }
+            LoadBalancerStrategy::LeastLoaded => {
+                self.select_least_loaded_instance(pool, instances).await
+            }
+            LoadBalancerStrategy::HealthBased => {
+                self.select_healthiest_instance(pool, instances).await
+            }
+            LoadBalancerStrategy::Intelligent => {
+                self.select_intelligent_instance(pool, instances).await
+            }
+        }
+    }
+
+    /// Select the least loaded instance based on pool metrics
+    async fn select_least_loaded_instance(
+        &self,
+        pool: &Arc<LanguageServerPool>,
+        instances: &[String],
+    ) -> Result<String, SqlLspError> {
+        let load_metrics = pool.get_server_load_metrics().await;
+
+        // Find the instance with the lowest load score
+        let mut best_instance = &instances[0];
+        let mut best_score = f64::INFINITY;
+
+        for instance in instances {
+            let instance_score = self.calculate_instance_load_score(&load_metrics, instance);
+            if instance_score < best_score {
+                best_score = instance_score;
+                best_instance = instance;
+            }
+        }
+
+        Ok(best_instance.clone())
+    }
+
+    /// Select the healthiest instance based on pool metrics
+    async fn select_healthiest_instance(
+        &self,
+        pool: &Arc<LanguageServerPool>,
+        instances: &[String],
+    ) -> Result<String, SqlLspError> {
+        let load_metrics = pool.get_server_load_metrics().await;
+
+        // Find the instance with the highest health score
+        let mut best_instance = &instances[0];
+        let mut best_health = 0.0;
+
+        for instance in instances {
+            let health_score = self.calculate_instance_health_score(&load_metrics, instance);
+            if health_score > best_health {
+                best_health = health_score;
+                best_instance = instance;
+            }
+        }
+
+        Ok(best_instance.clone())
+    }
+
+    /// Intelligent instance selection using multiple factors
+    async fn select_intelligent_instance(
+        &self,
+        pool: &Arc<LanguageServerPool>,
+        instances: &[String],
+    ) -> Result<String, SqlLspError> {
+        let load_metrics = pool.get_server_load_metrics().await;
+        let pool_stats = pool.get_statistics().await;
+
+        // Get resource metrics for system-wide assessment
+        let resource_metrics = match pool.get_resource_metrics().await {
+            Ok(metrics) => metrics,
+            Err(_) => {
+                // Fallback to least loaded if resource metrics unavailable
+                return self.select_least_loaded_instance(pool, instances).await;
+            }
+        };
+
+        // Calculate composite score for each instance
+        let mut best_instance = &instances[0];
+        let mut best_score = f64::INFINITY;
+
+        for instance in instances {
+            let load_score = self.calculate_instance_load_score(&load_metrics, instance);
+            let health_score = self.calculate_instance_health_score(&load_metrics, instance);
+            let resource_pressure = self.calculate_resource_pressure_score(&resource_metrics);
+
+            // Composite score: load (40%) + health (30%) + resource pressure (30%)
+            let composite_score = load_score * 0.4 + (1.0 - health_score) * 0.3 + resource_pressure * 0.3;
+
+            if composite_score < best_score {
+                best_score = composite_score;
+                best_instance = instance;
+            }
+        }
+
+        info!("Selected instance {} with composite score {:.3}", best_instance, best_score);
+        Ok(best_instance.clone())
+    }
+
+    /// Calculate load score for an instance (lower is better)
+    fn calculate_instance_load_score(&self, load_metrics: &[ServerLoadMetrics], instance: &str) -> f64 {
+        for metric in load_metrics {
+            if metric.server_id.contains(instance) {
+                // Weighted score based on pending requests, response time, and CPU usage
+                let pending_weight = 0.4;
+                let response_weight = 0.3;
+                let cpu_weight = 0.3;
+
+                let pending_score = (metric.pending_requests as f64 / 10.0).min(1.0);
+                let response_score = (metric.response_time_ms / 1000.0).min(1.0);
+                let cpu_score = metric.cpu_usage_percent / 100.0;
+
+                return pending_score * pending_weight +
+                       response_score * response_weight +
+                       cpu_score * cpu_weight;
+            }
+        }
+
+        // Default moderate load if no metrics available
+        0.5
+    }
+
+    /// Calculate health score for an instance (higher is better)
+    fn calculate_instance_health_score(&self, load_metrics: &[ServerLoadMetrics], instance: &str) -> f64 {
+        for metric in load_metrics {
+            if metric.server_id.contains(instance) {
+                return metric.health_score;
+            }
+        }
+
+        // Default health score if no metrics available
+        0.8
+    }
+
+    /// Calculate system resource pressure score
+    fn calculate_resource_pressure_score(&self, resource_metrics: &crate::pool::ResourceMetrics) -> f64 {
+        let cpu_pressure = resource_metrics.cpu_usage_percent / 100.0;
+        let memory_pressure = resource_metrics.memory_used_mb as f64 / resource_metrics.memory_total_mb as f64;
+
+        // Average of CPU and memory pressure
+        (cpu_pressure + memory_pressure) / 2.0
+    }
+
+    /// Check if the current load justifies scaling actions
+    pub async fn should_scale(&self, pool: &Arc<LanguageServerPool>, instances: &[String]) -> bool {
+        if instances.len() < 2 {
+            return false; // Need at least 2 instances for meaningful scaling decisions
+        }
+
+        let load_metrics = pool.get_server_load_metrics().await;
+        let pool_stats = pool.get_statistics().await;
+
+        // Scale up conditions
+        let high_load = load_metrics.iter().any(|m| m.pending_requests > 15 || m.cpu_usage_percent > 85.0);
+        let high_error_rate = pool_stats.error_rate > 0.1;
+
+        // Scale down conditions
+        let low_utilization = load_metrics.iter().all(|m| m.pending_requests < 2 && m.cpu_usage_percent < 20.0);
+        let excess_capacity = instances.len() > pool_stats.active_servers + 2;
+
+        high_load || high_error_rate || (low_utilization && excess_capacity)
+    }
 }
 
 pub struct SessionStickinessConfig {

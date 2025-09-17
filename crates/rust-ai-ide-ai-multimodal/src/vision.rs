@@ -29,7 +29,11 @@ impl VisionProcessor {
     /// Process an image for analysis
     /// # Errors
     /// Returns an error if image processing fails
-    pub async fn process_image(&self, _image_data: &[u8], _format: &str) -> Result<ModalityResult, MultimodalError> {
+    pub async fn process_image(
+        &self,
+        _image_data: &[u8],
+        _format: &str,
+    ) -> Result<ModalityResult, MultimodalError> {
         // TODO: Actual OpenCV processing
         // TODO: Object detection
         // TODO: OCR if applicable
@@ -37,16 +41,16 @@ impl VisionProcessor {
 
         // Placeholder result
         Ok(ModalityResult {
-            modality_type:      ModalityType::Image,
-            success:            true,
-            confidence:         0.8,
-            data:               ModalityData::Image {
+            modality_type: ModalityType::Image,
+            success: true,
+            confidence: 0.8,
+            data: ModalityData::Image {
                 description: "Image processed successfully".to_string(),
-                objects:     Vec::new(),
-                ocr_text:    Some("Placeholder OCR text".to_string()),
-                scene:       Some("placeholder scene".to_string()),
+                objects: Vec::new(),
+                ocr_text: Some("Placeholder OCR text".to_string()),
+                scene: Some("placeholder scene".to_string()),
             },
-            bounding_boxes:     Vec::new(),
+            bounding_boxes: Vec::new(),
             processing_time_ms: 100,
         })
     }
@@ -54,23 +58,26 @@ impl VisionProcessor {
     /// Analyze screenshot content
     /// # Errors
     /// Returns an error if screenshot analysis fails
-    pub async fn analyze_screenshot(&self, _request: &AnalysisRequest) -> Result<ModalityResult, MultimodalError> {
+    pub async fn analyze_screenshot(
+        &self,
+        _request: &AnalysisRequest,
+    ) -> Result<ModalityResult, MultimodalError> {
         // TODO: Screenshot-specific analysis
         // TODO: UI element detection
         // TODO: Text extraction from screenshots
 
         // Placeholder implementation
         Ok(ModalityResult {
-            modality_type:      ModalityType::Screenshot,
-            success:            true,
-            confidence:         0.7,
-            data:               ModalityData::Image {
+            modality_type: ModalityType::Screenshot,
+            success: true,
+            confidence: 0.7,
+            data: ModalityData::Image {
                 description: "Screenshot analyzed".to_string(),
-                objects:     Vec::new(),
-                ocr_text:    Some("UI text extracted".to_string()),
-                scene:       Some("application interface".to_string()),
+                objects: Vec::new(),
+                ocr_text: Some("UI text extracted".to_string()),
+                scene: Some("application interface".to_string()),
             },
-            bounding_boxes:     Vec::new(),
+            bounding_boxes: Vec::new(),
             processing_time_ms: 120,
         })
     }

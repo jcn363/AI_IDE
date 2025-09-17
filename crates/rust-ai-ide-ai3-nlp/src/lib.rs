@@ -8,8 +8,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 
 use rust_ai_ide_ai3_quantum::{QuantumAIEngine, QuantumProcessor};
-#[cfg(feature = "rust-bert")]
-use rust_bert::pipelines::sentence_embeddings::SentenceEmbeddingsModel;
+// #[cfg(feature = "rust-bert")]
+// use rust_bert::pipelines::sentence_embeddings::SentenceEmbeddingsModel;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, RwLock};
 

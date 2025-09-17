@@ -18,7 +18,7 @@ impl EnterpriseBatteryManager {
 
 pub struct EnterpriseBatteryPolicy {
     pub restrict_background_tasks: bool,
-    pub max_performance_mode:      PowerMode,
+    pub max_performance_mode: PowerMode,
     pub remote_monitoring_enabled: bool,
 }
 

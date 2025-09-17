@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🚀 Running pre-push checks..."
+
+# Build verification
+echo "🔨 Running build verification..."
+cd web && npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Build verification failed. Please fix build errors before pushing."
+  exit 1
+fi
+
+# Security scanning
+echo "🔒 Running security scanning..."
+cd web && npm run security:audit
+if [ $? -ne 0 ]; then
+  echo "❌ Security scanning failed. Please address security vulnerabilities before pushing."
+  exit 1
+fi
+
+echo "✅ All pre-push checks passed!"

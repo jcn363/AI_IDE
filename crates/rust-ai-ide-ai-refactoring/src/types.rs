@@ -1,4 +1,3 @@
-use quote::ToTokens;
 use serde::{Deserialize, Serialize};
 
 /// Refactoring types that define the kind of refactoring operation
@@ -206,6 +205,14 @@ pub enum RefactoringImpact {
     Medium,
     High,
     Critical,
+}
+
+/// Impact level for refactoring operations
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ImpactLevel {
+    Low,
+    Medium,
+    High,
 }
 
 /// Target information for a refactoring operation

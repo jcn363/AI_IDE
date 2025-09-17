@@ -14,26 +14,26 @@ use crate::errors::IDEServiceError;
 /// Documentation generation request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocGenerationRequest {
-    pub source_path:     PathBuf,
-    pub output_format:   String,
+    pub source_path: PathBuf,
+    pub output_format: String,
     pub include_private: bool,
-    pub open_browser:    bool,
+    pub open_browser: bool,
 }
 
 /// Documentation section
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocSection {
-    pub title:   String,
+    pub title: String,
     pub content: String,
-    pub level:   u32,
+    pub level: u32,
 }
 
 /// Documentation file
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DocFile {
-    pub path:         PathBuf,
-    pub title:        String,
-    pub sections:     Vec<DocSection>,
+    pub path: PathBuf,
+    pub title: String,
+    pub sections: Vec<DocSection>,
     pub generated_at: u64,
 }
 
@@ -56,14 +56,17 @@ pub async fn doc_list_files(directory: Option<PathBuf>) -> Result<Vec<String>, S
 
 /// Search documentation handler
 #[tauri::command]
-pub async fn doc_search(query: String, directory: Option<PathBuf>) -> Result<Vec<DocSection>, String> {
+pub async fn doc_search(
+    query: String,
+    directory: Option<PathBuf>,
+) -> Result<Vec<DocSection>, String> {
     log::info!("Searching documentation for '{}'", query);
 
     // Placeholder results
     Ok(vec![DocSection {
-        title:   "Search Results".to_string(),
+        title: "Search Results".to_string(),
         content: format!("Found results for query: {}", query),
-        level:   1,
+        level: 1,
     }])
 }
 

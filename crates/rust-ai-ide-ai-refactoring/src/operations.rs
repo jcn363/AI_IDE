@@ -17,7 +17,7 @@ pub fn is_ast_supported(file_path: &str) -> bool {
 }
 
 // Re-export main types and operations for public API
-pub use crate::async_operations::ConvertToAsyncOperation;
+pub use crate::signature_operations::ConvertToAsyncOperation;
 pub use crate::batch_operations::BatchInterfaceExtractionOperation;
 pub use crate::class_struct_operations::{
     EncapsulateFieldOperation, ExtractClassOperation, ExtractInterfaceOperation, GenerateGettersSettersOperation,

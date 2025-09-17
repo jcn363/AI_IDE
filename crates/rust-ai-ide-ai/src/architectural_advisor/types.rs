@@ -73,31 +73,31 @@ pub enum ProjectType {
 /// Current architecture description
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CurrentArchitecture {
-    pub layers:           Vec<ArchitectureLayer>,
-    pub patterns_used:    Vec<String>,
-    pub technologies:     Vec<String>,
+    pub layers: Vec<ArchitectureLayer>,
+    pub patterns_used: Vec<String>,
+    pub technologies: Vec<String>,
     pub deployment_model: String,
 }
 
 /// Architecture layer
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitectureLayer {
-    pub name:             String,
+    pub name: String,
     pub responsibilities: Vec<String>,
-    pub technologies:     Vec<String>,
-    pub interfaces:       Vec<String>,
+    pub technologies: Vec<String>,
+    pub interfaces: Vec<String>,
 }
 
 /// Architectural context for analysis
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalContext {
-    pub codebase_path:        String,
-    pub project_type:         ProjectType,
+    pub codebase_path: String,
+    pub project_type: ProjectType,
     pub current_architecture: Option<CurrentArchitecture>,
-    pub constraints:          Vec<String>,
-    pub goals:                Vec<String>,
-    pub team_size:            Option<usize>,
-    pub expected_lifecycle:   Option<String>,
+    pub constraints: Vec<String>,
+    pub goals: Vec<String>,
+    pub team_size: Option<usize>,
+    pub expected_lifecycle: Option<String>,
 }
 
 /// Comprehensive pattern analysis result synthesizing multiple analysis dimensions
@@ -230,19 +230,19 @@ pub struct DetectedPattern {
 /// Pattern location
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternLocation {
-    pub files:   Vec<String>,
+    pub files: Vec<String>,
     pub modules: Vec<String>,
-    pub lines:   Option<(usize, usize)>,
+    pub lines: Option<(usize, usize)>,
 }
 
 /// Anti-pattern detection
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AntiPattern {
-    pub anti_pattern_type:       String,
-    pub severity:                f32,
-    pub location:                PatternLocation,
-    pub description:             String,
-    pub consequences:            Vec<String>,
+    pub anti_pattern_type: String,
+    pub severity: f32,
+    pub location: PatternLocation,
+    pub description: String,
+    pub consequences: Vec<String>,
     pub refactoring_suggestions: Vec<String>,
 }
 
@@ -440,33 +440,33 @@ pub enum ComplexityLevel {
 /// Complexity hotspot in the codebase
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplexityHotspot {
-    pub file:             String,
+    pub file: String,
     pub complexity_score: f32,
-    pub description:      String,
+    pub description: String,
 }
 
 /// Complexity trend over time
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComplexityTrend {
-    pub period:            String,
+    pub period: String,
     pub complexity_change: f32,
-    pub description:       String,
+    pub description: String,
 }
 
 /// Coupling analysis between modules
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CouplingAnalysis {
-    pub afferent_coupling:  HashMap<String, usize>, // Number of incoming dependencies
-    pub efferent_coupling:  HashMap<String, usize>, // Number of outgoing dependencies
-    pub instability:        HashMap<String, f32>,
-    pub abstractness:       HashMap<String, f32>,
+    pub afferent_coupling: HashMap<String, usize>, // Number of incoming dependencies
+    pub efferent_coupling: HashMap<String, usize>, // Number of outgoing dependencies
+    pub instability: HashMap<String, f32>,
+    pub abstractness: HashMap<String, f32>,
     pub distance_from_main: HashMap<String, f32>,
 }
 
 /// Cohesion analysis for modules
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CohesionAnalysis {
-    pub lack_of_cohesion:    HashMap<String, f32>,
+    pub lack_of_cohesion: HashMap<String, f32>,
     pub functional_cohesion: HashMap<String, f32>,
 }
 
@@ -548,24 +548,24 @@ pub struct ArchitecturalGuidance {
 /// Architectural recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalRecommendation {
-    pub title:                 String,
-    pub description:           String,
-    pub rationale:             String,
-    pub expected_benefits:     Vec<String>,
+    pub title: String,
+    pub description: String,
+    pub rationale: String,
+    pub expected_benefits: Vec<String>,
     pub implementation_effort: ImplementationEffort,
-    pub risk_level:            RiskLevel,
-    pub prerequisites:         Vec<String>,
-    pub alternatives:          Vec<String>,
+    pub risk_level: RiskLevel,
+    pub prerequisites: Vec<String>,
+    pub alternatives: Vec<String>,
 }
 
 /// Architectural suggestion
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalSuggestion {
-    pub title:       String,
+    pub title: String,
     pub description: String,
-    pub category:    SuggestionCategory,
-    pub priority:    PriorityLevel,
-    pub impact:      ImpactLevel,
+    pub category: SuggestionCategory,
+    pub priority: PriorityLevel,
+    pub impact: ImpactLevel,
 }
 
 /// Suggestion categories for architectural improvements
@@ -619,92 +619,92 @@ pub enum RiskLevel {
 /// Risk assessment for architectural decisions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskAssessment {
-    pub overall_risk:          f32,
-    pub risk_factors:          Vec<RiskFactor>,
+    pub overall_risk: f32,
+    pub risk_factors: Vec<RiskFactor>,
     pub mitigation_strategies: Vec<String>,
 }
 
 /// Risk factor in architectural assessment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskFactor {
-    pub factor:      String,
+    pub factor: String,
     pub probability: f32,
-    pub impact:      f32,
+    pub impact: f32,
     pub description: String,
 }
 
 /// Priority action for implementation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PriorityAction {
-    pub action:       String,
-    pub deadline:     Option<String>,
-    pub responsible:  Option<String>,
+    pub action: String,
+    pub deadline: Option<String>,
+    pub responsible: Option<String>,
     pub dependencies: Vec<String>,
 }
 
 /// Architectural roadmap for changes
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalRoadmap {
-    pub short_term:  Vec<RoadmapItem>, // Next 3-6 months
+    pub short_term: Vec<RoadmapItem>,  // Next 3-6 months
     pub medium_term: Vec<RoadmapItem>, // Next 6-12 months
-    pub long_term:   Vec<RoadmapItem>, // Beyond 12 months
+    pub long_term: Vec<RoadmapItem>,   // Beyond 12 months
 }
 
 /// Roadmap item for architectural planning
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoadmapItem {
-    pub title:            String,
-    pub description:      String,
-    pub timeline:         String,
-    pub dependencies:     Vec<String>,
+    pub title: String,
+    pub description: String,
+    pub timeline: String,
+    pub dependencies: Vec<String>,
     pub success_criteria: Vec<String>,
 }
 
 /// Decision option for architectural decision making
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionOption {
-    pub title:        String,
-    pub description:  String,
+    pub title: String,
+    pub description: String,
     pub alternatives: Vec<String>,
-    pub criteria:     Vec<DecisionCriterion>,
-    pub context:      String,
+    pub criteria: Vec<DecisionCriterion>,
+    pub context: String,
 }
 
 /// Decision criterion for evaluation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionCriterion {
-    pub name:        String,
-    pub weight:      f32,
+    pub name: String,
+    pub weight: f32,
     pub description: String,
 }
 
 /// Decision analysis result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionAnalysis {
-    pub decision:       DecisionOption,
+    pub decision: DecisionOption,
     pub recommendation: DecisionRecommendation,
-    pub analysis:       HashMap<String, f32>, // Criterion -> Score mapping
-    pub trade_offs:     Vec<TradeOff>,
-    pub risks:          Vec<String>,
-    pub assumptions:    Vec<String>,
+    pub analysis: HashMap<String, f32>, // Criterion -> Score mapping
+    pub trade_offs: Vec<TradeOff>,
+    pub risks: Vec<String>,
+    pub assumptions: Vec<String>,
 }
 
 /// Decision recommendation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionRecommendation {
-    pub recommended_option:      String,
-    pub confidence:              f32,
-    pub rationale:               Vec<String>,
+    pub recommended_option: String,
+    pub confidence: f32,
+    pub rationale: Vec<String>,
     pub alternatives_considered: Vec<String>,
 }
 
 /// Trade-off analysis between options
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TradeOff {
-    pub option1:               String,
-    pub option2:               String,
-    pub advantages_option1:    Vec<String>,
-    pub advantages_option2:    Vec<String>,
+    pub option1: String,
+    pub option2: String,
+    pub advantages_option1: Vec<String>,
+    pub advantages_option2: Vec<String>,
     pub disadvantages_option1: Vec<String>,
     pub disadvantages_option2: Vec<String>,
 }
@@ -712,13 +712,13 @@ pub struct TradeOff {
 /// Architectural document containing system documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalDocument {
-    pub overview:           ArchitecturalOverview,
-    pub components:         Vec<ComponentDocument>,
-    pub patterns:           Vec<PatternDocument>,
-    pub interfaces:         Vec<InterfaceDocument>,
-    pub decisions:          Vec<DecisionRecord>,
+    pub overview: ArchitecturalOverview,
+    pub components: Vec<ComponentDocument>,
+    pub patterns: Vec<PatternDocument>,
+    pub interfaces: Vec<InterfaceDocument>,
+    pub decisions: Vec<DecisionRecord>,
     pub quality_attributes: QualityAttributesDocument,
-    pub deployment:         DeploymentDocument,
+    pub deployment: DeploymentDocument,
 }
 
 /// Architectural pattern enumeration
@@ -746,73 +746,73 @@ pub enum ArchitecturalPattern {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalOverview {
     pub description: String,
-    pub purpose:     String,
-    pub scope:       String,
+    pub purpose: String,
+    pub scope: String,
     pub assumptions: Vec<String>,
     pub constraints: Vec<String>,
-    pub goals:       Vec<String>,
+    pub goals: Vec<String>,
 }
 
 /// Component documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComponentDocument {
-    pub name:             String,
-    pub description:      String,
+    pub name: String,
+    pub description: String,
     pub responsibilities: Vec<String>,
-    pub interfaces:       Vec<String>,
-    pub dependencies:     Vec<String>,
-    pub technologies:     Vec<String>,
+    pub interfaces: Vec<String>,
+    pub dependencies: Vec<String>,
+    pub technologies: Vec<String>,
 }
 
 /// Pattern documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PatternDocument {
     pub pattern_name: String,
-    pub description:  String,
-    pub context:      String,
-    pub problem:      String,
-    pub solution:     String,
+    pub description: String,
+    pub context: String,
+    pub problem: String,
+    pub solution: String,
     pub consequences: Vec<String>,
-    pub examples:     Vec<String>,
+    pub examples: Vec<String>,
 }
 
 /// Interface documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InterfaceDocument {
-    pub name:         String,
-    pub description:  String,
-    pub methods:      Vec<InterfaceMethod>,
-    pub protocols:    Vec<String>,
+    pub name: String,
+    pub description: String,
+    pub methods: Vec<InterfaceMethod>,
+    pub protocols: Vec<String>,
     pub data_formats: Vec<String>,
 }
 
 /// Interface method documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InterfaceMethod {
-    pub name:        String,
-    pub signature:   String,
+    pub name: String,
+    pub signature: String,
     pub description: String,
-    pub parameters:  Vec<MethodParameter>,
+    pub parameters: Vec<MethodParameter>,
     pub return_type: String,
 }
 
 /// Method parameter documentation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MethodParameter {
-    pub name:        String,
-    pub data_type:   String,
+    pub name: String,
+    pub data_type: String,
     pub description: String,
-    pub optional:    bool,
+    pub optional: bool,
 }
 
 /// Decision record (ADR)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DecisionRecord {
-    pub title:        String,
-    pub date:         String,
-    pub status:       DecisionStatus,
-    pub context:      String,
-    pub decision:     String,
+    pub title: String,
+    pub date: String,
+    pub status: DecisionStatus,
+    pub context: String,
+    pub decision: String,
     pub consequences: Vec<String>,
     pub alternatives: Vec<String>,
 }
@@ -831,36 +831,36 @@ pub enum DecisionStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityAttributesDocument {
     pub attributes: Vec<QualityAttribute>,
-    pub scenarios:  Vec<QualityScenario>,
-    pub metrics:    Vec<QualityMetric>,
+    pub scenarios: Vec<QualityScenario>,
+    pub metrics: Vec<QualityMetric>,
 }
 
 /// Quality attribute
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityAttribute {
-    pub name:         String,
-    pub description:  String,
-    pub importance:   f32,
-    pub measures:     Vec<String>,
+    pub name: String,
+    pub description: String,
+    pub importance: f32,
+    pub measures: Vec<String>,
     pub stakeholders: Vec<String>,
 }
 
 /// Quality scenario
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityScenario {
-    pub stimulus:    String,
+    pub stimulus: String,
     pub environment: String,
-    pub response:    String,
-    pub measure:     String,
+    pub response: String,
+    pub measure: String,
 }
 
 /// Quality metric
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityMetric {
-    pub name:          String,
-    pub description:   String,
-    pub formula:       String,
-    pub target_value:  f32,
+    pub name: String,
+    pub description: String,
+    pub formula: String,
+    pub target_value: f32,
     pub current_value: Option<f32>,
 }
 
@@ -868,17 +868,17 @@ pub struct QualityMetric {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeploymentDocument {
     pub environments: Vec<DeploymentEnvironment>,
-    pub topologies:   Vec<String>,
+    pub topologies: Vec<String>,
     pub requirements: DeploymentRequirements,
-    pub procedures:   DeploymentProcedures,
+    pub procedures: DeploymentProcedures,
 }
 
 /// Deployment environment
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeploymentEnvironment {
-    pub name:               String,
-    pub purpose:            String,
-    pub configuration:      HashMap<String, String>,
+    pub name: String,
+    pub purpose: String,
+    pub configuration: HashMap<String, String>,
     pub scaling_properties: Vec<String>,
 }
 
@@ -887,7 +887,7 @@ pub struct DeploymentEnvironment {
 pub struct DeploymentRequirements {
     pub hardware: Vec<String>,
     pub software: Vec<String>,
-    pub network:  Vec<String>,
+    pub network: Vec<String>,
     pub security: Vec<String>,
 }
 
@@ -895,9 +895,9 @@ pub struct DeploymentRequirements {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeploymentProcedures {
     pub preparation: Vec<String>,
-    pub deployment:  Vec<String>,
-    pub rollback:    Vec<String>,
-    pub monitoring:  Vec<String>,
+    pub deployment: Vec<String>,
+    pub rollback: Vec<String>,
+    pub monitoring: Vec<String>,
 }
 
 /// Result type for architectural advisor operations
@@ -950,13 +950,13 @@ mod tests {
     #[test]
     fn test_architectural_context_creation() {
         let context = ArchitecturalContext {
-            codebase_path:        "src/".to_string(),
-            project_type:         ProjectType::Application,
+            codebase_path: "src/".to_string(),
+            project_type: ProjectType::Application,
             current_architecture: None,
-            constraints:          vec!["Performance".to_string()],
-            goals:                vec!["Scalability".to_string()],
-            team_size:            Some(5),
-            expected_lifecycle:   Some("3 years".to_string()),
+            constraints: vec!["Performance".to_string()],
+            goals: vec!["Scalability".to_string()],
+            team_size: Some(5),
+            expected_lifecycle: Some("3 years".to_string()),
         };
 
         assert_eq!(context.project_type, ProjectType::Application);

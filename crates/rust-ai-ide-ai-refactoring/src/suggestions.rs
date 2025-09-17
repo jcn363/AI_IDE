@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use async_trait::async_trait;
 
@@ -9,7 +11,7 @@ use crate::types::*;
 
 /// Trait for suggestion engines
 #[async_trait]
-pub trait SuggestionEngine {
+pub trait SuggestionEngine: Send + Sync {
     /// Get suggestions based on refactoring context
     async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String>;
 }
@@ -28,38 +30,23 @@ pub struct AISuggestionEngine {
     base_engine: SuggestionEngineWrapper,
 }
 
-/// Wrapper for the old SuggestionEngine to work with the trait
-struct SuggestionEngineWrapper {
-    inner: Box<dyn SuggestionEngine + Send + Sync>,
+/// Wrapper for the SuggestionEngine to work with the trait
+pub struct SuggestionEngineWrapper {
+    inner: Box<dyn SuggestionEngine>,
+}
+
+impl SuggestionEngineWrapper {
+    pub fn new(engine: impl SuggestionEngine + 'static) -> Self {
+        SuggestionEngineWrapper {
+            inner: Box::new(engine),
+        }
+    }
 }
 
 #[async_trait]
 impl SuggestionEngine for SuggestionEngineWrapper {
     async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
-        // Convert to refactoring context
-        let refactoring_context = RefactoringContext {
-            file_path:        context.file_path.clone(),
-            cursor_line:      0, // Default values
-            cursor_character: 0,
-            selection:        None,
-            symbol_name:      context.symbol_name.clone(),
-            symbol_kind:      context.symbol_kind.clone(),
-        };
-
-        let suggestions = self
-            .inner
-            .generate_suggestions(&refactoring_context, None)
-            .await?;
-        let suggestions = suggestions
-            .into_iter()
-            .map(|s| RefactoringSuggestion {
-                operation_type:   s.refactoring_type.to_string(),
-                confidence_score: s.confidence.overall_score,
-                description:      s.reasoning,
-            })
-            .collect();
-
-        Ok(suggestions)
+        self.inner.get_suggestions(context).await
     }
 }
 
@@ -67,9 +54,7 @@ impl SuggestionEngine for SuggestionEngineWrapper {
 impl AISuggestionEngine {
     pub fn new() -> Self {
         AISuggestionEngine {
-            base_engine: SuggestionEngineWrapper {
-                inner: SuggestionEngineImpl::new(),
-            },
+            base_engine: SuggestionEngineWrapper::new(SuggestionEngineImpl::new()),
         }
     }
 }
@@ -81,35 +66,77 @@ impl SuggestionEngine for AISuggestionEngine {
     }
 }
 
+#[async_trait]
+impl SuggestionEngine for SuggestionEngineImpl {
+    async fn get_suggestions(&self, context: &SuggestionContext) -> Result<Vec<RefactoringSuggestion>, String> {
+        // Convert to refactoring context
+        let refactoring_context = RefactoringContext {
+            file_path: context.file_path.clone(),
+            cursor_line: 0,
+            cursor_character: 0,
+            selection: None,
+            symbol_name: context.symbol_name.clone(),
+            symbol_kind: context.symbol_kind.clone(),
+        };
+
+        // Use the engine directly
+        let smart_suggestions = self.generate_suggestions(&refactoring_context, None)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        // Convert SmartSuggestion to RefactoringSuggestion
+        let suggestions = smart_suggestions
+            .into_iter()
+            .map(|s| {
+                let confidence = s.confidence.overall_score as f32;
+                
+                RefactoringSuggestion {
+                    refactoring_type: s.refactoring_type,
+                    confidence: confidence.into(),
+                    context: refactoring_context.clone(),
+                    expected_changes: vec![],
+                    description: "Generated suggestion".to_string(), // Default description
+                }
+            })
+            .collect();
+
+        Ok(suggestions)
+    }
+}
+
 /// Context-aware suggestion engine for intelligent refactoring recommendations
+#[derive(Clone)]
 pub struct SuggestionEngineImpl {
-    analyzer:          RefactoringAnalyzer,
+    analyzer:          crate::analysis::RefactoringAnalysisEngine,
     confidence_scorer: ConfidenceScorer,
-    suggestion_cache:  HashMap<String, Vec<SmartSuggestion>>,
+    suggestion_cache:  Arc<Mutex<HashMap<String, Vec<SmartSuggestion>>>>,
     context_patterns:  Vec<ContextPattern>,
 }
 
 impl SuggestionEngineImpl {
     pub fn new() -> Self {
         SuggestionEngineImpl {
-            analyzer:          RefactoringAnalyzer::new(),
-            confidence_scorer: ConfidenceScorer::new(),
-            suggestion_cache:  HashMap::new(),
+            analyzer: crate::analysis::RefactoringAnalysisEngine::new(),
+            confidence_scorer: ConfidenceScorer::new(crate::confidence::ScoringStrategy::default()),
+            suggestion_cache:  Arc::new(Mutex::new(HashMap::new())),
             context_patterns:  Self::create_default_patterns(),
         }
     }
 
     /// Generate intelligent refactoring suggestions based on context analysis
     pub async fn generate_suggestions(
-        &mut self,
+        &self,
         context: &RefactoringContext,
         code_content: Option<&str>,
     ) -> Result<Vec<SmartSuggestion>, Box<dyn std::error::Error + Send + Sync>> {
         let cache_key = self.generate_cache_key(context);
 
         // Check cache first
-        if let Some(cached) = self.suggestion_cache.get(&cache_key) {
-            return Ok(cached.clone());
+        {
+            let cache = self.suggestion_cache.lock().await;
+            if let Some(cached) = cache.get(&cache_key) {
+                return Ok(cached.clone());
+            }
         }
 
         let mut suggestions = Vec::new();
@@ -139,30 +166,33 @@ impl SuggestionEngineImpl {
         });
 
         // Cache the results
-        self.suggestion_cache.insert(cache_key, suggestions.clone());
+        {
+            let mut cache = self.suggestion_cache.lock().await;
+            cache.insert(cache_key, suggestions.clone());
+        }
 
         Ok(suggestions)
     }
 
     /// Create a smart suggestion for a specific refactoring type
     async fn create_smart_suggestion(
-        &mut self,
+        &self,
         refactoring_type: &RefactoringType,
         context: &RefactoringContext,
         code_content: Option<&str>,
     ) -> Option<SmartSuggestion> {
-        let analysis = self
+        let _analysis = self
             .analyzer
             .analyze_refactoring_cached(refactoring_type, context)
             .await
             .ok()?;
         let confidence = self
             .confidence_scorer
-            .calculate_confidence(refactoring_type, context, &Some(analysis.clone()))
+            .calculate_confidence(refactoring_type, context, &Some(_analysis.clone()))
             .await;
 
-        let context_relevance = self.calculate_context_relevance(refactoring_type, context, &analysis);
-        let impact_assessment = self.assess_impact(refactoring_type, &analysis);
+        let context_relevance = self.calculate_context_relevance(refactoring_type, context, &_analysis);
+        let impact_assessment = self.assess_impact(refactoring_type, &_analysis);
 
         // Only suggest if confidence is above threshold
         if confidence.overall_score < 0.4 {
@@ -178,9 +208,9 @@ impl SuggestionEngineImpl {
             impact_assessment,
             priority,
             suggested_context: context.clone(),
-            reasoning: self.generate_reasoning(refactoring_type, context, &analysis),
+            reasoning: self.generate_reasoning(refactoring_type, context, &_analysis),
             alternatives: self.suggest_alternatives(refactoring_type, context),
-            prerequisites: self.identify_prerequisites(refactoring_type, context, &analysis),
+            prerequisites: self.identify_prerequisites(refactoring_type, context, &_analysis),
         })
     }
 
@@ -189,7 +219,7 @@ impl SuggestionEngineImpl {
         &self,
         refactoring_type: &RefactoringType,
         context: &RefactoringContext,
-        analysis: &RefactoringAnalysis,
+        _analysis: &RefactoringAnalysis,
     ) -> ContextRelevance {
         let mut score = 0.0;
         let mut factors = Vec::new();
@@ -310,7 +340,7 @@ impl SuggestionEngineImpl {
         }
 
         if context.selection.is_some() {
-            reasons.push(format!("Based on selected code range"));
+            reasons.push("Based on selected code range".to_string());
         }
 
         reasons.join(", ")
@@ -319,10 +349,10 @@ impl SuggestionEngineImpl {
     /// Suggest alternative refactorings
     fn suggest_alternatives(
         &self,
-        refactoring_type: &RefactoringType,
+        _refactoring_type: &RefactoringType,
         _context: &RefactoringContext,
     ) -> Vec<RefactoringType> {
-        match refactoring_type {
+        match _refactoring_type {
             RefactoringType::Rename => vec![
                 RefactoringType::ExtractVariable,
                 RefactoringType::ExtractFunction,
@@ -342,29 +372,29 @@ impl SuggestionEngineImpl {
     /// Identify prerequisites for the refactoring
     fn identify_prerequisites(
         &self,
-        refactoring_type: &RefactoringType,
-        context: &RefactoringContext,
+        _refactoring_type: &RefactoringType,
+        _context: &RefactoringContext,
         _analysis: &RefactoringAnalysis,
     ) -> Vec<String> {
         let mut prerequisites = Vec::new();
 
         prerequisites.push("File must be writable".to_string());
 
-        match refactoring_type {
+        match _refactoring_type {
             RefactoringType::Rename => {
                 prerequisites.push("Symbol must be defined in current file".to_string());
-                if context.symbol_name.is_none() {
+                if _context.symbol_name.is_none() {
                     prerequisites.push("Symbol name must be provided".to_string());
                 }
             }
             RefactoringType::ExtractFunction => {
-                if context.selection.is_none() {
+                if _context.selection.is_none() {
                     prerequisites.push("Code must be selected for extraction".to_string());
                 }
                 prerequisites.push("Selected code must be syntactically valid".to_string());
             }
             RefactoringType::ExtractVariable => {
-                if context.selection.is_none() {
+                if _context.selection.is_none() {
                     prerequisites.push("Expression must be selected".to_string());
                 }
                 prerequisites.push("Selected expression must be side-effect free".to_string());
@@ -436,8 +466,9 @@ impl SuggestionEngineImpl {
     }
 
     /// Clear suggestion cache
-    pub fn clear_cache(&mut self) {
-        self.suggestion_cache.clear();
+    pub async fn clear_cache(&self) {
+        let mut cache = self.suggestion_cache.lock().await;
+        cache.clear();
     }
 }
 
@@ -554,6 +585,11 @@ impl PatternCondition {
 
 impl Default for SuggestionEngineImpl {
     fn default() -> Self {
-        Self::new()
+        Self {
+            analyzer: crate::analysis::RefactoringAnalysisEngine::new(),
+            confidence_scorer: ConfidenceScorer::new(crate::confidence::ScoringStrategy::default()),
+            suggestion_cache: Arc::new(Mutex::new(HashMap::new())),
+            context_patterns: Vec::new(),
+        }
     }
 }

@@ -14,21 +14,21 @@ use tokio::sync::{mpsc, Mutex, RwLock};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LeakDetectionConfig {
-    pub suspicion_threshold_seconds:  u64,
+    pub suspicion_threshold_seconds: u64,
     pub confirmation_threshold_count: usize,
-    pub monitoring_window_seconds:    u64,
-    pub auto_prevention_enabled:      bool,
-    pub smart_allocation_enabled:     bool,
+    pub monitoring_window_seconds: u64,
+    pub auto_prevention_enabled: bool,
+    pub smart_allocation_enabled: bool,
 }
 
 impl Default for LeakDetectionConfig {
     fn default() -> Self {
         Self {
-            suspicion_threshold_seconds:  300, // 5 minutes
+            suspicion_threshold_seconds: 300, // 5 minutes
             confirmation_threshold_count: 10,
-            monitoring_window_seconds:    3600, // 1 hour
-            auto_prevention_enabled:      true,
-            smart_allocation_enabled:     true,
+            monitoring_window_seconds: 3600, // 1 hour
+            auto_prevention_enabled: true,
+            smart_allocation_enabled: true,
         }
     }
 }
@@ -36,11 +36,11 @@ impl Default for LeakDetectionConfig {
 /// Memory allocation record
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MemoryAllocation {
-    pub address:          usize,
-    pub size:             usize,
-    pub owner:            String,
-    pub allocation_time:  chrono::DateTime<Utc>,
-    pub access_pattern:   AllocationPattern,
+    pub address: usize,
+    pub size: usize,
+    pub owner: String,
+    pub allocation_time: chrono::DateTime<Utc>,
+    pub access_pattern: AllocationPattern,
     pub suspicious_score: f64,
 }
 
@@ -54,34 +54,34 @@ pub enum AllocationPattern {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LeakReport {
-    pub leak_id:             String,
-    pub suspected_address:   usize,
-    pub suspected_owner:     String,
-    pub timespan_seconds:    u64,
-    pub memory_wasted_mb:    f64,
-    pub confidence:          f64,
+    pub leak_id: String,
+    pub suspected_address: usize,
+    pub suspected_owner: String,
+    pub timespan_seconds: u64,
+    pub memory_wasted_mb: f64,
+    pub confidence: f64,
     pub detection_timestamp: chrono::DateTime<Utc>,
 }
 
 #[derive(Clone, Debug)]
 pub struct MemoryProfiler {
-    allocations:       HashMap<usize, MemoryAllocation>,
-    historical_data:   Vec<(chrono::DateTime<Utc>, usize)>, // timestamp, total_allocated
+    allocations: HashMap<usize, MemoryAllocation>,
+    historical_data: Vec<(chrono::DateTime<Utc>, usize)>, // timestamp, total_allocated
     trending_analyzer: TrendingAnalyzer,
 }
 
 struct TrendingAnalyzer {
-    growth_rate:     f64,
+    growth_rate: f64,
     memory_pressure: f64,
 }
 
 impl MemoryProfiler {
     pub fn new() -> Self {
         Self {
-            allocations:       HashMap::new(),
-            historical_data:   Vec::new(),
+            allocations: HashMap::new(),
+            historical_data: Vec::new(),
             trending_analyzer: TrendingAnalyzer {
-                growth_rate:     0.0,
+                growth_rate: 0.0,
                 memory_pressure: 0.0,
             },
         }
@@ -114,7 +114,8 @@ impl MemoryProfiler {
             .collect();
 
         if !growth_values.is_empty() {
-            self.trending_analyzer.growth_rate = growth_values.iter().sum::<f64>() / growth_values.len() as f64;
+            self.trending_analyzer.growth_rate =
+                growth_values.iter().sum::<f64>() / growth_values.len() as f64;
         }
     }
 
@@ -134,15 +135,15 @@ impl MemoryProfiler {
 /// Smart allocation strategies
 #[derive(Clone, Debug)]
 pub struct SmartAllocationStrategies {
-    strategies:            HashMap<String, AllocationStrategy>,
+    strategies: HashMap<String, AllocationStrategy>,
     effectiveness_tracker: HashMap<String, StrategyEffectiveness>,
 }
 
 #[derive(Clone, Debug)]
 struct AllocationStrategy {
     strategy_type: StrategyType,
-    config:        HashMap<String, serde_json::Value>,
-    is_active:     bool,
+    config: HashMap<String, serde_json::Value>,
+    is_active: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -156,11 +157,11 @@ pub enum StrategyType {
 
 #[derive(Clone, Debug)]
 struct StrategyEffectiveness {
-    leak_prevention_score:    f64,
-    memory_efficiency_score:  f64,
+    leak_prevention_score: f64,
+    memory_efficiency_score: f64,
     performance_impact_score: f64,
-    usage_count:              usize,
-    last_updated:             chrono::DateTime<Utc>,
+    usage_count: usize,
+    last_updated: chrono::DateTime<Utc>,
 }
 
 impl SmartAllocationStrategies {
@@ -169,19 +170,25 @@ impl SmartAllocationStrategies {
         let mut effectiveness_tracker = HashMap::new();
 
         // Default strategies
-        strategies.insert("pool".to_string(), AllocationStrategy {
-            strategy_type: StrategyType::PoolAllocation,
-            config:        HashMap::new(),
-            is_active:     true,
-        });
+        strategies.insert(
+            "pool".to_string(),
+            AllocationStrategy {
+                strategy_type: StrategyType::PoolAllocation,
+                config: HashMap::new(),
+                is_active: true,
+            },
+        );
 
-        effectiveness_tracker.insert("pool".to_string(), StrategyEffectiveness {
-            leak_prevention_score:    0.8,
-            memory_efficiency_score:  0.9,
-            performance_impact_score: 0.1,
-            usage_count:              0,
-            last_updated:             Utc::now(),
-        });
+        effectiveness_tracker.insert(
+            "pool".to_string(),
+            StrategyEffectiveness {
+                leak_prevention_score: 0.8,
+                memory_efficiency_score: 0.9,
+                performance_impact_score: 0.1,
+                usage_count: 0,
+                last_updated: Utc::now(),
+            },
+        );
 
         Self {
             strategies,
@@ -189,7 +196,10 @@ impl SmartAllocationStrategies {
         }
     }
 
-    pub async fn recommend_strategy(&mut self, allocation_pattern: &AllocationPattern) -> StrategyType {
+    pub async fn recommend_strategy(
+        &mut self,
+        allocation_pattern: &AllocationPattern,
+    ) -> StrategyType {
         // Simple strategy recommendation based on allocation pattern
         match allocation_pattern {
             AllocationPattern::FrequentAccess => StrategyType::PoolAllocation,
@@ -203,20 +213,20 @@ impl SmartAllocationStrategies {
 /// Memory Monitoring Integrator
 #[derive(Clone, Debug)]
 pub struct MemoryMonitoringIntegrator {
-    config:         LeakDetectionConfig,
-    profiler:       Arc<Mutex<MemoryProfiler>>,
-    strategies:     Arc<Mutex<SmartAllocationStrategies>>,
-    leak_reports:   Arc<RwLock<Vec<LeakReport>>>,
+    config: LeakDetectionConfig,
+    profiler: Arc<Mutex<MemoryProfiler>>,
+    strategies: Arc<Mutex<SmartAllocationStrategies>>,
+    leak_reports: Arc<RwLock<Vec<LeakReport>>>,
     alerts_enabled: bool,
 }
 
 impl MemoryMonitoringIntegrator {
     pub fn new(config: LeakDetectionConfig) -> Self {
         Self {
-            config:         config.clone(),
-            profiler:       Arc::new(Mutex::new(MemoryProfiler::new())),
-            strategies:     Arc::new(Mutex::new(SmartAllocationStrategies::new())),
-            leak_reports:   Arc::new(RwLock::new(Vec::new())),
+            config: config.clone(),
+            profiler: Arc::new(Mutex::new(MemoryProfiler::new())),
+            strategies: Arc::new(Mutex::new(SmartAllocationStrategies::new())),
+            leak_reports: Arc::new(RwLock::new(Vec::new())),
             alerts_enabled: true,
         }
     }
@@ -262,10 +272,10 @@ impl MemoryMonitoringIntegrator {
 
 /// Main Memory Leak Detector
 pub struct MemoryLeakDetector {
-    config:          LeakDetectionConfig,
-    profiler:        Arc<Mutex<MemoryProfiler>>,
-    strategies:      Arc<Mutex<SmartAllocationStrategies>>,
-    integrator:      Arc<MemoryMonitoringIntegrator>,
+    config: LeakDetectionConfig,
+    profiler: Arc<Mutex<MemoryProfiler>>,
+    strategies: Arc<Mutex<SmartAllocationStrategies>>,
+    integrator: Arc<MemoryMonitoringIntegrator>,
     detector_active: Arc<RwLock<bool>>,
 }
 
@@ -276,10 +286,10 @@ impl MemoryLeakDetector {
 
     pub async fn new_with_config(config: LeakDetectionConfig) -> Result<Self, IDEError> {
         Ok(Self {
-            config:          config.clone(),
-            profiler:        Arc::new(Mutex::new(MemoryProfiler::new())),
-            strategies:      Arc::new(Mutex::new(SmartAllocationStrategies::new())),
-            integrator:      Arc::new(MemoryMonitoringIntegrator::new(config)),
+            config: config.clone(),
+            profiler: Arc::new(Mutex::new(MemoryProfiler::new())),
+            strategies: Arc::new(Mutex::new(SmartAllocationStrategies::new())),
+            integrator: Arc::new(MemoryMonitoringIntegrator::new(config)),
             detector_active: Arc::new(RwLock::new(false)),
         })
     }
@@ -348,18 +358,21 @@ impl MemoryLeakDetector {
         false
     }
 
-    async fn create_leak_report(&self, allocation: &MemoryAllocation) -> Result<LeakReport, IDEError> {
+    async fn create_leak_report(
+        &self,
+        allocation: &MemoryAllocation,
+    ) -> Result<LeakReport, IDEError> {
         Ok(LeakReport {
-            leak_id:             format!(
+            leak_id: format!(
                 "leak_{}_{}",
                 allocation.address,
                 allocation.allocation_time.timestamp()
             ),
-            suspected_address:   allocation.address,
-            suspected_owner:     allocation.owner.clone(),
-            timespan_seconds:    (Utc::now() - allocation.allocation_time).num_seconds() as u64,
-            memory_wasted_mb:    allocation.size as f64 / (1024.0 * 1024.0),
-            confidence:          0.8, // Could be calculated based on various factors
+            suspected_address: allocation.address,
+            suspected_owner: allocation.owner.clone(),
+            timespan_seconds: (Utc::now() - allocation.allocation_time).num_seconds() as u64,
+            memory_wasted_mb: allocation.size as f64 / (1024.0 * 1024.0),
+            confidence: 0.8, // Could be calculated based on various factors
             detection_timestamp: Utc::now(),
         })
     }

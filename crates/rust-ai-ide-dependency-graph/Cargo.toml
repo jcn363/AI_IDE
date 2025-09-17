@@ -64,8 +64,17 @@ reqwest = { workspace = true }
 # CPU information for parallel processing
 num_cpus = { version = "1.16" }
 
+# Regular expressions for parsing AI responses
+regex = { version = "1.10" }
+
 # Common utilities
 rust-ai-ide-common = { workspace = true }
 
 # Types shared across the project
 rust-ai-ide-types = { workspace = true }
+
+# AI/ML infrastructure for conflict resolution
+rust-ai-ide-ai-inference = { workspace = true }
+
+# AI code generation services
+rust-ai-ide-ai-codegen = { workspace = true }

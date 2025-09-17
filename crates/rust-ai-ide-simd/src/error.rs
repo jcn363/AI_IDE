@@ -62,8 +62,8 @@ pub enum RecoveryStrategy {
 
 /// SIMD error handler for recovery strategies
 pub struct SIMDRecoveryHandler {
-    pub strategy:            RecoveryStrategy,
-    pub error_threshold:     usize,
+    pub strategy: RecoveryStrategy,
+    pub error_threshold: usize,
     pub current_error_count: usize,
 }
 
@@ -87,15 +87,18 @@ impl SIMDRecoveryHandler {
                     reason: format!("SIMD failed: {:?}", error),
                 })
             }
-            RecoveryStrategy::RetryDifferentImplementation =>
+            RecoveryStrategy::RetryDifferentImplementation => {
                 if self.current_error_count < 3 {
-                    tracing::warn!("SIMD operation failed, retrying with alternate implementation...");
+                    tracing::warn!(
+                        "SIMD operation failed, retrying with alternate implementation..."
+                    );
                     Err(SIMDError::FallbackError {
                         reason: format!("Retry failed: {:?}", error),
                     })
                 } else {
                     Err(error)
-                },
+                }
+            }
             RecoveryStrategy::DegradedMode => {
                 tracing::error!("SIMD operation failed, entering degraded mode: {:?}", error);
                 Err(SIMDError::FallbackError {
@@ -168,7 +171,9 @@ pub mod error_utils {
     /// Try to convert SIMDError to a user-friendly message
     pub fn user_friendly_error(error: &SIMDError) -> String {
         match error {
-            SIMDError::SIMDUnavailable => "SIMD acceleration is not available on this system".to_string(),
+            SIMDError::SIMDUnavailable => {
+                "SIMD acceleration is not available on this system".to_string()
+            }
             SIMDError::MemoryAllocationError { reason } => {
                 format!("SIMD operation failed due to memory issues: {}", reason)
             }

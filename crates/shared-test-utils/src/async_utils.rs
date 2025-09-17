@@ -7,7 +7,10 @@ use tokio::time::timeout;
 use crate::error::TestError;
 
 /// Executes a future with a timeout
-pub async fn with_timeout<T>(future: impl Future<Output = T>, duration: Duration) -> Result<T, TestError> {
+pub async fn with_timeout<T>(
+    future: impl Future<Output = T>,
+    duration: Duration,
+) -> Result<T, TestError> {
     timeout(duration, future)
         .await
         .map_err(|_| TestError::Timeout(format!("Operation timed out after {:?}", duration)))
@@ -80,8 +83,12 @@ impl AsyncTestHelper {
         task2: impl Future<Output = Result<T2, TestError>> + Send + 'static,
     ) -> Result<futures::future::Either<T1, T2>, TestError> {
         match futures::future::select(Box::pin(task1), Box::pin(task2)).await {
-            futures::future::Either::Left((result1, _)) => Ok(futures::future::Either::Left(result1?)),
-            futures::future::Either::Right((result2, _)) => Ok(futures::future::Either::Right(result2?)),
+            futures::future::Either::Left((result1, _)) => {
+                Ok(futures::future::Either::Left(result1?))
+            }
+            futures::future::Either::Right((result2, _)) => {
+                Ok(futures::future::Either::Right(result2?))
+            }
         }
     }
 }
@@ -175,7 +182,11 @@ impl ConcurrencyTester {
     }
 
     /// Tests concurrent execution of a function
-    pub async fn test_concurrent<F, Fut, T>(&self, test_fn: F, iterations: usize) -> Result<Vec<T>, TestError>
+    pub async fn test_concurrent<F, Fut, T>(
+        &self,
+        test_fn: F,
+        iterations: usize,
+    ) -> Result<Vec<T>, TestError>
     where
         F: Fn() -> Fut + Send + Sync + Clone + 'static,
         Fut: Future<Output = Result<T, TestError>> + Send + 'static,
@@ -226,11 +237,12 @@ impl ConcurrencyTester {
             match result {
                 Ok(Ok(_)) => continue,
                 Ok(Err(e)) => return Err(e),
-                Err(e) =>
+                Err(e) => {
                     return Err(TestError::Async(format!(
                         "Race condition test failed: {:?}",
                         e
-                    ))),
+                    )))
+                }
             }
         }
 
@@ -248,7 +260,10 @@ impl Default for ConcurrencyTester {
 pub struct AsyncScheduler {
     tasks: Vec<(
         String,
-        Box<dyn FnOnce() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>> + Send>,
+        Box<
+            dyn FnOnce() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>>
+                + Send,
+        >,
     )>,
 }
 
@@ -316,16 +331,16 @@ impl Default for AsyncScheduler {
 /// Stress testing utilities for async operations
 pub struct AsyncStressTester {
     concurrency_level: usize,
-    iterations:        usize,
-    timeout:           Duration,
+    iterations: usize,
+    timeout: Duration,
 }
 
 impl AsyncStressTester {
     pub fn new() -> Self {
         Self {
             concurrency_level: 10,
-            iterations:        100,
-            timeout:           Duration::from_secs(30),
+            iterations: 100,
+            timeout: Duration::from_secs(30),
         }
     }
 
@@ -419,21 +434,31 @@ impl Default for AsyncStressTester {
 
 #[derive(Debug)]
 pub struct StressTestResults {
-    pub total_operations:      usize,
+    pub total_operations: usize,
     pub successful_operations: usize,
-    pub failed_operations:     usize,
-    pub total_time:            Duration,
+    pub failed_operations: usize,
+    pub total_time: Duration,
     pub operations_per_second: f64,
-    pub errors:                Vec<String>,
+    pub errors: Vec<String>,
 }
 
 /// Async test hooks for setup and teardown
 #[derive(Default)]
 pub struct AsyncTestHooks {
-    before_each:
-        Vec<Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>> + Send + Sync>>,
-    after_each:
-        Vec<Box<dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>> + Send + Sync>>,
+    before_each: Vec<
+        Box<
+            dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>>
+                + Send
+                + Sync,
+        >,
+    >,
+    after_each: Vec<
+        Box<
+            dyn Fn() -> std::pin::Pin<Box<dyn Future<Output = Result<(), TestError>> + Send>>
+                + Send
+                + Sync,
+        >,
+    >,
 }
 
 impl AsyncTestHooks {

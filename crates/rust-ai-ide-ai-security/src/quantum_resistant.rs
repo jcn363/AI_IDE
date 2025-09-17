@@ -10,20 +10,20 @@ use tokio::sync::Mutex;
 /// Post-quantum AI configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostQuantumAIConfig {
-    pub key_encapsulation_method:    String, // "kyber"
-    pub signature_scheme:            String, // "falcon"
-    pub encryption_level:            String, // "512", "768", "1024"
-    pub model_encryption_enabled:    bool,
+    pub key_encapsulation_method: String, // "kyber"
+    pub signature_scheme: String,         // "falcon"
+    pub encryption_level: String,         // "512", "768", "1024"
+    pub model_encryption_enabled: bool,
     pub gradient_encryption_enabled: bool,
 }
 
 impl Default for PostQuantumAIConfig {
     fn default() -> Self {
         Self {
-            key_encapsulation_method:    "kyber".to_string(),
-            signature_scheme:            "falcon".to_string(),
-            encryption_level:            "768".to_string(),
-            model_encryption_enabled:    true,
+            key_encapsulation_method: "kyber".to_string(),
+            signature_scheme: "falcon".to_string(),
+            encryption_level: "768".to_string(),
+            model_encryption_enabled: true,
             gradient_encryption_enabled: false,
         }
     }
@@ -32,9 +32,9 @@ impl Default for PostQuantumAIConfig {
 /// Main quantum-resistant AI engine
 #[derive(Debug)]
 pub struct QuantumResistantAI {
-    config:         PostQuantumAIConfig,
-    public_key:     kyber768_public_key,
-    secret_key:     kyber768_secret_key,
+    config: PostQuantumAIConfig,
+    public_key: kyber768_public_key,
+    secret_key: kyber768_secret_key,
     is_initialized: Mutex<bool>,
 }
 
@@ -79,14 +79,17 @@ impl QuantumResistantAI {
         encrypted_data.extend_from_slice(model_data);
 
         Ok(QuantumEncryptedData {
-            ciphertext:      cipher_text,
+            ciphertext: cipher_text,
             encrypted_model: encrypted_data,
-            shared_secret:   secret_shared,
+            shared_secret: secret_shared,
         })
     }
 
     /// Decrypt AI model data
-    pub async fn decrypt_model_data(&self, encrypted_data: &QuantumEncryptedData) -> Result<Vec<u8>> {
+    pub async fn decrypt_model_data(
+        &self,
+        encrypted_data: &QuantumEncryptedData,
+    ) -> Result<Vec<u8>> {
         // Decapsulate to get shared secret
         let shared_secret = decapsulate(&encrypted_data.ciphertext, &self.secret_key);
 
@@ -99,7 +102,10 @@ impl QuantumResistantAI {
     }
 
     /// Secure AI inference with quantum-resistant encryption
-    pub async fn secure_inference(&self, inference_request: &[u8]) -> Result<QuantumEncryptedResult> {
+    pub async fn secure_inference(
+        &self,
+        inference_request: &[u8],
+    ) -> Result<QuantumEncryptedResult> {
         let initialized = self.is_initialized.lock().await;
         if !*initialized {
             return Err(anyhow::anyhow!("Quantum resistance not enabled"));
@@ -120,8 +126,8 @@ impl QuantumResistantAI {
 
         Ok(QuantumEncryptedResult {
             encrypted_inference: encrypted_result,
-            signature:           vec![], // TODO: Add PQ signature
-            model_version:       "pq-v1".to_string(),
+            signature: vec![], // TODO: Add PQ signature
+            model_version: "pq-v1".to_string(),
         })
     }
 
@@ -135,23 +141,23 @@ impl QuantumResistantAI {
 /// Quantum-encrypted data structure
 #[derive(Debug, Clone)]
 pub struct QuantumEncryptedData {
-    pub ciphertext:      kyber768_ciphertext,
+    pub ciphertext: kyber768_ciphertext,
     pub encrypted_model: Vec<u8>,
-    pub shared_secret:   kyber768_shared_secret,
+    pub shared_secret: kyber768_shared_secret,
 }
 
 /// Quantum-encrypted AI result
 #[derive(Debug, Clone)]
 pub struct QuantumEncryptedResult {
     pub encrypted_inference: Vec<u8>,
-    pub signature:           Vec<u8>, // PQ signature
-    pub model_version:       String,
+    pub signature: Vec<u8>, // PQ signature
+    pub model_version: String,
 }
 
 /// Quantum-resistant secure container for AI operations
 #[derive(Debug)]
 pub struct QuantumSecureContainer<T> {
-    data:      T,
+    data: T,
     encrypted: bool,
     signature: Option<Vec<u8>>,
 }

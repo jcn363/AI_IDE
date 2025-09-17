@@ -15,30 +15,30 @@ use crate::{GlobalTestConfig, IntegrationTestResult};
 
 /// End-to-end workflow test runner
 pub struct E2EWorkflowRunner {
-    framework:       UITestFramework,
+    framework: UITestFramework,
     workflow_config: WorkflowConfig,
-    test_data:       HashMap<String, String>,
+    test_data: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct WorkflowConfig {
-    pub enable_full_workflows:     bool,
+    pub enable_full_workflows: bool,
     pub enable_long_running_tests: bool,
-    pub screenshot_on_failure:     bool,
+    pub screenshot_on_failure: bool,
     pub generate_workflow_reports: bool,
-    pub max_workflow_duration:     Duration,
-    pub cleanup_after_workflow:    bool,
+    pub max_workflow_duration: Duration,
+    pub cleanup_after_workflow: bool,
 }
 
 impl Default for WorkflowConfig {
     fn default() -> Self {
         Self {
-            enable_full_workflows:     true,
+            enable_full_workflows: true,
             enable_long_running_tests: true,
-            screenshot_on_failure:     true,
+            screenshot_on_failure: true,
             generate_workflow_reports: true,
-            max_workflow_duration:     Duration::from_secs(600), // 10 minutes
-            cleanup_after_workflow:    true,
+            max_workflow_duration: Duration::from_secs(600), // 10 minutes
+            cleanup_after_workflow: true,
         }
     }
 }
@@ -65,20 +65,20 @@ pub enum UserWorkflowType {
 /// Workflow execution context
 #[derive(Debug, Clone)]
 pub struct WorkflowContext {
-    pub workflow_id:   String,
-    pub user_type:     UserPersona,
+    pub workflow_id: String,
+    pub user_type: UserPersona,
     pub workflow_type: UserWorkflowType,
-    pub start_time:    DateTime<Utc>,
-    pub checkpoints:   Vec<WorkflowCheckpoint>,
-    pub test_data:     HashMap<String, String>,
+    pub start_time: DateTime<Utc>,
+    pub checkpoints: Vec<WorkflowCheckpoint>,
+    pub test_data: HashMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct WorkflowCheckpoint {
-    pub name:      String,
+    pub name: String,
     pub timestamp: DateTime<Utc>,
-    pub status:    CheckpointStatus,
-    pub data:      Option<String>,
+    pub status: CheckpointStatus,
+    pub data: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -144,12 +144,12 @@ impl E2EWorkflowRunner {
         );
 
         let mut context = WorkflowContext {
-            workflow_id:   workflow_id.clone(),
-            user_type:     persona,
+            workflow_id: workflow_id.clone(),
+            user_type: persona,
             workflow_type: workflow_type.clone(),
-            start_time:    Utc::now(),
-            checkpoints:   Vec::new(),
-            test_data:     self.test_data.clone(),
+            start_time: Utc::now(),
+            checkpoints: Vec::new(),
+            test_data: self.test_data.clone(),
         };
 
         // Start workflow checkpoint
@@ -162,17 +162,27 @@ impl E2EWorkflowRunner {
 
         // Execute the specific workflow
         let result = match workflow_type {
-            UserWorkflowType::NewUserOnboarding =>
+            UserWorkflowType::NewUserOnboarding => {
                 self.execute_new_user_onboarding_workflow(&mut context)
-                    .await,
-            UserWorkflowType::ProjectDevelopment =>
+                    .await
+            }
+            UserWorkflowType::ProjectDevelopment => {
                 self.execute_project_development_workflow(&mut context)
-                    .await,
-            UserWorkflowType::CodeReviewCollaboration => self.execute_code_review_workflow(&mut context).await,
-            UserWorkflowType::RefactoringImprovement => self.execute_refactoring_workflow(&mut context).await,
+                    .await
+            }
+            UserWorkflowType::CodeReviewCollaboration => {
+                self.execute_code_review_workflow(&mut context).await
+            }
+            UserWorkflowType::RefactoringImprovement => {
+                self.execute_refactoring_workflow(&mut context).await
+            }
             UserWorkflowType::BugFixDebug => self.execute_bug_fix_workflow(&mut context).await,
-            UserWorkflowType::TestQualityAssurance => self.execute_test_qa_workflow(&mut context).await,
-            UserWorkflowType::DeploymentRelease => self.execute_deployment_workflow(&mut context).await,
+            UserWorkflowType::TestQualityAssurance => {
+                self.execute_test_qa_workflow(&mut context).await
+            }
+            UserWorkflowType::DeploymentRelease => {
+                self.execute_deployment_workflow(&mut context).await
+            }
         };
 
         // End workflow checkpoint
@@ -253,7 +263,12 @@ impl E2EWorkflowRunner {
                     .scenarios
                     .iter()
                     .find(|s| s.name == scenario_name)
-                    .ok_or_else(|| RustAIError::ConfigurationError(format!("Scenario {} not found", scenario_name)))?
+                    .ok_or_else(|| {
+                        RustAIError::ConfigurationError(format!(
+                            "Scenario {} not found",
+                            scenario_name
+                        ))
+                    })?
                     .clone(),
             );
 
@@ -406,7 +421,12 @@ impl E2EWorkflowRunner {
                     .scenarios
                     .iter()
                     .find(|s| s.name == scenario_name)
-                    .ok_or_else(|| RustAIError::ConfigurationError(format!("Scenario {} not found", scenario_name)))?
+                    .ok_or_else(|| {
+                        RustAIError::ConfigurationError(format!(
+                            "Scenario {} not found",
+                            scenario_name
+                        ))
+                    })?
                     .clone(),
             );
 
@@ -425,7 +445,9 @@ impl E2EWorkflowRunner {
     }
 
     /// Execute all available user workflows
-    pub async fn execute_all_user_workflows(&mut self) -> Result<Vec<WorkflowExecutionReport>, RustAIError> {
+    pub async fn execute_all_user_workflows(
+        &mut self,
+    ) -> Result<Vec<WorkflowExecutionReport>, RustAIError> {
         let personas = vec![
             UserPersona::BEGINNER,
             UserPersona::EXPERIENCED,
@@ -518,14 +540,14 @@ impl E2EWorkflowRunner {
 /// Workflow execution report
 #[derive(Debug, Clone)]
 pub struct WorkflowExecutionReport {
-    pub workflow_id:      String,
-    pub workflow_type:    UserWorkflowType,
-    pub persona:          UserPersona,
-    pub success:          bool,
-    pub duration:         Duration,
-    pub checkpoints:      Vec<WorkflowCheckpoint>,
-    pub ui_test_reports:  Vec<UITestReport>,
-    pub errors:           Vec<String>,
+    pub workflow_id: String,
+    pub workflow_type: UserWorkflowType,
+    pub persona: UserPersona,
+    pub success: bool,
+    pub duration: Duration,
+    pub checkpoints: Vec<WorkflowCheckpoint>,
+    pub ui_test_reports: Vec<UITestReport>,
+    pub errors: Vec<String>,
     pub workflow_metrics: HashMap<String, f64>,
 }
 

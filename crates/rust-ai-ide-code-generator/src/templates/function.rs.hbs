@@ -1,0 +1,13 @@
+{{#each docs}}
+/// {{{this}}}
+{{/each}}
+{{#each attributes}}
+{{{this}}}
+{{/each}}
+{{#if visibility}}{{visibility}} {{/if}}{{#if async}}async {{/if}}fn {{function_name}}{{#if generics}}<{{#each generics}}{{this.name}}{{#if this.bounds}}: {{this.bounds}}{{/if}}{{#unless @last}}, {{/unless}}{{/each}}>{{/if}}({{#each parameters}}{{this.name}}: {{this.type}}{{#unless @last}}, {{/unless}}{{/each}}){{#if return_type}} -> {{#if use_result}}Result<{{return_type}}, {{error_type}}>{{else}}{{return_type}}{{/if}}{{/if}} {
+    {{#if body}}
+{{{body}}}
+    {{else}}
+    todo!()
+    {{/if}}
+}

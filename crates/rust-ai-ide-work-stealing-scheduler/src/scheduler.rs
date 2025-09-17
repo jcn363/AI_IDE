@@ -15,19 +15,19 @@ use crate::SchedulerConfig;
 /// Main work-stealing scheduler
 pub struct WorkStealingScheduler {
     /// Worker pool
-    worker_pool:     WorkerPool,
+    worker_pool: WorkerPool,
     /// Global task injector
     global_injector: Arc<Injector<BoxedTask>>,
     /// Metrics collector
-    metrics:         Arc<MetricsCollector>,
+    metrics: Arc<MetricsCollector>,
     /// Result receiver
-    result_rx:       mpsc::UnboundedReceiver<TaskResult<serde_json::Value>>,
+    result_rx: mpsc::UnboundedReceiver<TaskResult<serde_json::Value>>,
     /// Configuration
-    config:          SchedulerConfig,
+    config: SchedulerConfig,
     /// Running flag
-    is_running:      std::sync::atomic::AtomicBool,
+    is_running: std::sync::atomic::AtomicBool,
     /// Start time for uptime tracking
-    start_time:      std::time::Instant,
+    start_time: std::time::Instant,
 }
 
 impl WorkStealingScheduler {
@@ -126,7 +126,10 @@ impl WorkStealingScheduler {
     }
 
     /// Wait for task completion and get result
-    pub async fn wait_for_task(&mut self, task_id: &str) -> SchedulerResult<TaskResult<serde_json::Value>> {
+    pub async fn wait_for_task(
+        &mut self,
+        task_id: &str,
+    ) -> SchedulerResult<TaskResult<serde_json::Value>> {
         while let Some(result) = self.result_rx.recv().await {
             if result.task_id == task_id {
                 return Ok(result);
@@ -135,13 +138,16 @@ impl WorkStealingScheduler {
         }
 
         Err(SchedulerError::TaskExecutionTimeout {
-            task_id:    task_id.to_string(),
+            task_id: task_id.to_string(),
             timeout_ms: 0, // Would need timeout implementation
         })
     }
 
     /// Wait for multiple tasks to complete
-    pub async fn wait_for_batch(&mut self, task_ids: &[String]) -> SchedulerResult<Vec<TaskResult<serde_json::Value>>> {
+    pub async fn wait_for_batch(
+        &mut self,
+        task_ids: &[String],
+    ) -> SchedulerResult<Vec<TaskResult<serde_json::Value>>> {
         let mut results = Vec::new();
         let mut remaining_ids: std::collections::HashSet<_> = task_ids.iter().cloned().collect();
 
@@ -168,18 +174,18 @@ impl WorkStealingScheduler {
         let metrics = self.metrics().await.unwrap_or_default();
 
         SchedulerStatus {
-            is_running:           self.is_running.load(std::sync::atomic::Ordering::Acquire),
-            num_workers:          self.worker_pool.num_workers(),
-            uptime_seconds:       self.start_time.elapsed().as_secs() as u64,
+            is_running: self.is_running.load(std::sync::atomic::Ordering::Acquire),
+            num_workers: self.worker_pool.num_workers(),
+            uptime_seconds: self.start_time.elapsed().as_secs() as u64,
             total_tasks_executed: metrics.task_metrics.total_executed,
-            active_tasks:         self
+            active_tasks: self
                 .worker_pool
                 .status()
                 .await
                 .iter()
                 .map(|w| w.queue_depth)
                 .sum::<usize>(),
-            worker_status:        self.worker_pool.status().await,
+            worker_status: self.worker_pool.status().await,
         }
     }
 
@@ -250,28 +256,28 @@ impl WorkStealingScheduler {
 #[derive(Debug, Clone)]
 pub struct SchedulerStatus {
     /// Whether scheduler is running
-    pub is_running:           bool,
+    pub is_running: bool,
     /// Number of worker threads
-    pub num_workers:          usize,
+    pub num_workers: usize,
     /// Scheduler uptime in seconds
-    pub uptime_seconds:       u64,
+    pub uptime_seconds: u64,
     /// Total tasks executed
     pub total_tasks_executed: u64,
     /// Currently active tasks (in queues)
-    pub active_tasks:         usize,
+    pub active_tasks: usize,
     /// Individual worker status
-    pub worker_status:        Vec<crate::worker::WorkerStatus>,
+    pub worker_status: Vec<crate::worker::WorkerStatus>,
 }
 
 impl Default for SchedulerStatus {
     fn default() -> Self {
         Self {
-            is_running:           false,
-            num_workers:          0,
-            uptime_seconds:       0,
+            is_running: false,
+            num_workers: 0,
+            uptime_seconds: 0,
             total_tasks_executed: 0,
-            active_tasks:         0,
-            worker_status:        Vec::new(),
+            active_tasks: 0,
+            worker_status: Vec::new(),
         }
     }
 }

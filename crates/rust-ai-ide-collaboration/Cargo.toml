@@ -12,7 +12,7 @@ repository = { workspace = true }
 
 [dependencies]
 # Async runtime
-tokio = { workspace = true, features = ["sync", "rt"] }
+tokio = { workspace = true, features = ["sync", "rt", "net", "time", "macros"] }
 
 # Serialization for CRDT operations
 serde = { workspace = true, features = ["derive"] }
@@ -25,9 +25,15 @@ log = { workspace = true }
 # WebSocket support for real-time communication
 tokio-tungstenite = "0.21.0"
 futures-util = "0.3.30"
+tokio-native-tls = "0.3.1"
+native-tls = "0.2.11"
 
-# CRDT dependencies (basic implementation, may need additional crates for complex CRDTs)
+# Enhanced CRDT implementation
 uuid = { version = "1.0", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Performance monitoring
+moka = { version = "0.12", features = ["future"] }
 
 # Security and validation
 rust-ai-ide-security = { path = "../rust-ai-ide-security" }
@@ -37,11 +43,17 @@ rust-ai-ide-common = { path = "../rust-ai-ide-common" }
 rust-ai-ide-types = { path = "../rust-ai-ide-types" }
 rust-ai-ide-errors = { path = "../rust-ai-ide-errors" }
 
-# AI integration for coaching
+# AI integration for conflict resolution
 rust-ai-ide-ai-inference = { path = "../rust-ai-ide-ai-inference" }
 
 # LSP integration for collaborative editing context
 rust-ai-ide-lsp = { path = "../rust-ai-ide-lsp" }
+
+# Infra components for EventBus and connection pooling
+rust-ai-ide-core = { path = "../rust-ai-ide-core" }
+
+# SQLite persistence
+rusqlite = { workspace = true }
 
 [features]
 default = ["std"]

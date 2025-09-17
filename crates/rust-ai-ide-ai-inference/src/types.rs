@@ -37,17 +37,17 @@ pub enum SecurityError {
 /// Edit operation for text editing
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EditOperation {
-    pub range:    serde_json::Value, // Using Value for flexibility
+    pub range: serde_json::Value, // Using Value for flexibility
     pub new_text: String,
 }
 
 /// Basic model information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelInfo {
-    pub model_path:      PathBuf,
-    pub model_size:      ModelSize,
-    pub quantization:    Option<Quantization>,
-    pub lora_adapters:   Vec<String>,
+    pub model_path: PathBuf,
+    pub model_size: ModelSize,
+    pub quantization: Option<Quantization>,
+    pub lora_adapters: Vec<String>,
     pub memory_usage_mb: u64,
 }
 
@@ -73,12 +73,12 @@ pub enum ModelDevice {
 /// Model load configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModelLoadConfig {
-    pub quantization:    Option<Quantization>,
-    pub lora_adapters:   Vec<String>,
+    pub quantization: Option<Quantization>,
+    pub lora_adapters: Vec<String>,
     pub memory_limit_mb: Option<u64>,
-    pub device:          ModelDevice,
-    pub lazy_loading:    bool,
-    pub enable_cache:    bool,
+    pub device: ModelDevice,
+    pub lazy_loading: bool,
+    pub enable_cache: bool,
 }
 
 /// Analysis configuration for AI operations

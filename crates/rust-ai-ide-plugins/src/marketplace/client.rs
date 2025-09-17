@@ -16,9 +16,9 @@ use crate::interfaces::{PluginError, PluginMetadata};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketplaceServer {
     /// Server URL
-    pub url:        String,
+    pub url: String,
     /// API key for authentication
-    pub api_key:    Option<String>,
+    pub api_key: Option<String>,
     /// Whether to verify SSL certificates
     pub verify_ssl: bool,
 }
@@ -27,27 +27,27 @@ pub struct MarketplaceServer {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketplaceSearchResult {
     /// Plugin ID
-    pub plugin_id:      String,
+    pub plugin_id: String,
     /// Plugin metadata
-    pub metadata:       PluginMetadata,
+    pub metadata: PluginMetadata,
     /// Download URL
-    pub download_url:   String,
+    pub download_url: String,
     /// SHA256 hash for verification
-    pub hash:           String,
+    pub hash: String,
     /// Digital signature
-    pub signature:      Option<String>,
+    pub signature: Option<String>,
     /// Plugin rating (out of 5 stars)
-    pub rating:         Option<f32>,
+    pub rating: Option<f32>,
     /// Number of reviews
-    pub review_count:   Option<u32>,
+    pub review_count: Option<u32>,
     /// Download count
     pub download_count: Option<u32>,
     /// Last updated date
-    pub last_updated:   Option<chrono::DateTime<chrono::Utc>>,
+    pub last_updated: Option<chrono::DateTime<chrono::Utc>>,
     /// Plugin categories
-    pub categories:     Vec<String>,
+    pub categories: Vec<String>,
     /// Featured status
-    pub featured:       bool,
+    pub featured: bool,
 }
 
 /// Plugin categories
@@ -68,29 +68,29 @@ pub enum PluginCategory {
 /// Enhanced plugin review
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginReview {
-    pub review_id:  String,
-    pub plugin_id:  String,
-    pub user_id:    String,
-    pub rating:     f32,
-    pub comment:    String,
+    pub review_id: String,
+    pub plugin_id: String,
+    pub user_id: String,
+    pub rating: f32,
+    pub comment: String,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Marketplace analytics data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MarketplaceAnalytics {
-    pub total_plugins:        u32,
+    pub total_plugins: u32,
     pub active_installations: u32,
     pub downloads_this_month: u32,
-    pub popular_plugins:      Vec<PopularPlugin>,
+    pub popular_plugins: Vec<PopularPlugin>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PopularPlugin {
     pub plugin_id: String,
-    pub name:      String,
+    pub name: String,
     pub downloads: u32,
-    pub rating:    f32,
+    pub rating: f32,
 }
 
 /// Marketplace plugin installation result
@@ -100,9 +100,9 @@ pub type InstallResult = Result<InstalledPlugin, PluginError>;
 #[derive(Debug, Clone)]
 pub struct InstalledPlugin {
     /// Plugin ID
-    pub plugin_id:    String,
+    pub plugin_id: String,
     /// Installed version
-    pub version:      String,
+    pub version: String,
     /// Installation path
     pub install_path: String,
     /// Installation timestamp
@@ -112,9 +112,9 @@ pub struct InstalledPlugin {
 /// Plugin marketplace client
 pub struct MarketplaceClient {
     /// HTTP client
-    client:   Client,
+    client: Client,
     /// Marketplace servers
-    servers:  Vec<MarketplaceServer>,
+    servers: Vec<MarketplaceServer>,
     /// Plugin registry for signature verification
     registry: Arc<dyn PluginRegistry>,
 }
@@ -157,7 +157,10 @@ impl MarketplaceClient {
     }
 
     /// Get detailed plugin information
-    pub async fn get_plugin_info(&self, plugin_id: &uuid::Uuid) -> Result<MarketplaceSearchResult, PluginError> {
+    pub async fn get_plugin_info(
+        &self,
+        plugin_id: &uuid::Uuid,
+    ) -> Result<MarketplaceSearchResult, PluginError> {
         // Search all servers for the specific plugin
         for server in &self.servers {
             match self
@@ -176,7 +179,11 @@ impl MarketplaceClient {
     }
 
     /// Download and verify a plugin
-    pub async fn download_plugin(&self, plugin_id: &uuid::Uuid, target_path: &std::path::Path) -> InstallResult {
+    pub async fn download_plugin(
+        &self,
+        plugin_id: &uuid::Uuid,
+        target_path: &std::path::Path,
+    ) -> InstallResult {
         // Get plugin information
         let plugin_info = self.get_plugin_info(plugin_id).await?;
 
@@ -205,8 +212,8 @@ impl MarketplaceClient {
 
         // Create installation record
         let installed = InstalledPlugin {
-            plugin_id:    plugin_info.plugin_id,
-            version:      plugin_info.metadata.version.to_string(),
+            plugin_id: plugin_info.plugin_id,
+            version: plugin_info.metadata.version.to_string(),
             install_path: target_path.to_string_lossy().to_string(),
             installed_at: chrono::Utc::now(),
         };
@@ -227,7 +234,10 @@ impl MarketplaceClient {
     }
 
     /// Get popular plugins
-    pub async fn get_popular_plugins(&self, limit: Option<u32>) -> Result<Vec<PopularPlugin>, PluginError> {
+    pub async fn get_popular_plugins(
+        &self,
+        limit: Option<u32>,
+    ) -> Result<Vec<PopularPlugin>, PluginError> {
         let results = self.get_popular_from_default_server(limit).await?;
         Ok(results)
     }
@@ -256,7 +266,11 @@ impl MarketplaceClient {
     }
 
     /// Get plugin reviews
-    pub async fn get_reviews(&self, plugin_id: &str, limit: Option<u32>) -> Result<Vec<PluginReview>, PluginError> {
+    pub async fn get_reviews(
+        &self,
+        plugin_id: &str,
+        limit: Option<u32>,
+    ) -> Result<Vec<PluginReview>, PluginError> {
         let mut all_reviews = Vec::new();
 
         for server in &self.servers {
@@ -299,7 +313,10 @@ impl MarketplaceClient {
         Ok(plugins)
     }
 
-    async fn get_popular_from_default_server(&self, limit: Option<u32>) -> Result<Vec<PopularPlugin>, PluginError> {
+    async fn get_popular_from_default_server(
+        &self,
+        limit: Option<u32>,
+    ) -> Result<Vec<PopularPlugin>, PluginError> {
         if let Some(server) = self.servers.first() {
             let mut url = format!("{}/api/analytics/popular", server.url);
             if let Some(lim) = limit {
@@ -374,7 +391,10 @@ impl MarketplaceClient {
         Ok(reviews)
     }
 
-    async fn get_analytics_from_server(&self, server: &MarketplaceServer) -> Result<MarketplaceAnalytics, PluginError> {
+    async fn get_analytics_from_server(
+        &self,
+        server: &MarketplaceServer,
+    ) -> Result<MarketplaceAnalytics, PluginError> {
         let url = format!("{}/api/analytics/overview", server.url);
         let mut request = self.client.get(&url);
 

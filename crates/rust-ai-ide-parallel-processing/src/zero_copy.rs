@@ -28,19 +28,23 @@ pub trait ZeroCopyBuffer {
 
 /// Memory-mapped file manager for zero-copy operations
 pub struct MmapManager {
-    pub(crate) maps:      Arc<Mutex<HashMap<String, MmapMut>>>,
+    pub(crate) maps: Arc<Mutex<HashMap<String, MmapMut>>>,
     pub(crate) semaphore: Arc<Semaphore>,
 }
 
 impl MmapManager {
     pub fn new(max_concurrent: usize) -> Self {
         Self {
-            maps:      Arc::new(Mutex::new(HashMap::new())),
+            maps: Arc::new(Mutex::new(HashMap::new())),
             semaphore: Arc::new(Semaphore::new(max_concurrent)),
         }
     }
 
-    pub async fn create_mmap_file<P: AsRef<Path>>(&self, path: P, size: usize) -> Result<String, IDEError> {
+    pub async fn create_mmap_file<P: AsRef<Path>>(
+        &self,
+        path: P,
+        size: usize,
+    ) -> Result<String, IDEError> {
         let _permit = self.semaphore.acquire().await.map_err(|e| {
             IDEError::new(
                 IDEErrorKind::ConcurrencyError,
@@ -67,16 +71,20 @@ impl MmapManager {
             .create(true)
             .truncate(true)
             .open(&temp_file)
-            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to create temp file").with_source(e))?;
+            .map_err(|e| {
+                IDEError::new(IDEErrorKind::FileOperation, "Failed to create temp file")
+                    .with_source(e)
+            })?;
 
-        file.set_len(size as u64)
-            .map_err(|e| IDEError::new(IDEErrorKind::FileOperation, "Failed to set file size").with_source(e))?;
+        file.set_len(size as u64).map_err(|e| {
+            IDEError::new(IDEErrorKind::FileOperation, "Failed to set file size").with_source(e)
+        })?;
 
         let mmap = unsafe {
-            MmapOptions::new()
-                .len(size)
-                .map_mut(&file)
-                .map_err(|e| IDEError::new(IDEErrorKind::MemoryError, "Failed to create memory map").with_source(e))?
+            MmapOptions::new().len(size).map_mut(&file).map_err(|e| {
+                IDEError::new(IDEErrorKind::MemoryError, "Failed to create memory map")
+                    .with_source(e)
+            })?
         };
 
         maps.insert(file_id.clone(), mmap);
@@ -103,7 +111,7 @@ impl MmapManager {
 
 /// Zero-copy channel for inter-thread communication
 pub struct ZeroCopyChannel<T: ZeroCopyBuffer> {
-    sender:   tokio::sync::mpsc::Sender<T>,
+    sender: tokio::sync::mpsc::Sender<T>,
     receiver: Arc<Mutex<tokio::sync::mpsc::Receiver<T>>>,
 }
 
@@ -129,10 +137,9 @@ impl<T: ZeroCopyBuffer> ZeroCopyChannel<T> {
 
     pub async fn receive(&self) -> Result<T, IDEError> {
         let mut receiver = self.receiver.lock().await;
-        receiver
-            .recv()
-            .await
-            .ok_or_else(|| IDEError::new(IDEErrorKind::CommunicationError, "Zero-copy channel closed"))
+        receiver.recv().await.ok_or_else(|| {
+            IDEError::new(IDEErrorKind::CommunicationError, "Zero-copy channel closed")
+        })
     }
 }
 
@@ -160,8 +167,8 @@ impl ZeroCopyBuffer for Vec<u8> {
 
 /// Enhanced zero-copy operations for advanced memory management
 pub struct AdvancedZeroCopyOperations {
-    mmap_manager:      Arc<MmapManager>,
-    resource_pool:     Arc<RwLock<HashMap<String, VecDeque<MmapSegment>>>>,
+    mmap_manager: Arc<MmapManager>,
+    resource_pool: Arc<RwLock<HashMap<String, VecDeque<MmapSegment>>>>,
     cleanup_scheduler: Arc<tokio::sync::RwLock<HashMap<String, Instant>>>,
 }
 
@@ -242,9 +249,12 @@ impl AdvancedZeroCopyOperations {
         for operation in operations {
             let result = match operation.op_type {
                 ZeroCopyOperationType::Read => self.read_operation(&operation).await?,
-                ZeroCopyOperationType::Write(data) => self.write_operation(&operation, &data).await?,
-                ZeroCopyOperationType::Transform(transform_fn) =>
-                    self.transform_operation(&operation, transform_fn).await?,
+                ZeroCopyOperationType::Write(data) => {
+                    self.write_operation(&operation, &data).await?
+                }
+                ZeroCopyOperationType::Transform(transform_fn) => {
+                    self.transform_operation(&operation, transform_fn).await?
+                }
             };
 
             // Update LRU access
@@ -270,11 +280,11 @@ impl AdvancedZeroCopyOperations {
 
         Ok(ZeroCopyResult {
             operation_id: operation.id.clone(),
-            data:         Some(result_data),
-            size:         operation.size,
-            success:      true,
-            error:        None,
-            timing:       None,
+            data: Some(result_data),
+            size: operation.size,
+            success: true,
+            error: None,
+            timing: None,
         })
     }
 
@@ -299,16 +309,17 @@ impl AdvancedZeroCopyOperations {
                         }
 
                         mmap.flush().map_err(|e| {
-                            IDEError::new(IDEErrorKind::FileOperation, "Failed to flush mmap").with_source(e)
+                            IDEError::new(IDEErrorKind::FileOperation, "Failed to flush mmap")
+                                .with_source(e)
                         })?;
 
                         return Ok(ZeroCopyResult {
                             operation_id: operation.id.clone(),
-                            data:         None,
-                            size:         write_size,
-                            success:      true,
-                            error:        None,
-                            timing:       None,
+                            data: None,
+                            size: write_size,
+                            success: true,
+                            error: None,
+                            timing: None,
                         });
                     }
                 }
@@ -335,11 +346,11 @@ impl AdvancedZeroCopyOperations {
 
         Ok(ZeroCopyResult {
             operation_id: operation.id.clone(),
-            data:         Some(transformed),
-            size:         operation.size,
-            success:      true,
-            error:        None,
-            timing:       None,
+            data: Some(transformed),
+            size: operation.size,
+            success: true,
+            error: None,
+            timing: None,
         })
     }
 }
@@ -347,17 +358,23 @@ impl AdvancedZeroCopyOperations {
 /// Memory-mapped file segment for advanced operations
 #[derive(Debug, Clone)]
 pub struct MmapSegment {
-    pub file_id:       String,
-    pub path:          std::path::PathBuf,
-    pub offset:        u64,
-    pub size:          usize,
-    pub mmap:          Option<Arc<MmapMut>>,
-    pub access_time:   Instant,
+    pub file_id: String,
+    pub path: std::path::PathBuf,
+    pub offset: u64,
+    pub size: usize,
+    pub mmap: Option<Arc<MmapMut>>,
+    pub access_time: Instant,
     pub cleanup_delay: Duration,
 }
 
 impl MmapSegment {
-    pub fn new(file_id: String, path: std::path::PathBuf, offset: u64, size: usize, cleanup_delay: Duration) -> Self {
+    pub fn new(
+        file_id: String,
+        path: std::path::PathBuf,
+        offset: u64,
+        size: usize,
+        cleanup_delay: Duration,
+    ) -> Self {
         Self {
             file_id,
             path,
@@ -377,10 +394,10 @@ impl MmapSegment {
 /// Zero-copy operation specification
 #[derive(Clone)]
 pub struct ZeroCopyOperation<P: AsRef<Path>> {
-    pub id:      String,
-    pub path:    P,
-    pub offset:  usize,
-    pub size:    usize,
+    pub id: String,
+    pub path: P,
+    pub offset: usize,
+    pub size: usize,
     pub op_type: ZeroCopyOperationType,
 }
 
@@ -395,30 +412,34 @@ pub enum ZeroCopyOperationType {
 #[derive(Debug)]
 pub struct ZeroCopyResult {
     pub operation_id: String,
-    pub data:         Option<Vec<u8>>,
-    pub size:         usize,
-    pub success:      bool,
-    pub error:        Option<String>,
-    pub timing:       Option<Duration>,
+    pub data: Option<Vec<u8>>,
+    pub size: usize,
+    pub success: bool,
+    pub error: Option<String>,
+    pub timing: Option<Duration>,
 }
 
 /// Zero-copy resource pool integration with ResourcePoolManager
 pub struct ZeroCopyResourcePool {
-    pub(crate) manager:       Arc<MmapManager>,
+    pub(crate) manager: Arc<MmapManager>,
     pub(crate) usage_tracker: Arc<Mutex<HashMap<String, usize>>>,
-    pub(crate) advanced_ops:  AdvancedZeroCopyOperations,
+    pub(crate) advanced_ops: AdvancedZeroCopyOperations,
 }
 
 impl ZeroCopyResourcePool {
     pub fn new(manager: Arc<MmapManager>) -> Self {
         Self {
-            manager:       manager.clone(),
+            manager: manager.clone(),
             usage_tracker: Arc::new(Mutex::new(HashMap::new())),
-            advanced_ops:  AdvancedZeroCopyOperations::new(manager),
+            advanced_ops: AdvancedZeroCopyOperations::new(manager),
         }
     }
 
-    pub async fn allocate_zero_copy_buffer<P: AsRef<Path>>(&self, path: P, size: usize) -> Result<String, IDEError> {
+    pub async fn allocate_zero_copy_buffer<P: AsRef<Path>>(
+        &self,
+        path: P,
+        size: usize,
+    ) -> Result<String, IDEError> {
         let file_id = self.manager.create_mmap_file(path, size).await?;
 
         let mut tracker = self.usage_tracker.lock().await;

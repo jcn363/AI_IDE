@@ -39,8 +39,8 @@ use uuid::Uuid;
 
 use crate::types::{NetworkContext, OperationType, ResourceContext};
 use crate::{
-    AuditEventContext, AuditEventSeverity, AuditEventType, AuditLogger, ComponentStatus, OperationContext,
-    SecurityError, SecurityResult, UserContext,
+    AuditEventContext, AuditEventSeverity, AuditEventType, AuditLogger, ComponentStatus,
+    OperationContext, SecurityError, SecurityResult, UserContext,
 };
 
 /// User role for rate limiting purposes
@@ -85,13 +85,13 @@ pub enum EndpointType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RateLimitConfig {
     /// Whether rate limiting is enabled for this endpoint
-    pub enabled:          bool,
+    pub enabled: bool,
     /// Maximum number of requests allowed
-    pub requests:         u32,
+    pub requests: u32,
     /// Time window in seconds for the rate limit
-    pub window_seconds:   u64,
+    pub window_seconds: u64,
     /// Whether to enable burst allowance (additional requests beyond base rate)
-    pub burst_allowed:    bool,
+    pub burst_allowed: bool,
     /// Burst multiplier (e.g., 2.0 = 2x the base rate as burst)
     pub burst_multiplier: f64,
 }
@@ -99,10 +99,10 @@ pub struct RateLimitConfig {
 impl Default for RateLimitConfig {
     fn default() -> Self {
         Self {
-            enabled:          true,
-            requests:         10,
-            window_seconds:   60,
-            burst_allowed:    true,
+            enabled: true,
+            requests: 10,
+            window_seconds: 60,
+            burst_allowed: true,
             burst_multiplier: 1.5,
         }
     }
@@ -112,21 +112,21 @@ impl Default for RateLimitConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthRateLimiterConfig {
     /// Whether rate limiting is enabled
-    pub enabled:              bool,
+    pub enabled: bool,
     /// Default configuration for anonymous users
-    pub anonymous_limits:     HashMap<EndpointType, RateLimitConfig>,
+    pub anonymous_limits: HashMap<EndpointType, RateLimitConfig>,
     /// Default configuration for authenticated users
     pub authenticated_limits: HashMap<EndpointType, RateLimitConfig>,
     /// Default configuration for admin users
-    pub admin_limits:         HashMap<EndpointType, RateLimitConfig>,
+    pub admin_limits: HashMap<EndpointType, RateLimitConfig>,
     /// Default configuration for service accounts
-    pub service_limits:       HashMap<EndpointType, RateLimitConfig>,
+    pub service_limits: HashMap<EndpointType, RateLimitConfig>,
     /// Custom limits per user (user_id -> endpoint -> config)
     pub user_specific_limits: HashMap<String, HashMap<EndpointType, RateLimitConfig>>,
     /// Whether to include rate limit headers in responses
-    pub include_headers:      bool,
+    pub include_headers: bool,
     /// Cache size for rate limiters (performance optimization)
-    pub cache_size:           usize,
+    pub cache_size: usize,
 }
 
 impl Default for AuthRateLimiterConfig {
@@ -137,117 +137,162 @@ impl Default for AuthRateLimiterConfig {
         let mut service_limits = HashMap::new();
 
         // Anonymous user limits (most restrictive)
-        anonymous_limits.insert(EndpointType::WebauthnRegistration, RateLimitConfig {
-            enabled:          true,
-            requests:         3,
-            window_seconds:   300, // 5 minutes
-            burst_allowed:    false,
-            burst_multiplier: 1.0,
-        });
-        anonymous_limits.insert(EndpointType::WebauthnAuthentication, RateLimitConfig {
-            enabled:          true,
-            requests:         5,
-            window_seconds:   300,
-            burst_allowed:    false,
-            burst_multiplier: 1.0,
-        });
-        anonymous_limits.insert(EndpointType::Login, RateLimitConfig {
-            enabled:          true,
-            requests:         5,
-            window_seconds:   300,
-            burst_allowed:    false,
-            burst_multiplier: 1.0,
-        });
-        anonymous_limits.insert(EndpointType::AccountCreation, RateLimitConfig {
-            enabled:          true,
-            requests:         2,
-            window_seconds:   3600, // 1 hour
-            burst_allowed:    false,
-            burst_multiplier: 1.0,
-        });
-        anonymous_limits.insert(EndpointType::PasswordRecovery, RateLimitConfig {
-            enabled:          true,
-            requests:         2,
-            window_seconds:   3600,
-            burst_allowed:    false,
-            burst_multiplier: 1.0,
-        });
+        anonymous_limits.insert(
+            EndpointType::WebauthnRegistration,
+            RateLimitConfig {
+                enabled: true,
+                requests: 3,
+                window_seconds: 300, // 5 minutes
+                burst_allowed: false,
+                burst_multiplier: 1.0,
+            },
+        );
+        anonymous_limits.insert(
+            EndpointType::WebauthnAuthentication,
+            RateLimitConfig {
+                enabled: true,
+                requests: 5,
+                window_seconds: 300,
+                burst_allowed: false,
+                burst_multiplier: 1.0,
+            },
+        );
+        anonymous_limits.insert(
+            EndpointType::Login,
+            RateLimitConfig {
+                enabled: true,
+                requests: 5,
+                window_seconds: 300,
+                burst_allowed: false,
+                burst_multiplier: 1.0,
+            },
+        );
+        anonymous_limits.insert(
+            EndpointType::AccountCreation,
+            RateLimitConfig {
+                enabled: true,
+                requests: 2,
+                window_seconds: 3600, // 1 hour
+                burst_allowed: false,
+                burst_multiplier: 1.0,
+            },
+        );
+        anonymous_limits.insert(
+            EndpointType::PasswordRecovery,
+            RateLimitConfig {
+                enabled: true,
+                requests: 2,
+                window_seconds: 3600,
+                burst_allowed: false,
+                burst_multiplier: 1.0,
+            },
+        );
 
         // Authenticated user limits (moderate)
-        authenticated_limits.insert(EndpointType::WebauthnRegistration, RateLimitConfig {
-            enabled:          true,
-            requests:         10,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 1.5,
-        });
-        authenticated_limits.insert(EndpointType::WebauthnAuthentication, RateLimitConfig {
-            enabled:          true,
-            requests:         20,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 2.0,
-        });
-        authenticated_limits.insert(EndpointType::Login, RateLimitConfig {
-            enabled:          true,
-            requests:         10,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 1.5,
-        });
-        authenticated_limits.insert(EndpointType::TokenRefresh, RateLimitConfig {
-            enabled:          true,
-            requests:         30,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 2.0,
-        });
+        authenticated_limits.insert(
+            EndpointType::WebauthnRegistration,
+            RateLimitConfig {
+                enabled: true,
+                requests: 10,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 1.5,
+            },
+        );
+        authenticated_limits.insert(
+            EndpointType::WebauthnAuthentication,
+            RateLimitConfig {
+                enabled: true,
+                requests: 20,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 2.0,
+            },
+        );
+        authenticated_limits.insert(
+            EndpointType::Login,
+            RateLimitConfig {
+                enabled: true,
+                requests: 10,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 1.5,
+            },
+        );
+        authenticated_limits.insert(
+            EndpointType::TokenRefresh,
+            RateLimitConfig {
+                enabled: true,
+                requests: 30,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 2.0,
+            },
+        );
 
         // Admin user limits (higher limits)
-        admin_limits.insert(EndpointType::WebauthnRegistration, RateLimitConfig {
-            enabled:          true,
-            requests:         50,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 2.0,
-        });
-        admin_limits.insert(EndpointType::WebauthnAuthentication, RateLimitConfig {
-            enabled:          true,
-            requests:         100,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 3.0,
-        });
-        admin_limits.insert(EndpointType::Login, RateLimitConfig {
-            enabled:          true,
-            requests:         30,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 2.0,
-        });
+        admin_limits.insert(
+            EndpointType::WebauthnRegistration,
+            RateLimitConfig {
+                enabled: true,
+                requests: 50,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 2.0,
+            },
+        );
+        admin_limits.insert(
+            EndpointType::WebauthnAuthentication,
+            RateLimitConfig {
+                enabled: true,
+                requests: 100,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 3.0,
+            },
+        );
+        admin_limits.insert(
+            EndpointType::Login,
+            RateLimitConfig {
+                enabled: true,
+                requests: 30,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 2.0,
+            },
+        );
 
         // Service account limits (highest limits for automation)
-        service_limits.insert(EndpointType::WebauthnRegistration, RateLimitConfig {
-            enabled:          true,
-            requests:         200,
-            window_seconds:   300,
-            burst_allowed:    true,
-            burst_multiplier: 3.0,
-        });
-        service_limits.insert(EndpointType::WebauthnAuthentication, RateLimitConfig {
-            enabled:          true,
-            requests:         500,
-            window_seconds:   60,
-            burst_allowed:    true,
-            burst_multiplier: 10.0,
-        });
-        service_limits.insert(EndpointType::TokenRefresh, RateLimitConfig {
-            enabled:          true,
-            requests:         1000,
-            window_seconds:   60,
-            burst_allowed:    true,
-            burst_multiplier: 20.0,
-        });
+        service_limits.insert(
+            EndpointType::WebauthnRegistration,
+            RateLimitConfig {
+                enabled: true,
+                requests: 200,
+                window_seconds: 300,
+                burst_allowed: true,
+                burst_multiplier: 3.0,
+            },
+        );
+        service_limits.insert(
+            EndpointType::WebauthnAuthentication,
+            RateLimitConfig {
+                enabled: true,
+                requests: 500,
+                window_seconds: 60,
+                burst_allowed: true,
+                burst_multiplier: 10.0,
+            },
+        );
+        service_limits.insert(
+            EndpointType::TokenRefresh,
+            RateLimitConfig {
+                enabled: true,
+                requests: 1000,
+                window_seconds: 60,
+                burst_allowed: true,
+                burst_multiplier: 20.0,
+            },
+        );
 
         Self {
             enabled: true,
@@ -266,28 +311,28 @@ impl Default for AuthRateLimiterConfig {
 #[derive(Debug, Clone)]
 pub struct RateLimitState {
     /// Total number of requests processed
-    pub total_requests:   u64,
+    pub total_requests: u64,
     /// Total number of rate limit violations
     pub total_violations: u64,
     /// Number of allowed requests
     pub allowed_requests: u64,
     /// Number of denied requests
-    pub denied_requests:  u64,
+    pub denied_requests: u64,
     /// Number of active rate limiters
-    pub active_limiters:  u64,
+    pub active_limiters: u64,
     /// Cache hit rate for rate limit checks
-    pub cache_hit_rate:   f64,
+    pub cache_hit_rate: f64,
 }
 
 /// Response headers for rate limiting information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RateLimitHeaders {
     /// Maximum requests allowed in the current window
-    pub limit:       u32,
+    pub limit: u32,
     /// Remaining requests in the current window
-    pub remaining:   u32,
+    pub remaining: u32,
     /// Time until the rate limit resets (seconds)
-    pub reset:       u64,
+    pub reset: u64,
     /// Whether the request was rate limited
     pub retry_after: Option<u64>,
 }
@@ -318,9 +363,9 @@ impl RateLimitHeaders {
 
 /// Main authentication rate limiter service
 pub struct AuthRateLimiter {
-    config:       AuthRateLimiterConfig,
-    limiters:     RwLock<HashMap<String, Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock>>>>,
-    state:        RwLock<RateLimitState>,
+    config: AuthRateLimiterConfig,
+    limiters: RwLock<HashMap<String, Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock>>>>,
+    state: RwLock<RateLimitState>,
     audit_logger: Arc<dyn AuditLogger>,
 }
 
@@ -328,12 +373,12 @@ impl AuthRateLimiter {
     /// Create a new authentication rate limiter
     pub fn new(config: AuthRateLimiterConfig, audit_logger: Arc<dyn AuditLogger>) -> Self {
         let state = RwLock::new(RateLimitState {
-            total_requests:   0,
+            total_requests: 0,
             total_violations: 0,
             allowed_requests: 0,
-            denied_requests:  0,
-            active_limiters:  0,
-            cache_hit_rate:   0.0,
+            denied_requests: 0,
+            active_limiters: 0,
+            cache_hit_rate: 0.0,
         });
 
         Self {
@@ -436,31 +481,31 @@ impl AuthRateLimiter {
             // Fallback to a reasonable default based on role
             match user_role {
                 UserRole::Anonymous => RateLimitConfig {
-                    enabled:          true,
-                    requests:         10,
-                    window_seconds:   60,
-                    burst_allowed:    true,
+                    enabled: true,
+                    requests: 10,
+                    window_seconds: 60,
+                    burst_allowed: true,
                     burst_multiplier: 1.5,
                 },
                 UserRole::Authenticated => RateLimitConfig {
-                    enabled:          true,
-                    requests:         50,
-                    window_seconds:   60,
-                    burst_allowed:    true,
+                    enabled: true,
+                    requests: 50,
+                    window_seconds: 60,
+                    burst_allowed: true,
                     burst_multiplier: 2.0,
                 },
                 UserRole::Admin => RateLimitConfig {
-                    enabled:          true,
-                    requests:         200,
-                    window_seconds:   60,
-                    burst_allowed:    true,
+                    enabled: true,
+                    requests: 200,
+                    window_seconds: 60,
+                    burst_allowed: true,
                     burst_multiplier: 3.0,
                 },
                 UserRole::Service => RateLimitConfig {
-                    enabled:          true,
-                    requests:         1000,
-                    window_seconds:   60,
-                    burst_allowed:    true,
+                    enabled: true,
+                    requests: 1000,
+                    window_seconds: 60,
+                    burst_allowed: true,
                     burst_multiplier: 10.0,
                 },
             }
@@ -475,7 +520,8 @@ impl AuthRateLimiter {
         client_ip: Option<&str>,
     ) -> String {
         // Use user_id for authenticated users, client_ip for anonymous
-        let identifier = if !user_context.user_id.is_empty() && user_context.user_id != "anonymous" {
+        let identifier = if !user_context.user_id.is_empty() && user_context.user_id != "anonymous"
+        {
             user_context.user_id.clone()
         } else if let Some(ip) = client_ip {
             ip.to_string()
@@ -494,7 +540,8 @@ impl AuthRateLimiter {
         &self,
         key: String,
         config: &RateLimitConfig,
-    ) -> SecurityResult<Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>> {
+    ) -> SecurityResult<Arc<RateLimiter<NotKeyed, InMemoryState, DefaultClock, NoOpMiddleware>>>
+    {
         let mut limiters = self.limiters.write().await;
 
         // Check if we already have a limiter for this key
@@ -505,11 +552,13 @@ impl AuthRateLimiter {
         // Create a new rate limiter with the given configuration
         let burst = (config.requests as f64 * config.burst_multiplier).max(1.0) as u32;
         let quota = if config.burst_multiplier > 1.0 {
-            let per_second = NonZeroU32::new(config.requests).unwrap_or_else(|| NonZeroU32::new(1).unwrap());
+            let per_second =
+                NonZeroU32::new(config.requests).unwrap_or_else(|| NonZeroU32::new(1).unwrap());
             let burst = NonZeroU32::new(burst).unwrap_or_else(|| NonZeroU32::new(1).unwrap());
             Quota::per_second(per_second).allow_burst(burst)
         } else {
-            let per_second = NonZeroU32::new(config.requests).unwrap_or_else(|| NonZeroU32::new(1).unwrap());
+            let per_second =
+                NonZeroU32::new(config.requests).unwrap_or_else(|| NonZeroU32::new(1).unwrap());
             Quota::per_second(per_second)
         };
 
@@ -524,7 +573,11 @@ impl AuthRateLimiter {
     }
 
     /// Calculate rate limit headers
-    async fn calculate_headers(&self, key: &str, config: &RateLimitConfig) -> SecurityResult<RateLimitHeaders> {
+    async fn calculate_headers(
+        &self,
+        key: &str,
+        config: &RateLimitConfig,
+    ) -> SecurityResult<RateLimitHeaders> {
         let limiters = self.limiters.read().await;
         let limiter = limiters.get(key);
 
@@ -557,21 +610,21 @@ impl AuthRateLimiter {
         client_ip: Option<&str>,
     ) -> SecurityResult<()> {
         let operation_context = OperationContext {
-            operation_id:     Uuid::new_v4().to_string(),
-            request_id:       Uuid::new_v4().to_string(),
-            start_time:       Utc::now(),
-            timestamp:        Utc::now(),
-            network_context:  Some(NetworkContext {
-                source_ip:  client_ip.map(|s| s.to_string()),
-                protocol:   None,
+            operation_id: Uuid::new_v4().to_string(),
+            request_id: Uuid::new_v4().to_string(),
+            start_time: Utc::now(),
+            timestamp: Utc::now(),
+            network_context: Some(NetworkContext {
+                source_ip: client_ip.map(|s| s.to_string()),
+                protocol: None,
                 user_agent: None,
             }),
             resource_context: Some(ResourceContext {
-                resource_id:   format!("{:?}", endpoint_type),
+                resource_id: format!("{:?}", endpoint_type),
                 resource_type: "endpoint".to_string(),
-                action:        "rate_limit".to_string(),
+                action: "rate_limit".to_string(),
             }),
-            operation_type:   OperationType::Authentication,
+            operation_type: OperationType::Authentication,
         };
 
         let audit_context = AuditEventContext::new(

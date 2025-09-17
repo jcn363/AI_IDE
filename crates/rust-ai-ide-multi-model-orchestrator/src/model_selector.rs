@@ -11,8 +11,8 @@ use tokio::sync::RwLock;
 
 use crate::config::{validate_config, OrchestrationConfig};
 use crate::types::{
-    Complexity, ModelId, ModelInfo, ModelMetrics, ModelRecommendation, ModelSwitchingConfig, ModelTask,
-    PerformanceThresholds, RequestContext, RequestPriority,
+    Complexity, ModelId, ModelInfo, ModelMetrics, ModelRecommendation, ModelSwitchingConfig,
+    ModelTask, PerformanceThresholds, RequestContext, RequestPriority,
 };
 use crate::{OrchestrationError, Result};
 
@@ -20,7 +20,7 @@ use crate::{OrchestrationError, Result};
 #[derive(Debug)]
 pub struct ModelPerformanceTracker {
     metrics_store: Arc<RwLock<HashMap<ModelId, ModelMetrics>>>,
-    config:        OrchestrationConfig,
+    config: OrchestrationConfig,
 }
 
 impl ModelPerformanceTracker {
@@ -44,7 +44,7 @@ impl ModelPerformanceTracker {
 /// Load predictor for estimating future model load patterns
 #[derive(Debug)]
 pub struct LoadPredictor {
-    historical_loads:   Arc<RwLock<HashMap<ModelId, Vec<f64>>>>,
+    historical_loads: Arc<RwLock<HashMap<ModelId, Vec<f64>>>>,
     prediction_horizon: usize,
 }
 
@@ -90,10 +90,10 @@ pub struct ResourceUsageMonitor {
 
 #[derive(Debug, Clone)]
 pub struct SystemResourceMetrics {
-    pub total_memory_mb:     f64,
+    pub total_memory_mb: f64,
     pub available_memory_mb: f64,
-    pub cpu_usage_percent:   f64,
-    pub gpu_memory_usage:    HashMap<String, f64>,
+    pub cpu_usage_percent: f64,
+    pub gpu_memory_usage: HashMap<String, f64>,
 }
 
 impl ResourceUsageMonitor {
@@ -112,7 +112,7 @@ impl ResourceUsageMonitor {
 /// Model warmer for pre-loading frequently used models
 #[derive(Debug)]
 pub struct ModelWarmer {
-    cache:          HashMap<ModelId, std::time::Instant>,
+    cache: HashMap<ModelId, std::time::Instant>,
     max_cache_size: usize,
 }
 
@@ -152,10 +152,10 @@ impl ModelWarmer {
 /// Core model selection engine
 #[derive(Debug)]
 pub struct ModelSelectionEngine {
-    available_models:    Arc<RwLock<Vec<ModelInfo>>>,
+    available_models: Arc<RwLock<Vec<ModelInfo>>>,
     switching_cooldowns: Arc<RwLock<HashMap<ModelId, std::time::Instant>>>,
-    selection_history:   Arc<RwLock<Vec<ModelRecommendation>>>,
-    config:              OrchestrationConfig,
+    selection_history: Arc<RwLock<Vec<ModelRecommendation>>>,
+    config: OrchestrationConfig,
 }
 
 impl ModelSelectionEngine {
@@ -175,7 +175,9 @@ impl ModelSelectionEngine {
             // Check if model is in cooldown period
             if let Some(last_switch) = cooldowns.get(&model_info.id) {
                 if last_switch.elapsed()
-                    < std::time::Duration::from_secs(self.config.model_switching_config.cooldown_duration_secs)
+                    < std::time::Duration::from_secs(
+                        self.config.model_switching_config.cooldown_duration_secs,
+                    )
                 {
                     continue; // Skip models in cooldown
                 }
@@ -230,7 +232,11 @@ impl ModelSelectionEngine {
         Ok(recommendation)
     }
 
-    fn is_model_compatible(&self, capability: &crate::types::ModelCapability, request: &RequestContext) -> bool {
+    fn is_model_compatible(
+        &self,
+        capability: &crate::types::ModelCapability,
+        request: &RequestContext,
+    ) -> bool {
         // Check task compatibility
         if !capability.supported_tasks.contains(&request.task_type) {
             return false;
@@ -335,10 +341,10 @@ impl ModelSelectionEngine {
 #[derive(Debug)]
 pub struct PerformanceBasedModelSelector {
     pub performance_tracker: Arc<ModelPerformanceTracker>,
-    pub load_predictor:      Arc<LoadPredictor>,
-    pub resource_monitor:    Arc<ResourceUsageMonitor>,
-    pub model_warmer:        Arc<ModelWarmer>,
-    pub selection_engine:    Arc<ModelSelectionEngine>,
+    pub load_predictor: Arc<LoadPredictor>,
+    pub resource_monitor: Arc<ResourceUsageMonitor>,
+    pub model_warmer: Arc<ModelWarmer>,
+    pub selection_engine: Arc<ModelSelectionEngine>,
 }
 
 impl PerformanceBasedModelSelector {
@@ -348,22 +354,22 @@ impl PerformanceBasedModelSelector {
         Ok(Self {
             performance_tracker: Arc::new(ModelPerformanceTracker {
                 metrics_store: Arc::new(RwLock::new(HashMap::new())),
-                config:        config.clone(),
+                config: config.clone(),
             }),
-            load_predictor:      Arc::new(LoadPredictor {
-                historical_loads:   Arc::new(RwLock::new(HashMap::new())),
+            load_predictor: Arc::new(LoadPredictor {
+                historical_loads: Arc::new(RwLock::new(HashMap::new())),
                 prediction_horizon: 10,
             }),
-            resource_monitor:    Arc::new(ResourceUsageMonitor {
+            resource_monitor: Arc::new(ResourceUsageMonitor {
                 system_metrics: Arc::new(RwLock::new(SystemResourceMetrics {
-                    total_memory_mb:     8192.0, // Default 8GB
+                    total_memory_mb: 8192.0,     // Default 8GB
                     available_memory_mb: 4096.0, // Default 4GB available
-                    cpu_usage_percent:   50.0,   // Default 50% CPU usage
-                    gpu_memory_usage:    HashMap::new(),
+                    cpu_usage_percent: 50.0,     // Default 50% CPU usage
+                    gpu_memory_usage: HashMap::new(),
                 })),
             }),
-            model_warmer:        Arc::new(ModelWarmer::new(5)), // Warm up to 5 models
-            selection_engine:    Arc::new(ModelSelectionEngine {
+            model_warmer: Arc::new(ModelWarmer::new(5)), // Warm up to 5 models
+            selection_engine: Arc::new(ModelSelectionEngine {
                 available_models: Arc::new(RwLock::new(Vec::new())),
                 switching_cooldowns: Arc::new(RwLock::new(HashMap::new())),
                 selection_history: Arc::new(RwLock::new(Vec::new())),
@@ -389,7 +395,11 @@ impl PerformanceBasedModelSelector {
         }
     }
 
-    pub async fn update_model_metrics(&self, model_id: ModelId, metrics: ModelMetrics) -> Result<()> {
+    pub async fn update_model_metrics(
+        &self,
+        model_id: ModelId,
+        metrics: ModelMetrics,
+    ) -> Result<()> {
         self.performance_tracker
             .update_metrics(model_id, metrics)
             .await?;
@@ -438,18 +448,18 @@ mod tests {
         // Add a test model
         let test_model_id = ModelId::new();
         let model_info = ModelInfo {
-            id:         test_model_id,
-            name:       "test-model".to_string(),
-            version:    "1.0.0".to_string(),
+            id: test_model_id,
+            name: "test-model".to_string(),
+            version: "1.0.0".to_string(),
             capability: crate::types::ModelCapability {
-                supported_tasks:       vec![ModelTask::Completion],
-                max_context_length:    2048,
-                supported_languages:   vec!["rust".to_string()],
-                quantization_level:    None,
+                supported_tasks: vec![ModelTask::Completion],
+                max_context_length: 2048,
+                supported_languages: vec!["rust".to_string()],
+                quantization_level: None,
                 hardware_acceleration: vec![],
             },
-            status:     crate::types::ModelStatus::Available,
-            metrics:    ModelMetrics::new(test_model_id),
+            status: crate::types::ModelStatus::Available,
+            metrics: ModelMetrics::new(test_model_id),
         };
 
         selector.add_model(model_info).await.unwrap();
@@ -465,12 +475,12 @@ mod tests {
 
         // Test selection
         let context = RequestContext {
-            task_type:           ModelTask::Completion,
-            input_length:        100,
-            priority:            RequestPriority::Medium,
+            task_type: ModelTask::Completion,
+            input_length: 100,
+            priority: RequestPriority::Medium,
             expected_complexity: Complexity::Medium,
-            acceptable_latency:  std::time::Duration::from_millis(500),
-            preferred_hardware:  None,
+            acceptable_latency: std::time::Duration::from_millis(500),
+            preferred_hardware: None,
         };
 
         let recommendation = selector.select_model(&context).await.unwrap();
